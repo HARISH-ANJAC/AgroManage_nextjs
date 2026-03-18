@@ -8,25 +8,26 @@ import {
   Bell,
   PanelLeftClose,
   PanelLeftOpen,
-  LayoutGrid,
+  LayoutDashboard,
   Package,
   Truck,
   Users,
+  UserCheck,
   ShoppingCart,
-  Box,
+  ClipboardCheck,
+  FileText,
   Receipt,
-  ClipboardList,
+  Truck as DeliveriesIcon,
+  DollarSign,
   Warehouse,
-  Wallet,
-  BarChart3,
   Sprout,
   Settings,
   LogOut,
   X,
-  Tags,
-  FileText
+  BarChart3,
+  Wallet
 } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-is-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Context for managing sidebar state across the layout
 const SidebarContext = createContext({
@@ -93,39 +94,39 @@ const navigation = [
   {
     group: 'Overview',
     items: [
-      { name: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
-      { name: 'Purchase Orders', href: '/purchase-orders', icon: ShoppingCart }
+      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     ]
   },
   {
     group: 'Master Data',
     items: [
-      { name: 'Products', href: '/dashboard/products', icon: Package },
-      { name: 'Suppliers', href: '/dashboard/suppliers', icon: Truck },
-      { name: 'Customers', href: '/dashboard/customers', icon: Users }
+      { name: 'Products', href: '/products', icon: Package },
+      { name: 'Suppliers', href: '/suppliers', icon: UserCheck },
+      { name: 'Customers', href: '/customers', icon: Users }
     ]
   },
   {
     group: 'Purchasing',
     items: [
-      { name: 'Goods Receipts', href: '/dashboard/goods-receipts', icon: Box },
-      { name: 'Supplier Invoices', href: '/dashboard/supplier-invoices', icon: Receipt }
+      { name: 'Purchase Orders', href: '/purchase-orders', icon: ShoppingCart },
+      { name: 'Goods Receipts', href: '/goods-receipts', icon: ClipboardCheck },
+      { name: 'Supplier Invoices', href: '/supplier-invoices', icon: FileText }
     ]
   },
   {
     group: 'Sales',
     items: [
-      { name: 'Sales Orders', href: '/dashboard/sales-orders', icon: ClipboardList },
-      { name: 'Deliveries', href: '/dashboard/deliveries', icon: Truck },
-      { name: 'Sales Invoices', href: '/dashboard/sales-invoices', icon: Receipt }
+      { name: 'Sales Orders', href: '/sales-orders', icon: Receipt },
+      { name: 'Deliveries', href: '/deliveries', icon: DeliveriesIcon },
+      { name: 'Sales Invoices', href: '/sales-invoices', icon: DollarSign }
     ]
   },
   {
     group: 'Operations',
     items: [
-      { name: 'Inventory', href: '/dashboard/inventory', icon: Warehouse },
-      { name: 'Expenses', href: '/dashboard/expenses', icon: Wallet },
-      { name: 'Reports', href: '/dashboard/reports', icon: BarChart3 }
+      { name: 'Inventory', href: '/inventory', icon: Warehouse },
+      { name: 'Expenses', href: '/expenses', icon: DollarSign },
+      { name: 'Reports', href: '/reports', icon: BarChart3 }
     ]
   }
 ];
@@ -194,7 +195,7 @@ export function Sidebar() {
             )}
             <div className="space-y-1">
               {group.items.map((item) => {
-                const isActive = pathname === item.href;
+                const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
                 return (
                   <Link
                     key={item.name}
@@ -250,9 +251,9 @@ export function Sidebar() {
             <Settings size={18} />
             {(!isCollapsed || isMobile) && <span className="text-[13px] font-bold">Settings</span>}
           </button>
-          <button 
+          <button
             onClick={handleLogout}
-            className={`flex items-center gap-3.5 w-full p-2.5 rounded-xl text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-all ${isCollapsed && !isMobile ? 'justify-center' : 'px-4'}`} 
+            className={`flex items-center gap-3.5 w-full p-2.5 rounded-xl text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-all ${isCollapsed && !isMobile ? 'justify-center' : 'px-4'}`}
             title="Sign Out"
           >
             <LogOut size={18} />

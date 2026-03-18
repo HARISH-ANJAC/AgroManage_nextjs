@@ -1,0 +1,67 @@
+
+PURCHASE
+Step 1: - Purchase Order
+1.	Quotations if required
+2.	Issue purchase order to supplier with below details
+a.	Item description
+b.	Quantity
+c.	Rate 
+d.	Delivery term
+e.	Payment term (if any purchase if done on credit)
+Step 2: - Goods Receipt 
+1.	When goods arrive warehouse check 
+a.	Quantity
+b.	Quality
+c.	Condition of goods
+2.	Prepare goods receipt notes (GRN)
+Step 3: - Purchase booking in system (Three-way matching)
+1.	Supplier invoice 
+2.	Invoice number and date
+3.	PO reference number
+4.	Item description
+5.	Amount
+6.	Goods receipt note
+Note: - 
+	PO reference number must be unique with product code 
+	For eg 
+o	if we are buying Maize in Feb – 26-month ref number: - PO/MA/02/001
+o	if we are buying Karafu in Mar – 26-month ref number: - PO/KA/03/001
+	Invoice must be booked with PO and GRN reference number 
+
+
+
+
+
+EXPENSES
+•	All expense must be allocated under correct account head and with relevant PO reference so we can trace for an individual product how much cost is allocated
+•	All expenses before booking must have TRA EFD receipts 
+•	Any services related expenses must have TIN number of the service provider
+o	Accommodation
+o	Travel expenses
+o	Loading and off loading
+o	Fines and penalties
+o	Any other miscellaneous expenses
+
+
+SALES
+
+1.	Sales Order
+•	Sales order must include
+o	Customer Name (Tin number)
+o	Product details
+o	Quantity
+o	Price
+o	Delivery Date
+o	Payment Term
+2.	Delivery note
+•	Delivery reference number
+•	Product Details
+•	Date
+•	Quantity
+3.	Sales invoice
+•	Customer Name (Address and Tin no)
+•	Invoice Reference number
+•	Product details
+•	Quantity
+•	Price
+

@@ -1,129 +1,128 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { mockPurchaseOrders, PurchaseOrderHeader } from '@/app/mock';
-import { PurchaseOrderHeader as PageHeader } from '@/components/purchase-order/PurchaseOrderHeader';
-import { PurchaseOrderFilters } from '@/components/purchase-order/PurchaseOrderFilters';
-import { PurchaseOrderTable } from '@/components/purchase-order/PurchaseOrderTable';
-import { PurchaseOrderPagination } from '@/components/purchase-order/PurchaseOrderPagination';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { DataPage } from "@/components/DataPage";
+import { DataTable } from "@/components/DataTable";
+import { Badge } from "@/components/ui/badge";
+import { PurchaseOrderHeader } from "@/app/mock/types/purchase.types";
+import { Trash2, Pencil, Eye } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { useMockCrud } from "@/hooks/useMockCrud";
 
-import { useRouter } from 'next/navigation';
+type PurchaseOrderWithId = PurchaseOrderHeader & { id: string | number };
+
+const columns = [
+  { key: "poRefNo", label: "PO Number" },
+  { key: "poDate", label: "Date", render: (v: string) => v ? new Date(v).toLocaleDateString() : "-" },
+  { key: "supplierName", label: "Supplier" },
+  { key: "storeName", label: "Store" },
+  { key: "purchaseType", label: "Type" },
+  { key: "modeOfPayment", label: "Payment" },
+  { key: "finalPurchaseHdrAmount", label: "Amount", render: (v: number) => v ? `$${v.toLocaleString()}` : "$0" },
+  { key: "statusEntry", label: "Status", render: (v: string) => (
+    <Badge 
+      variant={v === "Approved" || v === "Completed" ? "default" : v === "Draft" ? "outline" : "secondary"} 
+      className="text-xs"
+    >
+      {v}
+    </Badge>
+  )},
+];
+
+
 
 export default function PurchaseOrdersPage() {
   const router = useRouter();
+  const { data, loading, create, update, remove } = useMockCrud<PurchaseOrderWithId>({ table: "purchaseOrders" });
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<PurchaseOrderWithId | null>(null);
+  const [selectedRows, setSelectedRows] = useState<(string | number)[]>([]);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
-  // Auth check
-  React.useEffect(() => {
+  useEffect(() => {
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     if (isLoggedIn !== 'true') {
       router.replace('/login');
     }
   }, [router]);
 
-  // State for filtering, sorting and pagination
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [supplierFilter, setSupplierFilter] = useState('All');
-  const [sortConfig, setSortConfig] = useState<{ key: keyof PurchaseOrderHeader; direction: 'asc' | 'desc' } | null>({
-    key: 'poDate',
-    direction: 'desc'
-  });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const openEdit = (row: PurchaseOrderWithId) => {
+    router.push(`/purchase-orders/create?id=${row.id}`);
+  };
 
-  // Extract unique suppliers for filter
-  const suppliers = useMemo(() => {
-    return Array.from(new Set(mockPurchaseOrders.map(po => po.supplierName || ''))).filter(Boolean).sort();
-  }, []);
+  const onView = (row: PurchaseOrderWithId) => {
+    router.push(`/purchase-orders/create?id=${row.id}&view=true`);
+  };
 
-  // Filter and Sort logic
-  const filteredAndSortedOrders = useMemo(() => {
-    let result = [...mockPurchaseOrders];
+  const openDelete = (row: PurchaseOrderWithId) => { setDeleteTarget(row); setDeleteOpen(true); };
 
-    // Search
-    if (searchQuery) {
-      result = result.filter(po => 
-        po.poRefNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        po.supplierName?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+  const handleDelete = async () => {
+    if (deleteTarget) { 
+      await remove(deleteTarget.id); 
+      setSelectedRows(prev => prev.filter(id => id !== deleteTarget.id));
+      setDeleteOpen(false); 
     }
+  };
 
-    // Status Filter
-    if (statusFilter !== 'All') {
-      // Map simplified statuses if needed, but here we use actual statusEntry
-      result = result.filter(po => po.statusEntry === statusFilter);
+  const handleDeleteSelected = async () => {
+    for (const id of selectedRows) {
+      await remove(id);
     }
-
-    // Supplier Filter
-    if (supplierFilter !== 'All') {
-      result = result.filter(po => po.supplierName === supplierFilter);
-    }
-
-    // Sorting
-    if (sortConfig) {
-      result.sort((a, b) => {
-        const aValue = a[sortConfig.key];
-        const bValue = b[sortConfig.key];
-
-        if (aValue === undefined || bValue === undefined) return 0;
-
-        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
-
-    return result;
-  }, [searchQuery, statusFilter, supplierFilter, sortConfig]);
-
-  // Pagination logic
-  const paginatedOrders = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredAndSortedOrders.slice(start, start + itemsPerPage);
-  }, [filteredAndSortedOrders, currentPage, itemsPerPage]);
-
-  const handleSort = (key: keyof PurchaseOrderHeader) => {
-    let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
+    setSelectedRows([]);
+    setBulkDeleteOpen(false);
   };
 
   return (
-    <main className="flex-1 flex flex-col min-w-0 bg-[#fafafa]">
-      <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
-        
-        {/* Header Section */}
-        <PageHeader onAddClick={() => console.log('Add PO clicked')} />
+    <main className="flex-1 bg-background animate-fade-in p-6 overflow-auto">
+      <DataPage title="Purchase Orders" description="Create and manage purchase orders for commodities" actionLabel="New Purchase Order" onAction={() => router.push('/purchase-orders/create')}>
+        <div className="space-y-4">
+          {selectedRows.length > 0 && (
+            <div className="flex items-center justify-between bg-primary/5 border border-primary/10 p-3 rounded-xl animate-in fade-in slide-in-from-top-2">
+              <p className="text-sm font-medium text-primary ml-2">
+                {selectedRows.length} {selectedRows.length === 1 ? 'order' : 'orders'} selected
+              </p>
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                className="rounded-lg h-9 font-bold flex items-center gap-2"
+                onClick={() => setBulkDeleteOpen(true)}
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete Selected
+              </Button>
+            </div>
+          )}
+          <DataTable 
+            columns={columns} 
+            data={data} 
+            loading={loading} 
+            searchPlaceholder="Search purchase orders..." 
+            onEdit={openEdit} 
+            onDelete={openDelete} 
+            onView={onView} 
+            onPrint={(row) => console.log("Print", row)} 
+            selectedRows={selectedRows}
+            onSelectionChange={setSelectedRows}
+          />
+        </div>
+      </DataPage>
 
-        {/* Filters Section */}
-        <PurchaseOrderFilters
-          searchQuery={searchQuery}
-          setSearchQuery={(q) => { setSearchQuery(q); setCurrentPage(1); }}
-          statusFilter={statusFilter}
-          setStatusFilter={(s) => { setStatusFilter(s); setCurrentPage(1); }}
-          supplierFilter={supplierFilter}
-          setSupplierFilter={(sup) => { setSupplierFilter(sup); setCurrentPage(1); }}
-          suppliers={suppliers}
-        />
+      <DeleteConfirmDialog 
+        open={deleteOpen} 
+        onOpenChange={setDeleteOpen} 
+        onConfirm={handleDelete} 
+      />
 
-        {/* Table Section */}
-        <PurchaseOrderTable
-          orders={paginatedOrders}
-          sortConfig={sortConfig}
-          onSort={handleSort}
-        />
-
-        {/* Pagination Section */}
-        <PurchaseOrderPagination
-          currentPage={currentPage}
-          totalItems={filteredAndSortedOrders.length}
-          itemsPerPage={itemsPerPage}
-          onPageChange={setCurrentPage}
-          onItemsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
-        />
-      </div>
+      <DeleteConfirmDialog 
+        open={bulkDeleteOpen} 
+        onOpenChange={setBulkDeleteOpen} 
+        onConfirm={handleDeleteSelected} 
+        title={`Delete ${selectedRows.length} Orders?`}
+        description={`This will permanently remove ${selectedRows.length} selected records. This action cannot be undone.`}
+      />
     </main>
   );
 }
+

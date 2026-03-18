@@ -63,10 +63,10 @@
     --popover: 0 0% 100%;
     --popover-foreground: 150 30% 12%;
 
-    --primary: 157 42% 18%;
+    --primary: 145 45% 28%;
     --primary-foreground: 40 20% 97%;
 
-    --secondary: 32 95% 44%;
+    --secondary: 35 60% 52%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 40 15% 92%;
@@ -80,15 +80,15 @@
 
     --border: 40 15% 88%;
     --input: 40 15% 88%;
-    --ring: 157 42% 18%;
+    --ring: 145 45% 28%;
 
-    --sidebar-background: 146 32% 15%;
+    --sidebar-background: 150 25% 16%;
     --sidebar-foreground: 40 20% 92%;
-    --sidebar-primary: 32 95% 44%;
+    --sidebar-primary: 35 80% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 146 20% 20%;
-    --sidebar-border: 146 15% 24%;
-    --sidebar-ring: 32 95% 44%;
+    --sidebar-accent: 150 20% 22%;
+    --sidebar-border: 150 15% 24%;
+    --sidebar-ring: 35 80% 55%;
 
     --success: 145 60% 40%;
     --success-foreground: 0 0% 100%;
@@ -97,8 +97,8 @@
     --info: 200 70% 50%;
     --info-foreground: 0 0% 100%;
 
-    --chart-1: 157 42% 18%;
-    --chart-2: 32 95% 44%;
+    --chart-1: 145 45% 28%;
+    --chart-2: 35 80% 55%;
     --chart-3: 200 70% 50%;
     --chart-4: 0 72% 51%;
     --chart-5: 280 60% 50%;
@@ -114,10 +114,10 @@
     --popover: 150 20% 12%;
     --popover-foreground: 40 20% 92%;
 
-    --primary: 157 50% 42%;
+    --primary: 145 50% 42%;
     --primary-foreground: 150 30% 8%;
 
-    --secondary: 32 95% 44%;
+    --secondary: 35 60% 52%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 150 15% 18%;
@@ -131,15 +131,15 @@
 
     --border: 150 15% 20%;
     --input: 150 15% 20%;
-    --ring: 157 50% 42%;
+    --ring: 145 50% 42%;
 
-    --sidebar-background: 146 25% 8%;
+    --sidebar-background: 150 25% 8%;
     --sidebar-foreground: 40 20% 92%;
-    --sidebar-primary: 32 95% 44%;
+    --sidebar-primary: 35 80% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 146 20% 14%;
-    --sidebar-border: 146 15% 16%;
-    --sidebar-ring: 32 95% 44%;
+    --sidebar-accent: 150 20% 14%;
+    --sidebar-border: 150 15% 16%;
+    --sidebar-ring: 35 80% 55%;
   }
 }
 
@@ -180,6 +180,12 @@
   .page-description {
     @apply text-sm text-muted-foreground mt-1;
   }
+}
+
+/* Required field asterisk - red color */
+label .required,
+label span.required {
+  color: hsl(var(--destructive));
 }
 
 /* Custom Webkit Scrollbar */
