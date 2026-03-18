@@ -1,3 +1,5 @@
+"use client";
+
 import { Product } from '../../types/master.types';
 
 export const mockProducts: Product[] = [

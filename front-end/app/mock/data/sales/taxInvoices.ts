@@ -1,3 +1,5 @@
+"use client";
+
 import { TaxInvoice } from '../../types/sales.types';
 
 // INV Format: INV/{MM}/{NNN}

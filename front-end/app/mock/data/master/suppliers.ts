@@ -1,3 +1,5 @@
+"use client";
+
 import { Supplier } from '../../types/master.types';
 
 export const mockSuppliers: Supplier[] = [

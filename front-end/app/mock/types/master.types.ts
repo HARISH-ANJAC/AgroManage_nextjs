@@ -1,3 +1,5 @@
+"use client";
+
 // Master Data Types
 export interface Company {
   companyId: string;

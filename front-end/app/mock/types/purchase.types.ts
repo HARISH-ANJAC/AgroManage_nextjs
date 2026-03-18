@@ -1,3 +1,5 @@
+"use client";
+
 import { Product, Supplier, Store } from './master.types';
 
 // PO Number Format: PO/{ProductCode}/{Month}/{RunningNumber}

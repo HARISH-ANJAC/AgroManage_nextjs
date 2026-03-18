@@ -1,3 +1,5 @@
+"use client";
+
 export interface InventoryItem {
   productId: string;
   productName: string;

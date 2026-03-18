@@ -1,128 +1,142 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { DataPage } from "@/components/DataPage";
-import { DataTable } from "@/components/DataTable";
-import { Badge } from "@/components/ui/badge";
-import { PurchaseOrderHeader } from "@/app/mock/types/purchase.types";
-import { Trash2, Pencil, Eye } from "lucide-react";
+import { useState } from "react";
+import { Plus, Search, Eye, Pencil, FileText, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
-import { useMockCrud } from "@/hooks/useMockCrud";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { useRouter } from 'next/navigation';
+import { usePurchaseOrders } from "@/hooks/useStoreData";
 
-type PurchaseOrderWithId = PurchaseOrderHeader & { id: string | number };
+import { toast } from "sonner";
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from "@/components/ui/alert-dialog";
 
-const columns = [
-  { key: "poRefNo", label: "PO Number" },
-  { key: "poDate", label: "Date", render: (v: string) => v ? new Date(v).toLocaleDateString() : "-" },
-  { key: "supplierName", label: "Supplier" },
-  { key: "storeName", label: "Store" },
-  { key: "purchaseType", label: "Type" },
-  { key: "modeOfPayment", label: "Payment" },
-  { key: "finalPurchaseHdrAmount", label: "Amount", render: (v: number) => v ? `$${v.toLocaleString()}` : "$0" },
-  { key: "statusEntry", label: "Status", render: (v: string) => (
-    <Badge 
-      variant={v === "Approved" || v === "Completed" ? "default" : v === "Draft" ? "outline" : "secondary"} 
-      className="text-xs"
-    >
-      {v}
-    </Badge>
-  )},
-];
-
-
+const statusColors: Record<string, string> = {
+  Approved: "bg-success/10 text-success border-success/30",
+  Submitted: "bg-warning/10 text-warning border-warning/30",
+  Completed: "bg-success/10 text-success border-success/30",
+  Draft: "bg-muted text-muted-foreground border-border",
+  "In-Approval": "bg-warning/10 text-warning border-warning/30",
+  Rejected: "bg-destructive/10 text-destructive border-destructive/30",
+};
 
 export default function PurchaseOrdersPage() {
-  const router = useRouter();
-  const { data, loading, create, update, remove } = useMockCrud<PurchaseOrderWithId>({ table: "purchaseOrders" });
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<PurchaseOrderWithId | null>(null);
-  const [selectedRows, setSelectedRows] = useState<(string | number)[]>([]);
-  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const { data: orders, isLoading, remove } = usePurchaseOrders();
+  const [search, setSearch] = useState("");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const navigate = useRouter();
 
-  useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    if (isLoggedIn !== 'true') {
-      router.replace('/login');
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 space-y-4 min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <p className="text-sm text-muted-foreground animate-pulse">Loading purchase orders...</p>
+      </div>
+    );
+  }
+
+  const filtered = (orders || []).filter((o: any) =>
+    (o.poNumber || o.poRefNo || "").toLowerCase().includes(search.toLowerCase()) ||
+    (o.supplier || "").toLowerCase().includes(search.toLowerCase())
+  );
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    try {
+      await remove(deleteId);
+      setDeleteId(null);
+      toast.success("Purchase Order deleted successfully");
+    } catch (e) {
+      toast.error("Failed to delete Purchase Order");
     }
-  }, [router]);
-
-  const openEdit = (row: PurchaseOrderWithId) => {
-    router.push(`/purchase-orders/create?id=${row.id}`);
-  };
-
-  const onView = (row: PurchaseOrderWithId) => {
-    router.push(`/purchase-orders/create?id=${row.id}&view=true`);
-  };
-
-  const openDelete = (row: PurchaseOrderWithId) => { setDeleteTarget(row); setDeleteOpen(true); };
-
-  const handleDelete = async () => {
-    if (deleteTarget) { 
-      await remove(deleteTarget.id); 
-      setSelectedRows(prev => prev.filter(id => id !== deleteTarget.id));
-      setDeleteOpen(false); 
-    }
-  };
-
-  const handleDeleteSelected = async () => {
-    for (const id of selectedRows) {
-      await remove(id);
-    }
-    setSelectedRows([]);
-    setBulkDeleteOpen(false);
   };
 
   return (
-    <main className="flex-1 bg-background animate-fade-in p-6 overflow-auto">
-      <DataPage title="Purchase Orders" description="Create and manage purchase orders for commodities" actionLabel="New Purchase Order" onAction={() => router.push('/purchase-orders/create')}>
-        <div className="space-y-4">
-          {selectedRows.length > 0 && (
-            <div className="flex items-center justify-between bg-primary/5 border border-primary/10 p-3 rounded-xl animate-in fade-in slide-in-from-top-2">
-              <p className="text-sm font-medium text-primary ml-2">
-                {selectedRows.length} {selectedRows.length === 1 ? 'order' : 'orders'} selected
-              </p>
-              <Button 
-                variant="destructive" 
-                size="sm" 
-                className="rounded-lg h-9 font-bold flex items-center gap-2"
-                onClick={() => setBulkDeleteOpen(true)}
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete Selected
-              </Button>
-            </div>
-          )}
-          <DataTable 
-            columns={columns} 
-            data={data} 
-            loading={loading} 
-            searchPlaceholder="Search purchase orders..." 
-            onEdit={openEdit} 
-            onDelete={openDelete} 
-            onView={onView} 
-            onPrint={(row) => console.log("Print", row)} 
-            selectedRows={selectedRows}
-            onSelectionChange={setSelectedRows}
-          />
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Purchase Orders</h1>
+          <p className="text-sm text-muted-foreground">Create and manage purchase orders for commodities</p>
         </div>
-      </DataPage>
+        <Button onClick={() => navigate.push("/purchase-orders/create")} className="bg-primary text-primary-foreground hover:bg-primary/90">
+          <Plus className="w-4 h-4 mr-2" /> New Purchase Order
+        </Button>
+      </div>
 
-      <DeleteConfirmDialog 
-        open={deleteOpen} 
-        onOpenChange={setDeleteOpen} 
-        onConfirm={handleDelete} 
-      />
+      <div className="bg-card rounded-xl border p-6">
+        <div className="relative mb-4 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="Search purchase orders..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-muted/50">
+                <th className="p-3 w-8"><input type="checkbox" className="rounded" /></th>
+                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Actions</th>
+                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">PO Number</th>
+                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Date</th>
+                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Supplier</th>
+                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Store</th>
+                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Type</th>
+                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Payment</th>
+                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Amount</th>
+                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((o: any) => (
+                <tr key={o.id} className="border-b hover:bg-muted/30">
+                  <td className="p-3"><input type="checkbox" className="rounded" /></td>
+                  <td className="p-3">
+                    <div className="flex gap-1.5">
+                      <button className="p-1 rounded hover:bg-muted"><Eye className="w-4 h-4 text-muted-foreground" /></button>
+                      <button className="p-1 rounded hover:bg-muted"><FileText className="w-4 h-4 text-muted-foreground" /></button>
+                      <button onClick={() => navigate.push(`/purchase-orders/create?id=${o.id}`)} className="p-1 rounded hover:bg-muted"><Pencil className="w-4 h-4 text-muted-foreground" /></button>
+                      <button onClick={() => setDeleteId(o.id)} className="p-1 rounded hover:bg-destructive/10"><Trash2 className="w-4 h-4 text-destructive" /></button>
+                    </div>
+                  </td>
+                  <td className="p-3 font-mono text-xs font-medium">{o.poNumber || o.poRefNo}</td>
+                  <td className="p-3">{o.date || o.poDate}</td>
+                  <td className="p-3">{o.supplier}</td>
+                  <td className="p-3 text-xs">{o.store}</td>
+                  <td className="p-3">{o.type || o.purchaseType || "Local"}</td>
+                  <td className="p-3">{o.payment || o.paymentMode || "Bank Transfer"}</td>
+                  <td className="p-3 font-medium">${(o.amount || o.finalAmount || 0).toLocaleString()}</td>
+                  <td className="p-3"><Badge variant="outline" className={statusColors[o.status] || ""}>{o.status}</Badge></td>
+                </tr>
+              ))}
+              {filtered.length === 0 && (
+                <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">No purchase orders found</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-      <DeleteConfirmDialog 
-        open={bulkDeleteOpen} 
-        onOpenChange={setBulkDeleteOpen} 
-        onConfirm={handleDeleteSelected} 
-        title={`Delete ${selectedRows.length} Orders?`}
-        description={`This will permanently remove ${selectedRows.length} selected records. This action cannot be undone.`}
-      />
-    </main>
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this purchase order. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 }
-

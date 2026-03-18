@@ -1,3 +1,5 @@
+"use client";
+
 import { PurchaseInvoice } from '../../types/purchase.types';
 
 // PINV Format: PINV/{MM}/{NNN}

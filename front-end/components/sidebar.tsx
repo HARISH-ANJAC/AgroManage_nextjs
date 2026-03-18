@@ -17,7 +17,6 @@ import {
   ClipboardCheck,
   FileText,
   Receipt,
-  Truck as DeliveriesIcon,
   DollarSign,
   Warehouse,
   Sprout,
@@ -25,7 +24,31 @@ import {
   LogOut,
   X,
   BarChart3,
-  Wallet
+  Wallet,
+  Building2,
+  Store,
+  MapPin,
+  Calendar,
+  Tag,
+  Ruler,
+  Landmark,
+  CreditCard,
+  Briefcase,
+  Globe,
+  Map,
+  MapPinned,
+  Shield,
+  UserCircle,
+  Link2,
+  Layers,
+  Database,
+  ArrowRightLeft,
+  Percent,
+  BookOpen,
+  CircleDollarSign,
+  Coins,
+  Hash,
+  ChevronDown
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -98,11 +121,60 @@ const navigation = [
     ]
   },
   {
-    group: 'Master Data',
+    group: 'Organization',
+    items: [
+      { name: 'Companies', href: '/companies', icon: Building2 },
+      { name: 'Stores', href: '/stores', icon: Store },
+      { name: 'Locations', href: '/locations', icon: MapPin },
+      { name: 'Billing Locations', href: '/billing-locations', icon: MapPinned },
+      { name: 'Financial Years', href: '/financial-years', icon: Calendar },
+    ]
+  },
+  {
+    group: 'Inventory',
     items: [
       { name: 'Products', href: '/products', icon: Package },
-      { name: 'Suppliers', href: '/suppliers', icon: UserCheck },
-      { name: 'Customers', href: '/customers', icon: Users }
+      { name: 'Main Categories', href: '/categories', icon: Tag },
+      { name: 'Sub Categories', href: '/sub-categories', icon: Layers },
+      { name: 'UOM', href: '/uom', icon: Ruler },
+      { name: 'Min Stock Settings', href: '/store-product-min-stock', icon: Database },
+      { name: 'Opening Stock', href: '/product-opening-stock', icon: Database },
+      { name: 'Category Mapping', href: '/product-company-category-mapping', icon: Link2 },
+    ]
+  },
+  {
+    group: 'Stakeholders',
+    items: [
+      { name: 'Suppliers', href: '/suppliers', icon: Truck },
+      { name: 'Customers', href: '/customers', icon: Users },
+      { name: 'Employees', href: '/employees', icon: Briefcase },
+      { name: 'Sales Persons', href: '/sales-persons', icon: UserCircle },
+    ]
+  },
+  {
+    group: 'Financial',
+    items: [
+      { name: 'Banks', href: '/bank-master', icon: Landmark },
+      { name: 'Bank Accounts', href: '/bank-accounts', icon: Wallet },
+      { name: 'Currencies', href: '/currency-master', icon: Coins },
+      { name: 'Exchange Rates', href: '/exchange-rate', icon: ArrowRightLeft },
+      { name: 'Tax Master', href: '/tax-master', icon: Receipt },
+      { name: 'VAT Settings', href: '/vat-settings', icon: Percent },
+      { name: 'Account Heads', href: '/account-heads', icon: FileText },
+      { name: 'Ledger Groups', href: '/ledger-groups', icon: BookOpen },
+      { name: 'Ledger Master', href: '/ledger-master', icon: BookOpen },
+      { name: 'Payment Modes', href: '/payment-modes', icon: CreditCard },
+      { name: 'Customer Pay Modes', href: '/customer-payment-modes', icon: CreditCard },
+      { name: 'Payment Terms', href: '/payment-terms', icon: Hash },
+      { name: 'Additional Cost Types', href: '/additional-cost-types', icon: CircleDollarSign },
+    ]
+  },
+  {
+    group: 'Geography',
+    items: [
+      { name: 'Countries', href: '/countries', icon: Globe },
+      { name: 'Regions', href: '/regions', icon: Map },
+      { name: 'Districts', href: '/districts', icon: MapPinned },
     ]
   },
   {
@@ -110,27 +182,33 @@ const navigation = [
     items: [
       { name: 'Purchase Orders', href: '/purchase-orders', icon: ShoppingCart },
       { name: 'Goods Receipts', href: '/goods-receipts', icon: ClipboardCheck },
-      { name: 'Supplier Invoices', href: '/supplier-invoices', icon: FileText }
+      { name: 'Purchase Invoices', href: '/purchase-booking', icon: FileText },
     ]
   },
   {
     group: 'Sales',
     items: [
-      { name: 'Sales Orders', href: '/sales-orders', icon: Receipt },
-      { name: 'Deliveries', href: '/deliveries', icon: DeliveriesIcon },
-      { name: 'Sales Invoices', href: '/sales-invoices', icon: DollarSign }
+      { name: 'Sales Orders', href: '/sales-orders', icon: DollarSign },
+      { name: 'Delivery Notes', href: '/delivery-notes', icon: Truck },
+      { name: 'Sales Invoices', href: '/sales-invoices', icon: Receipt },
+      { name: 'Customer Receipts', href: '/customer-receipts', icon: Wallet },
     ]
   },
   {
-    group: 'Operations',
+    group: 'Finance',
     items: [
-      { name: 'Inventory', href: '/inventory', icon: Warehouse },
-      { name: 'Expenses', href: '/expenses', icon: DollarSign },
-      { name: 'Reports', href: '/reports', icon: BarChart3 }
+      { name: 'Expenses', href: '/expenses', icon: CreditCard },
+    ]
+  },
+  {
+    group: 'System',
+    items: [
+      { name: 'Roles', href: '/roles', icon: Shield },
+      { name: 'Users', href: '/users', icon: UserCircle },
+      { name: 'User-Store Map', href: '/user-store-mapping', icon: Link2 },
     ]
   }
 ];
-;
 
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
@@ -158,6 +236,11 @@ export function Sidebar() {
   const { isCollapsed, toggleSidebar, isMobileOpen, setIsMobileOpen } = useSidebar();
   const isMobile = useIsMobile();
   const router = useRouter();
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+
+  const toggleSection = (title: string) => {
+    setCollapsedSections((prev) => ({ ...prev, [title]: !prev[title] }));
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
@@ -168,66 +251,72 @@ export function Sidebar() {
   if (pathname === '/' || pathname === '/login') return null;
 
   const SidebarContent = (
-    <div className={`flex flex-col h-full bg-sidebar border-r border-sidebar-border transition-all duration-500 ease-in-out`}>
+    <div className={`flex flex-col h-full sidebar-gradient border-r border-sidebar-border transition-all duration-500 ease-in-out`}>
       {/* Brand Section */}
       <div className={`px-6 py-8 flex items-center ${isCollapsed && !isMobile ? 'justify-center' : 'justify-between'}`}>
         <div className="flex items-center gap-3.5 group cursor-pointer overflow-hidden whitespace-nowrap">
-          <div className="bg-secondary p-2.5 rounded-2xl shadow-lg shadow-secondary/20 shrink-0 group-hover:rotate-6 transition-transform">
+          <div className="bg-amber-500/90 p-2.5 rounded-2xl shadow-lg shadow-amber-500/30 shrink-0 group-hover:rotate-6 transition-transform">
             <Sprout className="text-white w-7 h-7" strokeWidth={2.5} />
           </div>
           {(!isCollapsed || isMobile) && (
             <div className="flex flex-col animate-in fade-in slide-in-from-left-2 duration-300">
               <h1 className="text-xl font-display font-black text-white leading-none tracking-tight">AgroManage</h1>
-              <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.25em] mt-1">Forest Admin v2.0</p>
+              <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.25em] mt-1">Agro Business</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Navigation Groups */}
-      <nav className="flex-1 px-3 py-4 space-y-8 overflow-y-auto overflow-x-hidden custom-scrollbar">
+      <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
         {navigation.map((group) => (
-          <div key={group.group} className="space-y-1.5">
-            {(!isCollapsed || isMobile) && (
-              <h3 className="px-4 text-[9px] font-black text-white/10 uppercase tracking-[0.3em] mb-3 animate-in fade-in duration-500">
+          <div key={group.group} className="mb-2">
+            {(!isCollapsed || isMobile) ? (
+              <button
+                onClick={() => toggleSection(group.group)}
+                className="flex items-center justify-between w-full px-4 py-2 text-[10px] font-black text-white/30 uppercase tracking-[0.3em] hover:text-white/50 transition-colors"
+              >
                 {group.group}
-              </h3>
+                <ChevronDown className={`w-3 h-3 transition-transform ${collapsedSections[group.group] ? "-rotate-90" : ""}`} />
+              </button>
+            ) : (
+              <div className="h-4" /> // Spacer when collapsed
             )}
-            <div className="space-y-1">
-              {group.items.map((item) => {
-                const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    title={isCollapsed ? item.name : ''}
-                    className={`flex items-center group px-4 py-2.5 rounded-xl transition-all duration-300 relative overflow-hidden ${isActive
-                      ? 'text-white bg-secondary shadow-lg shadow-secondary/20'
-                      : 'text-white/50 hover:text-white hover:bg-white/5'
-                      } ${isCollapsed && !isMobile ? 'justify-center mx-1' : ''}`}
-                  >
-                    {isActive && (
-                      <div className="absolute left-0 top-2.5 bottom-2.5 w-1 bg-white/40 rounded-full" />
-                    )}
-                    <div className="flex items-center gap-3.5">
-                      <item.icon className={`w-[18px] h-[18px] shrink-0 transition-all duration-500 ${isActive ? 'text-white scale-110' : 'text-secondary/60 group-hover:text-secondary group-hover:scale-110'}`} strokeWidth={isActive ? 2.5 : 2} />
-                      {(!isCollapsed || isMobile) && (
-                        <span className={`text-[13px] tracking-tight whitespace-nowrap animate-in fade-in slide-in-from-left-1 duration-300 ${isActive ? 'font-black' : 'font-semibold'}`}>
-                          {item.name}
-                        </span>
-                      )}
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+
+            {(!collapsedSections[group.group] || isCollapsed) && (
+              <div className="space-y-0.5 mt-1">
+                {group.items.map((item) => {
+                  const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      title={isCollapsed ? item.name : ''}
+                      className={`flex items-center group px-4 py-2 rounded-xl transition-all duration-300 relative overflow-hidden ${isActive
+                        ? 'text-white font-bold bg-amber-500 shadow-lg shadow-amber-500/40'
+                        : 'text-white/60 hover:text-white hover:bg-white/10'
+                        } ${isCollapsed && !isMobile ? 'justify-center mx-1' : ''}`}
+                    >
+                      <div className="flex items-center gap-3.5">
+                        <item.icon className={`w-[18px] h-[18px] shrink-0 transition-all duration-500 ${isActive ? 'text-white scale-110' : 'text-white/50 group-hover:text-amber-500 group-hover:scale-110'}`} strokeWidth={isActive ? 2.5 : 2} />
+                        {(!isCollapsed || isMobile) && (
+                          <span className={`text-[13px] tracking-tight whitespace-nowrap animate-in fade-in slide-in-from-left-1 duration-300 ${isActive ? 'font-black' : 'font-semibold'}`}>
+                            {item.name}
+                          </span>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </div>
         ))}
       </nav>
 
       {/* Sidebar Footer / User Profile */}
       <div className="mt-auto p-5 border-t border-white/5 space-y-4">
-        <button className={`w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all duration-500 ${isCollapsed && !isMobile ? 'justify-center px-0' : 'bg-white/5 border border-white/5'} hover:bg-white/10 group`}>
+        <button className={`w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all duration-500 ${isCollapsed && !isMobile ? 'justify-center px-0' : 'bg-white/10 backdrop-blur-sm border border-white/10 shadow-lg'} hover:bg-white/20 group`}>
           <div className="relative shrink-0">
             <div className="size-11 rounded-full bg-linear-to-tr from-white/10 to-white/20 border border-white/10 overflow-hidden shadow-inner group-hover:scale-110 transition-transform duration-700">
               <img
@@ -236,28 +325,25 @@ export function Sidebar() {
                 className="w-full h-full object-cover transition-all duration-1000 grayscale group-hover:grayscale-0"
               />
             </div>
-            <div className="absolute -bottom-0.5 -right-0.5 size-3.5 bg-secondary rounded-full border-4 border-sidebar animate-pulse shadow-sm" />
+            <div className="absolute -bottom-0.5 -right-0.5 size-3.5 bg-green-500 rounded-full border-4 border-sidebar animate-pulse shadow-sm" />
           </div>
           {(!isCollapsed || isMobile) && (
             <div className="flex-1 min-w-0 text-left animate-in fade-in slide-in-from-left-2 duration-300">
-              <p className="text-sm font-black text-white truncate leading-none mb-1.5">Julian Thorne</p>
-              <p className="text-[10px] font-black text-white/20 uppercase truncate tracking-tight">Chief Agronomist</p>
+              <p className="text-sm font-black text-white truncate leading-none mb-1.5">Harish Prabhu</p>
+              <p className="text-[10px] font-black text-white/20 uppercase truncate tracking-tight">Admin</p>
             </div>
           )}
         </button>
 
-        <div className={`flex flex-col gap-1.5 ${isCollapsed && !isMobile ? 'items-center px-0' : ''}`}>
-          <button className={`flex items-center gap-3.5 w-full p-2.5 rounded-xl text-white/30 hover:text-white hover:bg-white/5 transition-all ${isCollapsed && !isMobile ? 'justify-center' : 'px-4'}`} title="Settings">
-            <Settings size={18} />
-            {(!isCollapsed || isMobile) && <span className="text-[13px] font-bold">Settings</span>}
-          </button>
+        <div className={`flex flex-col gap-1 ${isCollapsed && !isMobile ? 'items-center px-0' : ''}`}>
+
           <button
             onClick={handleLogout}
-            className={`flex items-center gap-3.5 w-full p-2.5 rounded-xl text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-all ${isCollapsed && !isMobile ? 'justify-center' : 'px-4'}`}
+            className={`flex items-center gap-3 w-full px-4 py-2 rounded-xl text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all ${isCollapsed && !isMobile ? 'justify-center' : ''}`}
             title="Sign Out"
           >
-            <LogOut size={18} />
-            {(!isCollapsed || isMobile) && <span className="text-[13px] font-bold">Sign Out</span>}
+            <LogOut size={16} />
+            {(!isCollapsed || isMobile) && <span className="text-xs font-bold">Sign Out</span>}
           </button>
         </div>
       </div>

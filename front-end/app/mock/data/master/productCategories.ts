@@ -1,3 +1,5 @@
+"use client";
+
 import { ProductMainCategory, ProductSubCategory } from '../../types/master.types';
 
 export const mockMainCategories: ProductMainCategory[] = [

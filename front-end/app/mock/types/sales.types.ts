@@ -1,3 +1,5 @@
+"use client";
+
 import { Customer, Product, Store } from './master.types';
 
 export interface SalesOrderHeader {

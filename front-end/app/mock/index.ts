@@ -1,3 +1,5 @@
+"use client";
+
 // Export all types
 export * from './types/master.types';
 export * from './types/purchase.types';

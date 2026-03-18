@@ -1,3 +1,5 @@
+"use client";
+
 import { Store } from '../../types/master.types';
 
 export const mockStores: Store[] = [

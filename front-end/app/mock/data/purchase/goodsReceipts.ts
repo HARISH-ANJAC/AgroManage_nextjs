@@ -1,3 +1,5 @@
+"use client";
+
 import { GoodsReceiptNote, GoodsReceiptDetail } from '../../types/purchase.types';
 
 // GRN Format: GRN/{MM}/{NNN}

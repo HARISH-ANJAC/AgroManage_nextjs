@@ -1,3 +1,5 @@
+"use client";
+
 import { PurchaseOrderHeader, PurchaseOrderDetail, PurchaseOrderAdditionalCost } from '../../types/purchase.types';
 
 // PO Format: PO/{ProductCode}/{Month}/{RunningNumber}

@@ -1,3 +1,5 @@
+"use client";
+
 import { Customer } from '../../types/master.types';
 
 export const mockCustomers: Customer[] = [

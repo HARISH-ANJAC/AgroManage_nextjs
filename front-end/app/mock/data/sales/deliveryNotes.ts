@@ -1,3 +1,5 @@
+"use client";
+
 import { DeliveryNote, DeliveryNoteDetail } from '../../types/sales.types';
 
 // DN Format: DN/{MM}/{NNN}

@@ -1,3 +1,5 @@
+"use client";
+
 import { SalesOrderHeader, SalesOrderDetail } from '../../types/sales.types';
 
 // SO Format: SO/{ProductPrefix}/{MM}/{NNN}
