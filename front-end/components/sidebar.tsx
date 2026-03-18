@@ -12,19 +12,15 @@ import {
   Package,
   Truck,
   Users,
-  UserCheck,
   ShoppingCart,
   ClipboardCheck,
   FileText,
   Receipt,
   DollarSign,
-  Warehouse,
   Sprout,
   Settings,
   LogOut,
   X,
-  BarChart3,
-  Wallet,
   Building2,
   Store,
   MapPin,
@@ -45,6 +41,7 @@ import {
   ArrowRightLeft,
   Percent,
   BookOpen,
+  Wallet,
   CircleDollarSign,
   Coins,
   Hash,
@@ -210,7 +207,6 @@ const navigation = [
   }
 ];
 
-
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -250,143 +246,112 @@ export function Sidebar() {
   // Don't show sidebar on login or root home pages
   if (pathname === '/' || pathname === '/login') return null;
 
-  const SidebarContent = (
-    <div className={`flex flex-col h-full sidebar-gradient border-r border-sidebar-border transition-all duration-500 ease-in-out`}>
-      {/* Brand Section */}
-      <div className={`px-6 py-8 flex items-center ${isCollapsed && !isMobile ? 'justify-center' : 'justify-between'}`}>
-        <div className="flex items-center gap-3.5 group cursor-pointer overflow-hidden whitespace-nowrap">
-          <div className="bg-amber-500/90 p-2.5 rounded-2xl shadow-lg shadow-amber-500/30 shrink-0 group-hover:rotate-6 transition-transform">
-            <Sprout className="text-white w-7 h-7" strokeWidth={2.5} />
-          </div>
-          {(!isCollapsed || isMobile) && (
-            <div className="flex flex-col animate-in fade-in slide-in-from-left-2 duration-300">
-              <h1 className="text-xl font-display font-black text-white leading-none tracking-tight">AgroManage</h1>
-              <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.25em] mt-1">Agro Business</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Navigation Groups */}
-      <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
-        {navigation.map((group) => (
-          <div key={group.group} className="mb-2">
-            {(!isCollapsed || isMobile) ? (
-              <button
-                onClick={() => toggleSection(group.group)}
-                className="flex items-center justify-between w-full px-4 py-2 text-[10px] font-black text-white/30 uppercase tracking-[0.3em] hover:text-white/50 transition-colors"
-              >
-                {group.group}
-                <ChevronDown className={`w-3 h-3 transition-transform ${collapsedSections[group.group] ? "-rotate-90" : ""}`} />
-              </button>
-            ) : (
-              <div className="h-4" /> // Spacer when collapsed
-            )}
-
-            {(!collapsedSections[group.group] || isCollapsed) && (
-              <div className="space-y-0.5 mt-1">
-                {group.items.map((item) => {
-                  const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      title={isCollapsed ? item.name : ''}
-                      className={`flex items-center group px-4 py-2 rounded-xl transition-all duration-300 relative overflow-hidden ${isActive
-                        ? 'text-white font-bold bg-amber-500 shadow-lg shadow-amber-500/40'
-                        : 'text-white/60 hover:text-white hover:bg-white/10'
-                        } ${isCollapsed && !isMobile ? 'justify-center mx-1' : ''}`}
-                    >
-                      <div className="flex items-center gap-3.5">
-                        <item.icon className={`w-[18px] h-[18px] shrink-0 transition-all duration-500 ${isActive ? 'text-white scale-110' : 'text-white/50 group-hover:text-amber-500 group-hover:scale-110'}`} strokeWidth={isActive ? 2.5 : 2} />
-                        {(!isCollapsed || isMobile) && (
-                          <span className={`text-[13px] tracking-tight whitespace-nowrap animate-in fade-in slide-in-from-left-1 duration-300 ${isActive ? 'font-black' : 'font-semibold'}`}>
-                            {item.name}
-                          </span>
-                        )}
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        ))}
-      </nav>
-
-      {/* Sidebar Footer / User Profile */}
-      <div className="mt-auto p-5 border-t border-white/5 space-y-4">
-        <button className={`w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all duration-500 ${isCollapsed && !isMobile ? 'justify-center px-0' : 'bg-white/10 backdrop-blur-sm border border-white/10 shadow-lg'} hover:bg-white/20 group`}>
-          <div className="relative shrink-0">
-            <div className="size-11 rounded-full bg-linear-to-tr from-white/10 to-white/20 border border-white/10 overflow-hidden shadow-inner group-hover:scale-110 transition-transform duration-700">
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAX0gtvcHOOLcve2FWFBLfqrFuQikNqmGUVSW4PzyAbjQ4OMdvQPkJR8WP6wO07MVzKkYGiahd_I_xifcFE1Hhiz22zsAOjB_GPPq7tPYKmDurwtlXwLmIoucf_e0MrcvArWUwVfE5gAnFxxp7zk3OQN5TUH1UNTscLlmb-Azm5Xg162T3T84NiIB4LzNDv4gyRwheeldtC-BG_-pdMKHDDkv3x9oVXoW34NdgyduUI7qTZh34bqzQ0nC3Jp60HeOh4jbIS6WQCz9aw"
-                alt="Julian Thorne"
-                className="w-full h-full object-cover transition-all duration-1000 grayscale group-hover:grayscale-0"
-              />
-            </div>
-            <div className="absolute -bottom-0.5 -right-0.5 size-3.5 bg-green-500 rounded-full border-4 border-sidebar animate-pulse shadow-sm" />
-          </div>
-          {(!isCollapsed || isMobile) && (
-            <div className="flex-1 min-w-0 text-left animate-in fade-in slide-in-from-left-2 duration-300">
-              <p className="text-sm font-black text-white truncate leading-none mb-1.5">Harish Prabhu</p>
-              <p className="text-[10px] font-black text-white/20 uppercase truncate tracking-tight">Admin</p>
-            </div>
-          )}
-        </button>
-
-        <div className={`flex flex-col gap-1 ${isCollapsed && !isMobile ? 'items-center px-0' : ''}`}>
-
-          <button
-            onClick={handleLogout}
-            className={`flex items-center gap-3 w-full px-4 py-2 rounded-xl text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all ${isCollapsed && !isMobile ? 'justify-center' : ''}`}
-            title="Sign Out"
-          >
-            <LogOut size={16} />
-            {(!isCollapsed || isMobile) && <span className="text-xs font-bold">Sign Out</span>}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <>
       {/* Mobile Drawer Backdrop */}
       {isMobile && (
         <div
-          className={`fixed inset-0 bg-sidebar/80 backdrop-blur-md z-150 transition-opacity duration-500 ${isMobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300 ${isMobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed inset-y-0 left-0 z-200 transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) transform ${isMobile
-          ? (isMobileOpen ? 'translate-x-0 w-[300px]' : '-translate-x-full w-[300px]')
-          : (isCollapsed ? 'w-20' : 'w-[280px]')
-          } shadow-2xl overflow-hidden`}
+        className={`fixed inset-y-0 left-0 z-50 transition-all duration-500 ease-in-out sidebar-gradient text-sidebar-foreground overflow-hidden flex flex-col ${isMobile
+          ? (isMobileOpen ? 'w-[280px] translate-x-0' : 'w-[280px] -translate-x-full')
+          : (isCollapsed ? 'w-20' : 'w-[260px]')
+          }`}
       >
-        {isMobile && isMobileOpen && (
-          <button
-            onClick={() => setIsMobileOpen(false)}
-            className="absolute top-6 right-6 size-11 bg-white/10 text-white rounded-2xl flex items-center justify-center backdrop-blur-xl border border-white/10 shadow-2xl active:scale-95 transition-transform duration-500"
-          >
-            <X size={24} strokeWidth={2.5} />
-          </button>
-        )}
+        {/* Branding Section */}
+        <div className={`flex items-center gap-3 px-5 py-6 ${isCollapsed && !isMobile ? 'justify-center' : ''}`}>
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 shrink-0">
+            <Sprout className="w-6 h-6 text-primary-foreground" />
+          </div>
+          {(!isCollapsed || isMobile) && (
+            <div className="animate-in fade-in slide-in-from-left-2 duration-300 overflow-hidden">
+              <h1 className="font-bold text-lg text-white leading-none whitespace-nowrap">AgroManage</h1>
+              <p className="text-[10px] uppercase tracking-widest text-white/50 mt-1 whitespace-nowrap">ERP v2.0</p>
+            </div>
+          )}
+          {isMobile && (
+            <button onClick={() => setIsMobileOpen(false)} className="ml-auto text-white/50 hover:text-white">
+              <X size={20} />
+            </button>
+          )}
+        </div>
 
-        {SidebarContent}
+        {/* Navigation Section */}
+        <nav className="flex-1 overflow-y-auto custom-scrollbar px-3 py-2 space-y-1">
+          {navigation.map((group) => (
+            <div key={group.group} className="mb-2">
+              {(!isCollapsed || isMobile) ? (
+                <button
+                  onClick={() => toggleSection(group.group)}
+                  className="flex items-center justify-between w-full px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-white/40 hover:text-white/60 transition-colors"
+                >
+                  {group.group}
+                  <ChevronDown className={`w-3 h-3 transition-transform ${collapsedSections[group.group] ? "-rotate-90" : ""}`} />
+                </button>
+              ) : (
+                <div className="h-4" />
+              )}
+
+              {(!collapsedSections[group.group] || isCollapsed) && (
+                <div className="space-y-0.5">
+                  {group.items.map((item) => {
+                    const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`flex items-center gap-3.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 relative ${isActive
+                          ? "bg-accent text-accent-foreground shadow-lg shadow-accent/20"
+                          : "text-white/70 hover:bg-white/10 hover:text-white"
+                          } ${isCollapsed && !isMobile ? 'justify-center px-0 mx-1' : ''}`}
+                        title={isCollapsed ? item.name : ''}
+                      >
+                        <item.icon className={`size-5 shrink-0 transition-transform duration-300 ${isActive ? 'scale-110' : 'opacity-70 group-hover:opacity-100'}`} />
+                        {(!isCollapsed || isMobile) && (
+                          <span className="truncate whitespace-nowrap animate-in fade-in slide-in-from-left-1 duration-300">{item.name}</span>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ))}
+        </nav>
+
+        {/* User Profile / Footer */}
+        <div className="px-3 py-4 border-t border-white/10 space-y-3">
+          <div className={`flex items-center gap-3 px-3 py-3 rounded-xl bg-white/5 border border-white/5 ${isCollapsed && !isMobile ? 'justify-center px-0' : ''}`}>
+            <div className="size-10 rounded-full bg-white/10 flex items-center justify-center font-bold text-sm shrink-0">JT</div>
+            {(!isCollapsed || isMobile) && (
+              <div className="overflow-hidden animate-in fade-in slide-in-from-left-2 duration-300">
+                <p className="text-sm font-semibold text-white truncate leading-none mb-1">Harish Prabhu</p>
+                <p className="text-[10px] uppercase tracking-wider text-white/30 truncate">Administrator</p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1">
+
+            <button onClick={handleLogout} className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-white/50 hover:bg-red-500/10 hover:text-red-400 transition-all ${isCollapsed && !isMobile ? 'justify-center' : ''}`}>
+              <LogOut size={16} />
+              {(!isCollapsed || isMobile) && <span>Sign Out</span>}
+            </button>
+          </div>
+        </div>
       </aside>
 
-      {/* Dynamic Spacer for Desktop Layout - Synchronized with Sidebar animation */}
+      {/* Dynamic Spacer for Desktop Layout */}
       {!isMobile && (
         <div
-          className={`hidden lg:block shrink-0 transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) h-screen ${isCollapsed ? 'w-20' : 'w-[280px]'}`}
+          className={`hidden lg:block shrink-0 transition-all duration-500 ease-in-out h-screen ${isCollapsed ? 'w-20' : 'w-[260px]'}`}
         />
       )}
     </>
   );
 }
-
-

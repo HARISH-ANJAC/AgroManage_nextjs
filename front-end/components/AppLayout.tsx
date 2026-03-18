@@ -1,8 +1,8 @@
 "use client";
 
+import React from 'react';
 import { usePathname } from 'next/navigation';
-
-import AppSidebar from "./AppSidebar";
+import { Sidebar as AppSidebar } from "./sidebar"; // Updated import to use consolidated sidebar
 import { Bell, Search } from "lucide-react";
 
 const pageTitles: Record<string, string> = {
@@ -32,9 +32,9 @@ const pageTitles: Record<string, string> = {
   "/reports": "Reports",
 };
 
-export default function AppLayout() {
-  const location = usePathname();
-  const title = pageTitles[location.pathname] || "AgroManage";
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const title = pageTitles[pathname] || "AgroManage";
 
   return (
     <div className="flex min-h-screen">
@@ -59,7 +59,7 @@ export default function AppLayout() {
             </div>
             <button className="relative p-2 rounded-lg hover:bg-muted">
               <Bell className="w-5 h-5 text-muted-foreground" />
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-accent" />
+              <span className="absolute top-0 right-0 size-2 bg-red-500 rounded-full border-2 border-white"></span>
             </button>
             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground">
               JT
@@ -68,7 +68,7 @@ export default function AppLayout() {
         </header>
         {/* Content */}
         <main className="flex-1 p-6 overflow-auto">
-          <Outlet />
+          {children}
         </main>
       </div>
     </div>
