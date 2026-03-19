@@ -17,7 +17,6 @@ import {
   FileText,
   Receipt,
   DollarSign,
-  Sprout,
   Settings,
   LogOut,
   X,
@@ -102,7 +101,7 @@ export function Header() {
         </button>
         <div className="flex items-center gap-3">
           <div className="size-8 sm:size-9 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-lg shadow-primary/20 shrink-0">
-            JT
+            SR
           </div>
         </div>
       </div>
@@ -265,13 +264,13 @@ export function Sidebar() {
       >
         {/* Branding Section */}
         <div className={`flex items-center gap-3 px-5 py-6 ${isCollapsed && !isMobile ? 'justify-center' : ''}`}>
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 shrink-0">
-            <Sprout className="w-6 h-6 text-primary-foreground" />
+          <div className="w-12 h-12 overflow-hidden shrink-0 transition-all duration-300">
+            <img src="/Prime-Harvest-Lo.png" alt="Prime Harvest Logo" className="w-full h-full object-contain" />
           </div>
           {(!isCollapsed || isMobile) && (
             <div className="animate-in fade-in slide-in-from-left-2 duration-300 overflow-hidden">
-              <h1 className="font-bold text-lg text-white leading-none whitespace-nowrap">AgroManage</h1>
-              <p className="text-[10px] uppercase tracking-widest text-white/50 mt-1 whitespace-nowrap">ERP v2.0</p>
+              <h1 className="font-bold text-lg text-white leading-none whitespace-nowrap">Prime Harvest</h1>
+              <p className="text-[10px] uppercase tracking-widest text-white/50 mt-1 whitespace-nowrap">ERP v1.0</p>
             </div>
           )}
           {isMobile && (
@@ -330,8 +329,8 @@ export function Sidebar() {
             <div className="size-10 rounded-full bg-white/10 flex items-center justify-center font-bold text-sm shrink-0">JT</div>
             {(!isCollapsed || isMobile) && (
               <div className="overflow-hidden animate-in fade-in slide-in-from-left-2 duration-300">
-                <p className="text-sm font-semibold text-white truncate leading-none mb-1">Harish Prabhu</p>
-                <p className="text-[10px] uppercase tracking-wider text-white/30 truncate">Administrator</p>
+                <p className="text-sm font-semibold text-white truncate leading-none mb-1">Srinivas</p>
+                <p className="text-[10px] uppercase tracking-wider text-white/30 truncate">Admin</p>
               </div>
             )}
           </div>
