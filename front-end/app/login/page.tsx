@@ -12,7 +12,7 @@ export default function LoginPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     // Simulate API call delay
     setTimeout(() => {
       localStorage.setItem('isLoggedIn', 'true');
@@ -35,27 +35,35 @@ export default function LoginPage() {
         style={{ backgroundImage: "url('/login-bg.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}
       />
 
-      <div className="relative z-10 w-full max-w-md px-6 py-12">
+      <div className="relative z-10 w-full max-w-md px-6 py-4">
         {/* Branding Section */}
-        <div className="flex flex-col items-center mb-10 group cursor-default">
-          <div className="bg-primary p-3 rounded-xl mb-4 shadow-xl shadow-primary/20 transform transition-all duration-500 group-hover:scale-110 group-hover:rotate-3">
-            <Sprout className="text-primary-foreground w-10 h-10" />
+        <div className="flex flex-col items-center mb-4 group cursor-default animate-in fade-in slide-in-from-top-6 duration-1000">
+          <div className="relative">
+            <div className="bg-white/90 flex items-center justify-center backdrop-blur-xl p-4 rounded-3xl shadow-[0_15px_40px_rgba(0,0,0,0.06)] border border-white transform transition-all duration-1000 group-hover:scale-[1.02]">
+              <img
+                src="/Prime-Harvest-Lo.png"
+                alt="Prime Harvest Logo"
+                className="w-40 h-auto max-h-20 object-contain transition-transform duration-700"
+              />
+            </div>
+            {/* Minimalist Professional Tagline */}
+            <div className="mt-4 flex flex-col items-center gap-1.5 transform transition-all duration-700">
+              <div className="h-1 w-10 bg-gradient-to-r from-transparent via-primary/30 to-transparent rounded-full"></div>
+              <p className="text-[10px] uppercase tracking-[0.4em] font-black text-primary/60">
+                ERP MANAGEMENT SYSTEM • v1.0
+              </p>
+            </div>
           </div>
-          <h1 className="text-3xl font-display font-bold text-foreground tracking-tight">AgroManage</h1>
-          <p className="text-muted-foreground mt-2 text-center text-sm font-medium">
-            Forest Admin v2.0 • Enterprise Management
-          </p>
         </div>
 
         {/* Login Card (Using Theme Card Component) */}
-        <div className="bg-card/80 backdrop-blur-2xl border border-border rounded-2xl shadow-2xl p-8 md:p-10 transition-all duration-300 hover:shadow-primary/5">
-          <div className="mb-8">
-
-            <h2 className="text-2xl font-display font-bold text-foreground">Welcome Back</h2>
-            <p className="text-sm text-muted-foreground mt-1 font-medium">Please enter your details to sign in</p>
+        <div className="bg-card/80 backdrop-blur-2xl border border-border rounded-2xl shadow-xl p-6 md:p-8 transition-all duration-300 hover:shadow-primary/5">
+          <div className="mb-6">
+            <h2 className="text-2xl font-display font-black text-foreground tracking-tight">Welcome Back</h2>
+            <p className="text-xs text-muted-foreground mt-1 font-medium leading-relaxed">Secure access to your enterprise dashboard</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleLogin} className="space-y-4">
             {/* Email Field */}
             <div className="space-y-2">
               <label className="text-sm font-bold text-foreground/80 ml-1" htmlFor="email">
@@ -69,7 +77,7 @@ export default function LoginPage() {
                   id="email"
                   type="email"
                   placeholder="name@agro-manage.com"
-                  className="block w-full pl-11 pr-4 py-4 bg-muted/30 border border-border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-foreground placeholder:text-muted-foreground/60 text-sm"
+                  className="block w-full pl-11 pr-4 py-3 bg-muted/30 border border-border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-foreground placeholder:text-muted-foreground/60 text-sm"
                   required
                 />
               </div>
@@ -93,7 +101,7 @@ export default function LoginPage() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  className="block w-full pl-11 pr-12 py-4 bg-muted/30 border border-border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-foreground placeholder:text-muted-foreground/60 text-sm"
+                  className="block w-full pl-11 pr-12 py-3 bg-muted/30 border border-border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-foreground placeholder:text-muted-foreground/60 text-sm"
                   required
                 />
                 <button
@@ -124,7 +132,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-primary hover:bg-primary/90 disabled:opacity-70 text-primary-foreground font-bold py-4 px-4 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 group mt-2"
+              className="w-full bg-primary hover:bg-primary/90 disabled:opacity-70 text-primary-foreground font-bold py-3 px-4 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 group mt-2"
             >
               {isLoading ? (
                 <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
