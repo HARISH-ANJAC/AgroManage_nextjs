@@ -1,7 +1,7 @@
 import { relations } from "drizzle-orm";
 import { pgSchema, integer, varchar, text, timestamp, decimal, serial, bigserial, bigint, customType } from "drizzle-orm/pg-core";
 
-export const stomasterSchema = pgSchema("Stomaster");
+export const stomasterSchema = pgSchema("stomaster");
 
 export const TBL_CUSTOMER_PAYMENT_MODE_MASTER = stomasterSchema.table("TBL_CUSTOMER_PAYMENT_MODE_MASTER", {
   PAYMENT_MODE_ID: serial("PAYMENT_MODE_ID").primaryKey(),

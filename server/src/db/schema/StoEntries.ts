@@ -18,7 +18,7 @@ import { TBL_COMPANY_BANK_ACCOUNT_MASTER } from "./Stomaster.js";
 import { relations } from "drizzle-orm";
 import { pgSchema, integer, varchar, text, timestamp, decimal, serial, bigserial, bigint, customType } from "drizzle-orm/pg-core";
 
-export const stoentriesSchema = pgSchema("StoEntries");
+export const stoentriesSchema = pgSchema("stoentries");
 
 export const TBL_PURCHASE_ORDER_HDR = stoentriesSchema.table("TBL_PURCHASE_ORDER_HDR", {
   SNO: serial("SNO"),
