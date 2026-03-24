@@ -13,7 +13,7 @@ const EMPTY_ARRAY: any[] = [];
 
 export function useMasterData(domain: string, initialData: any[] = [], idPrefix: string = "ID") {
   const queryClient = useQueryClient();
-  const BASE_URL = 'https://agro-manage-nextjs.vercel.app/api';
+  const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api';
 
   // Audit helpers
   const getAuditData = () => {
