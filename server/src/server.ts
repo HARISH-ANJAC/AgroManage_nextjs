@@ -6,7 +6,8 @@ import os from "os";
 import path from 'path';
 import { fileURLToPath } from 'url';
 import morgan from 'morgan';
-import helmet from 'helmet';
+import * as helmetPkg from 'helmet';
+const helmet = (helmetPkg as any).default ?? helmetPkg;
 import compression from 'compression';
 
 dotenv.config();

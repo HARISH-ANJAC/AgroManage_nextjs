@@ -7,6 +7,7 @@
     "outDir": "dist",
     "strict": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "types": ["node", "express", "cors", "morgan", "multer", "jsonwebtoken", "bcryptjs", "pg", "crypto-js", "nodemailer"]
