@@ -43,9 +43,9 @@ export const createExchangeRate = async (req: Request, res: Response): Promise<R
             Exchange_Rate: exchangeRate ? String(exchangeRate) : null,
             REMARKS: remarks,
             STATUS_MASTER: statusMaster || "Active",
-            Created_Date: new Date(),
-            Created_By: user,
-            Created_Mac_Address: systemMac,
+            CREATED_DATE: new Date(),
+            CREATED_BY: user,
+            CREATED_MAC_ADDRESS: systemMac,
         }).returning();
         return res.status(201).json(result[0]);
     } catch (error) {
@@ -75,9 +75,9 @@ export const updateExchangeRate = async (req: Request, res: Response): Promise<R
             Exchange_Rate: exchangeRate ? String(exchangeRate) : null,
             REMARKS: remarks,
             STATUS_MASTER: statusMaster,
-            Modified_Date: new Date(),
-            Modified_By: user,
-            Modified_Mac_Address: systemMac,
+            MODIFIED_DATE: new Date(),
+            MODIFIED_BY: user,
+            MODIFIED_MAC_ADDRESS: systemMac,
         }).where(eq(TBL_EXCHANGE_RATE_MASTER.SNO, exchangeRateId)).returning();
         
         if (!result.length) return res.status(404).json({ msg: "Exchange Rate not found" });

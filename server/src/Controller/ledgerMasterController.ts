@@ -42,8 +42,8 @@ export const createLedgerMaster = async (req: Request, res: Response): Promise<R
             LEDGER_NAME: ledgerName,
             LEDGER_GROUP_ID: ledgerGroupId,
             ACCOUNT_HEAD_ID: accountHeadId,
-            Created_By: user,
-            Created_Mac_Address: systemMac,
+            CREATED_BY: user,
+            CREATED_MAC_ADDRESS: systemMac,
         };
         
         if (remarks !== undefined) values.REMARKS = remarks;
@@ -77,8 +77,8 @@ export const updateLedgerMaster = async (req: Request, res: Response): Promise<R
             LEDGER_NAME: ledgerName,
             LEDGER_GROUP_ID: ledgerGroupId,
             ACCOUNT_HEAD_ID: accountHeadId,
-            Modified_By: user,
-            Modified_Mac_Address: systemMac,
+            MODIFIED_BY: user,
+            MODIFIED_MAC_ADDRESS: systemMac,
         };
         
         if (remarks !== undefined) updates.REMARKS = remarks;

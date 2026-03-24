@@ -736,6 +736,7 @@ export const TBL_ACCOUNTS_LEDGER_MASTER = stomasterSchema.table("TBL_ACCOUNTS_LE
   Company_id: integer("Company_id").references(() => TBL_COMPANY_MASTER.Company_Id),
   LEDGER_TYPE: varchar("LEDGER_TYPE", { length: 50 }),
   LEDGER_GROUP_ID: integer("LEDGER_GROUP_ID"),
+  ACCOUNT_HEAD_ID: integer("ACCOUNT_HEAD_ID").references(() => TBL_ACCOUNTS_HEAD_MASTER.ACCOUNT_HEAD_ID),
   LEDGER_NAME: varchar("LEDGER_NAME", { length: 100 }),
   LEDGER_DESC: varchar("LEDGER_DESC", { length: 100 }),
   REMARKS: varchar("REMARKS", { length: 100 }),
@@ -770,44 +771,44 @@ export const TBL_SALES_PERSON_MASTER = stomasterSchema.table("TBL_SALES_PERSON_M
 });
 
 
-export const TBL_COMPANY_MASTERRelations = relations(TBL_COMPANY_MASTER, ({ one, many }) => ({
+export const TBL_COMPANY_MASTERRelations = relations(TBL_COMPANY_MASTER, ({ one }) => ({
   currency: one(TBL_CURRENCY_MASTER, { fields: [TBL_COMPANY_MASTER.Currency_ID], references: [TBL_CURRENCY_MASTER.CURRENCY_ID] }),
 }));
 
-export const TBL_EXCHANGE_RATE_MASTERRelations = relations(TBL_EXCHANGE_RATE_MASTER, ({ one, many }) => ({
+export const TBL_EXCHANGE_RATE_MASTERRelations = relations(TBL_EXCHANGE_RATE_MASTER, ({ one }) => ({
   company: one(TBL_COMPANY_MASTER, { fields: [TBL_EXCHANGE_RATE_MASTER.Company_ID], references: [TBL_COMPANY_MASTER.Company_Id] }),
   currency: one(TBL_CURRENCY_MASTER, { fields: [TBL_EXCHANGE_RATE_MASTER.CURRENCY_ID], references: [TBL_CURRENCY_MASTER.CURRENCY_ID] }),
 }));
 
-export const TBL_VAT_PERCENTAGE_SETTINGRelations = relations(TBL_VAT_PERCENTAGE_SETTING, ({ one, many }) => ({
+export const TBL_VAT_PERCENTAGE_SETTINGRelations = relations(TBL_VAT_PERCENTAGE_SETTING, ({ one }) => ({
   company: one(TBL_COMPANY_MASTER, { fields: [TBL_VAT_PERCENTAGE_SETTING.COMPANY_ID], references: [TBL_COMPANY_MASTER.Company_Id] }),
 }));
 
-export const TBL_STORE_MASTERRelations = relations(TBL_STORE_MASTER, ({ one, many }) => ({
+export const TBL_STORE_MASTERRelations = relations(TBL_STORE_MASTER, ({ one }) => ({
   location: one(TBL_LOCATION_MASTER, { fields: [TBL_STORE_MASTER.Location_Id], references: [TBL_LOCATION_MASTER.Location_Id] }),
 }));
 
-export const TBL_USER_TO_STORE_MAPPINGRelations = relations(TBL_USER_TO_STORE_MAPPING, ({ one, many }) => ({
+export const TBL_USER_TO_STORE_MAPPINGRelations = relations(TBL_USER_TO_STORE_MAPPING, ({ one }) => ({
   user_id_user_to_role: one(TBL_USER_INFO_HDR, { fields: [TBL_USER_TO_STORE_MAPPING.USER_ID_USER_TO_ROLE], references: [TBL_USER_INFO_HDR.LOGIN_ID_USER_HDR] }),
   company: one(TBL_COMPANY_MASTER, { fields: [TBL_USER_TO_STORE_MAPPING.COMPANY_ID], references: [TBL_COMPANY_MASTER.Company_Id] }),
   store_id_user_to_role: one(TBL_STORE_MASTER, { fields: [TBL_USER_TO_STORE_MAPPING.STORE_ID_USER_TO_ROLE], references: [TBL_STORE_MASTER.Store_Id] }),
   role_id_user_to_role: one(TBL_ROLE_MASTER, { fields: [TBL_USER_TO_STORE_MAPPING.ROLE_ID_USER_TO_ROLE], references: [TBL_ROLE_MASTER.ROLE_ID] }),
 }));
 
-export const TBL_PRODUCT_SUB_CATEGORY_MASTERRelations = relations(TBL_PRODUCT_SUB_CATEGORY_MASTER, ({ one, many }) => ({
+export const TBL_PRODUCT_SUB_CATEGORY_MASTERRelations = relations(TBL_PRODUCT_SUB_CATEGORY_MASTER, ({ one }) => ({
   main_category: one(TBL_PRODUCT_MAIN_CATEGORY_MASTER, { fields: [TBL_PRODUCT_SUB_CATEGORY_MASTER.MAIN_CATEGORY_ID], references: [TBL_PRODUCT_MAIN_CATEGORY_MASTER.MAIN_CATEGORY_ID] }),
 }));
 
-export const TBL_PRODUCT_MASTERRelations = relations(TBL_PRODUCT_MASTER, ({ one, many }) => ({
+export const TBL_PRODUCT_MASTERRelations = relations(TBL_PRODUCT_MASTER, ({ one }) => ({
   main_category: one(TBL_PRODUCT_MAIN_CATEGORY_MASTER, { fields: [TBL_PRODUCT_MASTER.MAIN_CATEGORY_ID], references: [TBL_PRODUCT_MAIN_CATEGORY_MASTER.MAIN_CATEGORY_ID] }),
   sub_category: one(TBL_PRODUCT_SUB_CATEGORY_MASTER, { fields: [TBL_PRODUCT_MASTER.SUB_CATEGORY_ID], references: [TBL_PRODUCT_SUB_CATEGORY_MASTER.SUB_CATEGORY_ID] }),
 }));
 
-export const TBL_REGION_MASTERRelations = relations(TBL_REGION_MASTER, ({ one, many }) => ({
+export const TBL_REGION_MASTERRelations = relations(TBL_REGION_MASTER, ({ one }) => ({
   country: one(TBL_COUNTRY_MASTER, { fields: [TBL_REGION_MASTER.COUNTRY_ID], references: [TBL_COUNTRY_MASTER.Country_Id] }),
 }));
 
-export const TBL_PRODUCT_OPENING_STOCKRelations = relations(TBL_PRODUCT_OPENING_STOCK, ({ one, many }) => ({
+export const TBL_PRODUCT_OPENING_STOCKRelations = relations(TBL_PRODUCT_OPENING_STOCK, ({ one }) => ({
   company: one(TBL_COMPANY_MASTER, { fields: [TBL_PRODUCT_OPENING_STOCK.COMPANY_ID], references: [TBL_COMPANY_MASTER.Company_Id] }),
   store: one(TBL_STORE_MASTER, { fields: [TBL_PRODUCT_OPENING_STOCK.STORE_ID], references: [TBL_STORE_MASTER.Store_Id] }),
   main_category: one(TBL_PRODUCT_MAIN_CATEGORY_MASTER, { fields: [TBL_PRODUCT_OPENING_STOCK.MAIN_CATEGORY_ID], references: [TBL_PRODUCT_MAIN_CATEGORY_MASTER.MAIN_CATEGORY_ID] }),
@@ -815,16 +816,16 @@ export const TBL_PRODUCT_OPENING_STOCKRelations = relations(TBL_PRODUCT_OPENING_
   product: one(TBL_PRODUCT_MASTER, { fields: [TBL_PRODUCT_OPENING_STOCK.PRODUCT_ID], references: [TBL_PRODUCT_MASTER.PRODUCT_ID] }),
 }));
 
-export const TBL_FIELD_DTLRelations = relations(TBL_FIELD_DTL, ({ one, many }) => ({
+export const TBL_FIELD_DTLRelations = relations(TBL_FIELD_DTL, ({ one }) => ({
   field_id_fld_dtl: one(TBL_FIELD_HDR, { fields: [TBL_FIELD_DTL.field_id_fld_dtl], references: [TBL_FIELD_HDR.field_id_fld_hdr] }),
 }));
 
-export const TBL_PRODUCT_COMPANY_MAIN_CATEGORY_MAPPINGRelations = relations(TBL_PRODUCT_COMPANY_MAIN_CATEGORY_MAPPING, ({ one, many }) => ({
+export const TBL_PRODUCT_COMPANY_MAIN_CATEGORY_MAPPINGRelations = relations(TBL_PRODUCT_COMPANY_MAIN_CATEGORY_MAPPING, ({ one }) => ({
   company: one(TBL_COMPANY_MASTER, { fields: [TBL_PRODUCT_COMPANY_MAIN_CATEGORY_MAPPING.Company_Id], references: [TBL_COMPANY_MASTER.Company_Id] }),
   main_category: one(TBL_PRODUCT_MAIN_CATEGORY_MASTER, { fields: [TBL_PRODUCT_COMPANY_MAIN_CATEGORY_MAPPING.Main_Category_Id], references: [TBL_PRODUCT_MAIN_CATEGORY_MASTER.MAIN_CATEGORY_ID] }),
 }));
 
-export const TBL_STORE_PRODUCT_MINIMUM_STOCKRelations = relations(TBL_STORE_PRODUCT_MINIMUM_STOCK, ({ one, many }) => ({
+export const TBL_STORE_PRODUCT_MINIMUM_STOCKRelations = relations(TBL_STORE_PRODUCT_MINIMUM_STOCK, ({ one }) => ({
   company: one(TBL_COMPANY_MASTER, { fields: [TBL_STORE_PRODUCT_MINIMUM_STOCK.Company_id], references: [TBL_COMPANY_MASTER.Company_Id] }),
   store: one(TBL_STORE_MASTER, { fields: [TBL_STORE_PRODUCT_MINIMUM_STOCK.Store_Id], references: [TBL_STORE_MASTER.Store_Id] }),
   main_category: one(TBL_PRODUCT_MAIN_CATEGORY_MASTER, { fields: [TBL_STORE_PRODUCT_MINIMUM_STOCK.Main_Category_Id], references: [TBL_PRODUCT_MAIN_CATEGORY_MASTER.MAIN_CATEGORY_ID] }),
@@ -832,21 +833,21 @@ export const TBL_STORE_PRODUCT_MINIMUM_STOCKRelations = relations(TBL_STORE_PROD
   product: one(TBL_PRODUCT_MASTER, { fields: [TBL_STORE_PRODUCT_MINIMUM_STOCK.Product_Id], references: [TBL_PRODUCT_MASTER.PRODUCT_ID] }),
 }));
 
-export const TBL_SUPPLIER_MASTERRelations = relations(TBL_SUPPLIER_MASTER, ({ one, many }) => ({
+export const TBL_SUPPLIER_MASTERRelations = relations(TBL_SUPPLIER_MASTER, ({ one }) => ({
   country: one(TBL_COUNTRY_MASTER, { fields: [TBL_SUPPLIER_MASTER.Country_Id], references: [TBL_COUNTRY_MASTER.Country_Id] }),
 }));
 
-export const TBL_COMPANY_BANK_ACCOUNT_MASTERRelations = relations(TBL_COMPANY_BANK_ACCOUNT_MASTER, ({ one, many }) => ({
+export const TBL_COMPANY_BANK_ACCOUNT_MASTERRelations = relations(TBL_COMPANY_BANK_ACCOUNT_MASTER, ({ one }) => ({
   company: one(TBL_COMPANY_MASTER, { fields: [TBL_COMPANY_BANK_ACCOUNT_MASTER.Company_id], references: [TBL_COMPANY_MASTER.Company_Id] }),
   bank: one(TBL_BANK_MASTER, { fields: [TBL_COMPANY_BANK_ACCOUNT_MASTER.Bank_Id], references: [TBL_BANK_MASTER.BANK_ID] }),
   currency: one(TBL_CURRENCY_MASTER, { fields: [TBL_COMPANY_BANK_ACCOUNT_MASTER.Currency_Id], references: [TBL_CURRENCY_MASTER.CURRENCY_ID] }),
 }));
 
-export const TBL_CHANGE_PASSWORD_LOGRelations = relations(TBL_CHANGE_PASSWORD_LOG, ({ one, many }) => ({
+export const TBL_CHANGE_PASSWORD_LOGRelations = relations(TBL_CHANGE_PASSWORD_LOG, ({ one }) => ({
   login: one(TBL_USER_INFO_HDR, { fields: [TBL_CHANGE_PASSWORD_LOG.login_id], references: [TBL_USER_INFO_HDR.LOGIN_ID_USER_HDR] }),
 }));
 
-export const TBL_DISTRICT_MASTERRelations = relations(TBL_DISTRICT_MASTER, ({ one, many }) => ({
+export const TBL_DISTRICT_MASTERRelations = relations(TBL_DISTRICT_MASTER, ({ one }) => ({
   country: one(TBL_COUNTRY_MASTER, { fields: [TBL_DISTRICT_MASTER.Country_Id], references: [TBL_COUNTRY_MASTER.Country_Id] }),
   region: one(TBL_REGION_MASTER, { fields: [TBL_DISTRICT_MASTER.Region_Id], references: [TBL_REGION_MASTER.REGION_ID] }),
 }));
@@ -866,7 +867,7 @@ export const TBL_FINANCIAL_YEAR_MASTER = stomasterSchema.table("TBL_FINANCIAL_YE
   MODIFIED_MAC_ADDRESS: varchar("MODIFIED_MAC_ADDRESS", { length: 50 }),
 });
 
-export const TBL_CUSTOMER_MASTERRelations = relations(TBL_CUSTOMER_MASTER, ({ one, many }) => ({
+export const TBL_CUSTOMER_MASTERRelations = relations(TBL_CUSTOMER_MASTER, ({ one }) => ({
   billing_location: one(TBL_BILLING_LOCATION_MASTER, { fields: [TBL_CUSTOMER_MASTER.Billing_Location_Id], references: [TBL_BILLING_LOCATION_MASTER.Billing_Location_Id] }),
   country: one(TBL_COUNTRY_MASTER, { fields: [TBL_CUSTOMER_MASTER.Country_Id], references: [TBL_COUNTRY_MASTER.Country_Id] }),
   region: one(TBL_REGION_MASTER, { fields: [TBL_CUSTOMER_MASTER.Region_Id], references: [TBL_REGION_MASTER.REGION_ID] }),
@@ -874,21 +875,21 @@ export const TBL_CUSTOMER_MASTERRelations = relations(TBL_CUSTOMER_MASTER, ({ on
   currency: one(TBL_CURRENCY_MASTER, { fields: [TBL_CUSTOMER_MASTER.currency_id], references: [TBL_CURRENCY_MASTER.CURRENCY_ID] }),
 }));
 
-export const TBL_CUSTOMER_ADDRESS_DETAILSRelations = relations(TBL_CUSTOMER_ADDRESS_DETAILS, ({ one, many }) => ({
+export const TBL_CUSTOMER_ADDRESS_DETAILSRelations = relations(TBL_CUSTOMER_ADDRESS_DETAILS, ({ one }) => ({
   customer: one(TBL_CUSTOMER_MASTER, { fields: [TBL_CUSTOMER_ADDRESS_DETAILS.Customer_Id], references: [TBL_CUSTOMER_MASTER.Customer_Id] }),
 }));
 
-export const TBL_CUSTOMER_MASTER_FILES_UPLOADRelations = relations(TBL_CUSTOMER_MASTER_FILES_UPLOAD, ({ one, many }) => ({
+export const TBL_CUSTOMER_MASTER_FILES_UPLOADRelations = relations(TBL_CUSTOMER_MASTER_FILES_UPLOAD, ({ one }) => ({
   customer: one(TBL_CUSTOMER_MASTER, { fields: [TBL_CUSTOMER_MASTER_FILES_UPLOAD.Customer_Id], references: [TBL_CUSTOMER_MASTER.Customer_Id] }),
 }));
 
-export const TBL_CUSTOMER_COMPANY_WISE_BILLING_LOCATION_MAPPINGRelations = relations(TBL_CUSTOMER_COMPANY_WISE_BILLING_LOCATION_MAPPING, ({ one, many }) => ({
+export const TBL_CUSTOMER_COMPANY_WISE_BILLING_LOCATION_MAPPINGRelations = relations(TBL_CUSTOMER_COMPANY_WISE_BILLING_LOCATION_MAPPING, ({ one }) => ({
   customer: one(TBL_CUSTOMER_MASTER, { fields: [TBL_CUSTOMER_COMPANY_WISE_BILLING_LOCATION_MAPPING.Customer_Id], references: [TBL_CUSTOMER_MASTER.Customer_Id] }),
   company: one(TBL_COMPANY_MASTER, { fields: [TBL_CUSTOMER_COMPANY_WISE_BILLING_LOCATION_MAPPING.Company_id], references: [TBL_COMPANY_MASTER.Company_Id] }),
   billing_location: one(TBL_BILLING_LOCATION_MASTER, { fields: [TBL_CUSTOMER_COMPANY_WISE_BILLING_LOCATION_MAPPING.Billing_Location_Id], references: [TBL_BILLING_LOCATION_MASTER.Billing_Location_Id] }),
 }));
 
-export const TBL_CUSTOMER_PRODUCT_VAT_PERCENTAGE_SETTINGSRelations = relations(TBL_CUSTOMER_PRODUCT_VAT_PERCENTAGE_SETTINGS, ({ one, many }) => ({
+export const TBL_CUSTOMER_PRODUCT_VAT_PERCENTAGE_SETTINGSRelations = relations(TBL_CUSTOMER_PRODUCT_VAT_PERCENTAGE_SETTINGS, ({ one }) => ({
   company: one(TBL_COMPANY_MASTER, { fields: [TBL_CUSTOMER_PRODUCT_VAT_PERCENTAGE_SETTINGS.Company_id], references: [TBL_COMPANY_MASTER.Company_Id] }),
   customer: one(TBL_CUSTOMER_MASTER, { fields: [TBL_CUSTOMER_PRODUCT_VAT_PERCENTAGE_SETTINGS.Customer_Id], references: [TBL_CUSTOMER_MASTER.Customer_Id] }),
   main_category: one(TBL_PRODUCT_MAIN_CATEGORY_MASTER, { fields: [TBL_CUSTOMER_PRODUCT_VAT_PERCENTAGE_SETTINGS.Main_Category_Id], references: [TBL_PRODUCT_MAIN_CATEGORY_MASTER.MAIN_CATEGORY_ID] }),
@@ -896,7 +897,7 @@ export const TBL_CUSTOMER_PRODUCT_VAT_PERCENTAGE_SETTINGSRelations = relations(T
   product: one(TBL_PRODUCT_MASTER, { fields: [TBL_CUSTOMER_PRODUCT_VAT_PERCENTAGE_SETTINGS.Product_Id], references: [TBL_PRODUCT_MASTER.PRODUCT_ID] }),
 }));
 
-export const TBL_CUSTOMER_WISE_PRODUCT_PRICE_SETTINGSRelations = relations(TBL_CUSTOMER_WISE_PRODUCT_PRICE_SETTINGS, ({ one, many }) => ({
+export const TBL_CUSTOMER_WISE_PRODUCT_PRICE_SETTINGSRelations = relations(TBL_CUSTOMER_WISE_PRODUCT_PRICE_SETTINGS, ({ one }) => ({
   company: one(TBL_COMPANY_MASTER, { fields: [TBL_CUSTOMER_WISE_PRODUCT_PRICE_SETTINGS.Company_id], references: [TBL_COMPANY_MASTER.Company_Id] }),
   customer: one(TBL_CUSTOMER_MASTER, { fields: [TBL_CUSTOMER_WISE_PRODUCT_PRICE_SETTINGS.Customer_Id], references: [TBL_CUSTOMER_MASTER.Customer_Id] }),
   main_category: one(TBL_PRODUCT_MAIN_CATEGORY_MASTER, { fields: [TBL_CUSTOMER_WISE_PRODUCT_PRICE_SETTINGS.Main_Category_Id], references: [TBL_PRODUCT_MAIN_CATEGORY_MASTER.MAIN_CATEGORY_ID] }),
@@ -905,7 +906,7 @@ export const TBL_CUSTOMER_WISE_PRODUCT_PRICE_SETTINGSRelations = relations(TBL_C
   currency: one(TBL_CURRENCY_MASTER, { fields: [TBL_CUSTOMER_WISE_PRODUCT_PRICE_SETTINGS.currency_id], references: [TBL_CURRENCY_MASTER.CURRENCY_ID] }),
 }));
 
-export const TBL_CUSTOMER_CREDIT_LIMIT_DETAILSRelations = relations(TBL_CUSTOMER_CREDIT_LIMIT_DETAILS, ({ one, many }) => ({
+export const TBL_CUSTOMER_CREDIT_LIMIT_DETAILSRelations = relations(TBL_CUSTOMER_CREDIT_LIMIT_DETAILS, ({ one }) => ({
   company: one(TBL_COMPANY_MASTER, { fields: [TBL_CUSTOMER_CREDIT_LIMIT_DETAILS.Company_id], references: [TBL_COMPANY_MASTER.Company_Id] }),
   customer: one(TBL_CUSTOMER_MASTER, { fields: [TBL_CUSTOMER_CREDIT_LIMIT_DETAILS.Customer_Id], references: [TBL_CUSTOMER_MASTER.Customer_Id] }),
   currency: one(TBL_CURRENCY_MASTER, { fields: [TBL_CUSTOMER_CREDIT_LIMIT_DETAILS.Currency_id], references: [TBL_CURRENCY_MASTER.CURRENCY_ID] }),
@@ -913,10 +914,10 @@ export const TBL_CUSTOMER_CREDIT_LIMIT_DETAILSRelations = relations(TBL_CUSTOMER
   approved_payment_mode: one(TBL_CUSTOMER_PAYMENT_MODE_MASTER, { fields: [TBL_CUSTOMER_CREDIT_LIMIT_DETAILS.Approved_PAYMENT_MODE_ID], references: [TBL_CUSTOMER_PAYMENT_MODE_MASTER.PAYMENT_MODE_ID] }),
 }));
 
-export const CUSTOMER_CREDIT_LIMIT_FILE_UPLOADRelations = relations(CUSTOMER_CREDIT_LIMIT_FILE_UPLOAD, ({ one, many }) => ({
+export const CUSTOMER_CREDIT_LIMIT_FILE_UPLOADRelations = relations(CUSTOMER_CREDIT_LIMIT_FILE_UPLOAD, ({ one }) => ({
   credit_limit: one(TBL_CUSTOMER_CREDIT_LIMIT_DETAILS, { fields: [CUSTOMER_CREDIT_LIMIT_FILE_UPLOAD.CREDIT_LIMIT_ID], references: [TBL_CUSTOMER_CREDIT_LIMIT_DETAILS.Sno] }),
 }));
 
-export const TBL_ACCOUNTS_LEDGER_MASTERRelations = relations(TBL_ACCOUNTS_LEDGER_MASTER, ({ one, many }) => ({
+export const TBL_ACCOUNTS_LEDGER_MASTERRelations = relations(TBL_ACCOUNTS_LEDGER_MASTER, ({ one }) => ({
   company: one(TBL_COMPANY_MASTER, { fields: [TBL_ACCOUNTS_LEDGER_MASTER.Company_id], references: [TBL_COMPANY_MASTER.Company_Id] }),
 }));

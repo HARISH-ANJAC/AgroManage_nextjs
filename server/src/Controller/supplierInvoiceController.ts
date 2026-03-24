@@ -63,8 +63,9 @@ export const deleteSupplierInvoice = async (req: Request, res: Response): Promis
     try {
         const { id } = req.params;
         await db.transaction(async (tx) => {
-            await tx.delete(TBL_PURCHASE_INVOICE_DTL).where(eq(TBL_PURCHASE_INVOICE_DTL.PURCHASE_INVOICE_REF_NO, id));
-            await tx.delete(TBL_PURCHASE_INVOICE_HDR).where(eq(TBL_PURCHASE_INVOICE_HDR.PURCHASE_INVOICE_REF_NO, id));
+            const invoiceId = String(id);
+            await tx.delete(TBL_PURCHASE_INVOICE_DTL).where(eq(TBL_PURCHASE_INVOICE_DTL.PURCHASE_INVOICE_REF_NO, invoiceId));
+            await tx.delete(TBL_PURCHASE_INVOICE_HDR).where(eq(TBL_PURCHASE_INVOICE_HDR.PURCHASE_INVOICE_REF_NO, invoiceId));
         });
         return res.status(200).json({ msg: "Supplier Invoice deleted successfully" });
     } catch (error: any) {

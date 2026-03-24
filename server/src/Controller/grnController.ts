@@ -66,8 +66,9 @@ export const deleteGoodsReceipt = async (req: Request, res: Response): Promise<R
     try {
         const { id } = req.params;
         await db.transaction(async (tx) => {
-            await tx.delete(TBL_GOODS_INWARD_GRN_DTL).where(eq(TBL_GOODS_INWARD_GRN_DTL.GRN_REF_NO, id));
-            await tx.delete(TBL_GOODS_INWARD_GRN_HDR).where(eq(TBL_GOODS_INWARD_GRN_HDR.GRN_REF_NO, id));
+            const grnId = String(id);
+            await tx.delete(TBL_GOODS_INWARD_GRN_DTL).where(eq(TBL_GOODS_INWARD_GRN_DTL.GRN_REF_NO, grnId));
+            await tx.delete(TBL_GOODS_INWARD_GRN_HDR).where(eq(TBL_GOODS_INWARD_GRN_HDR.GRN_REF_NO, grnId));
         });
         return res.status(200).json({ msg: "GRN deleted successfully" });
     } catch (error: any) {

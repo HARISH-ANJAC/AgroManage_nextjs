@@ -623,7 +623,7 @@ export const TBL_CUSTOMER_RECEIPT_INVOICE_DTL = stoentriesSchema.table("TBL_CUST
 });
 
 
-export const TBL_PURCHASE_ORDER_HDRRelations = relations(TBL_PURCHASE_ORDER_HDR, ({ one, many }) => ({
+export const TBL_PURCHASE_ORDER_HDRRelations = relations(TBL_PURCHASE_ORDER_HDR, ({ one }) => ({
   company: one(TBL_COMPANY_MASTER, { fields: [TBL_PURCHASE_ORDER_HDR.COMPANY_ID], references: [TBL_COMPANY_MASTER.Company_Id] }),
   supplier: one(TBL_SUPPLIER_MASTER, { fields: [TBL_PURCHASE_ORDER_HDR.SUPPLIER_ID], references: [TBL_SUPPLIER_MASTER.Supplier_Id] }),
   po_store: one(TBL_STORE_MASTER, { fields: [TBL_PURCHASE_ORDER_HDR.PO_STORE_ID], references: [TBL_STORE_MASTER.Store_Id] }),
@@ -631,7 +631,7 @@ export const TBL_PURCHASE_ORDER_HDRRelations = relations(TBL_PURCHASE_ORDER_HDR,
   currency: one(TBL_CURRENCY_MASTER, { fields: [TBL_PURCHASE_ORDER_HDR.CURRENCY_ID], references: [TBL_CURRENCY_MASTER.CURRENCY_ID] }),
 }));
 
-export const TBL_PURCHASE_ORDER_DTLRelations = relations(TBL_PURCHASE_ORDER_DTL, ({ one, many }) => ({
+export const TBL_PURCHASE_ORDER_DTLRelations = relations(TBL_PURCHASE_ORDER_DTL, ({ one }) => ({
   po_ref_no: one(TBL_PURCHASE_ORDER_HDR, { fields: [TBL_PURCHASE_ORDER_DTL.PO_REF_NO], references: [TBL_PURCHASE_ORDER_HDR.PO_REF_NO] }),
   request_store: one(TBL_STORE_MASTER, { fields: [TBL_PURCHASE_ORDER_DTL.REQUEST_STORE_ID], references: [TBL_STORE_MASTER.Store_Id] }),
   main_category: one(TBL_PRODUCT_MAIN_CATEGORY_MASTER, { fields: [TBL_PURCHASE_ORDER_DTL.MAIN_CATEGORY_ID], references: [TBL_PRODUCT_MAIN_CATEGORY_MASTER.MAIN_CATEGORY_ID] }),
@@ -639,20 +639,20 @@ export const TBL_PURCHASE_ORDER_DTLRelations = relations(TBL_PURCHASE_ORDER_DTL,
   product: one(TBL_PRODUCT_MASTER, { fields: [TBL_PURCHASE_ORDER_DTL.PRODUCT_ID], references: [TBL_PRODUCT_MASTER.PRODUCT_ID] }),
 }));
 
-export const TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILSRelations = relations(TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS, ({ one, many }) => ({
+export const TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILSRelations = relations(TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS, ({ one }) => ({
   po_ref_no: one(TBL_PURCHASE_ORDER_HDR, { fields: [TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS.PO_REF_NO], references: [TBL_PURCHASE_ORDER_HDR.PO_REF_NO] }),
   additional_cost_type: one(TBL_ADDITIONAL_COST_TYPE_MASTER, { fields: [TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS.ADDITIONAL_COST_TYPE_ID], references: [TBL_ADDITIONAL_COST_TYPE_MASTER.ADDITIONAL_COST_TYPE_ID] }),
 }));
 
-export const TBL_PURCHASE_ORDER_FILES_UPLOADRelations = relations(TBL_PURCHASE_ORDER_FILES_UPLOAD, ({ one, many }) => ({
+export const TBL_PURCHASE_ORDER_FILES_UPLOADRelations = relations(TBL_PURCHASE_ORDER_FILES_UPLOAD, ({ one }) => ({
   po_ref_no: one(TBL_PURCHASE_ORDER_HDR, { fields: [TBL_PURCHASE_ORDER_FILES_UPLOAD.PO_REF_NO], references: [TBL_PURCHASE_ORDER_HDR.PO_REF_NO] }),
 }));
 
-export const TBL_PURCHASE_ORDER_CONVERSATION_DTLRelations = relations(TBL_PURCHASE_ORDER_CONVERSATION_DTL, ({ one, many }) => ({
+export const TBL_PURCHASE_ORDER_CONVERSATION_DTLRelations = relations(TBL_PURCHASE_ORDER_CONVERSATION_DTL, ({ one }) => ({
   po_ref_no: one(TBL_PURCHASE_ORDER_HDR, { fields: [TBL_PURCHASE_ORDER_CONVERSATION_DTL.PO_REF_NO], references: [TBL_PURCHASE_ORDER_HDR.PO_REF_NO] }),
 }));
 
-export const TBL_GOODS_INWARD_GRN_HDRRelations = relations(TBL_GOODS_INWARD_GRN_HDR, ({ one, many }) => ({
+export const TBL_GOODS_INWARD_GRN_HDRRelations = relations(TBL_GOODS_INWARD_GRN_HDR, ({ one }) => ({
   company: one(TBL_COMPANY_MASTER, { fields: [TBL_GOODS_INWARD_GRN_HDR.COMPANY_ID], references: [TBL_COMPANY_MASTER.Company_Id] }),
   source_store: one(TBL_STORE_MASTER, { fields: [TBL_GOODS_INWARD_GRN_HDR.SOURCE_STORE_ID], references: [TBL_STORE_MASTER.Store_Id] }),
   grn_store: one(TBL_STORE_MASTER, { fields: [TBL_GOODS_INWARD_GRN_HDR.GRN_STORE_ID], references: [TBL_STORE_MASTER.Store_Id] }),
@@ -660,7 +660,7 @@ export const TBL_GOODS_INWARD_GRN_HDRRelations = relations(TBL_GOODS_INWARD_GRN_
   po_ref_no: one(TBL_PURCHASE_ORDER_HDR, { fields: [TBL_GOODS_INWARD_GRN_HDR.PO_REF_NO], references: [TBL_PURCHASE_ORDER_HDR.PO_REF_NO] }),
 }));
 
-export const TBL_GOODS_INWARD_GRN_DTLRelations = relations(TBL_GOODS_INWARD_GRN_DTL, ({ one, many }) => ({
+export const TBL_GOODS_INWARD_GRN_DTLRelations = relations(TBL_GOODS_INWARD_GRN_DTL, ({ one }) => ({
   grn_ref_no: one(TBL_GOODS_INWARD_GRN_HDR, { fields: [TBL_GOODS_INWARD_GRN_DTL.GRN_REF_NO], references: [TBL_GOODS_INWARD_GRN_HDR.GRN_REF_NO] }),
   po_dtl_sno: one(TBL_PURCHASE_ORDER_DTL, { fields: [TBL_GOODS_INWARD_GRN_DTL.PO_DTL_SNO], references: [TBL_PURCHASE_ORDER_DTL.SNO] }),
   main_category: one(TBL_PRODUCT_MAIN_CATEGORY_MASTER, { fields: [TBL_GOODS_INWARD_GRN_DTL.MAIN_CATEGORY_ID], references: [TBL_PRODUCT_MAIN_CATEGORY_MASTER.MAIN_CATEGORY_ID] }),
@@ -668,7 +668,7 @@ export const TBL_GOODS_INWARD_GRN_DTLRelations = relations(TBL_GOODS_INWARD_GRN_
   product: one(TBL_PRODUCT_MASTER, { fields: [TBL_GOODS_INWARD_GRN_DTL.PRODUCT_ID], references: [TBL_PRODUCT_MASTER.PRODUCT_ID] }),
 }));
 
-export const TBL_PURCHASE_INVOICE_HDRRelations = relations(TBL_PURCHASE_INVOICE_HDR, ({ one, many }) => ({
+export const TBL_PURCHASE_INVOICE_HDRRelations = relations(TBL_PURCHASE_INVOICE_HDR, ({ one }) => ({
   company: one(TBL_COMPANY_MASTER, { fields: [TBL_PURCHASE_INVOICE_HDR.COMPANY_ID], references: [TBL_COMPANY_MASTER.Company_Id] }),
   po_ref_no: one(TBL_PURCHASE_ORDER_HDR, { fields: [TBL_PURCHASE_INVOICE_HDR.PO_REF_NO], references: [TBL_PURCHASE_ORDER_HDR.PO_REF_NO] }),
   supplier: one(TBL_SUPPLIER_MASTER, { fields: [TBL_PURCHASE_INVOICE_HDR.SUPPLIER_ID], references: [TBL_SUPPLIER_MASTER.Supplier_Id] }),
@@ -677,7 +677,7 @@ export const TBL_PURCHASE_INVOICE_HDRRelations = relations(TBL_PURCHASE_INVOICE_
   currency: one(TBL_CURRENCY_MASTER, { fields: [TBL_PURCHASE_INVOICE_HDR.CURRENCY_ID], references: [TBL_CURRENCY_MASTER.CURRENCY_ID] }),
 }));
 
-export const TBL_PURCHASE_INVOICE_DTLRelations = relations(TBL_PURCHASE_INVOICE_DTL, ({ one, many }) => ({
+export const TBL_PURCHASE_INVOICE_DTLRelations = relations(TBL_PURCHASE_INVOICE_DTL, ({ one }) => ({
   purchase_invoice_ref_no: one(TBL_PURCHASE_ORDER_HDR, { fields: [TBL_PURCHASE_INVOICE_DTL.PURCHASE_INVOICE_REF_NO], references: [TBL_PURCHASE_ORDER_HDR.PO_REF_NO] }),
   grn_ref_no: one(TBL_GOODS_INWARD_GRN_HDR, { fields: [TBL_PURCHASE_INVOICE_DTL.GRN_REF_NO], references: [TBL_GOODS_INWARD_GRN_HDR.GRN_REF_NO] }),
   main_category: one(TBL_PRODUCT_MAIN_CATEGORY_MASTER, { fields: [TBL_PURCHASE_INVOICE_DTL.MAIN_CATEGORY_ID], references: [TBL_PRODUCT_MAIN_CATEGORY_MASTER.MAIN_CATEGORY_ID] }),
@@ -685,16 +685,16 @@ export const TBL_PURCHASE_INVOICE_DTLRelations = relations(TBL_PURCHASE_INVOICE_
   product: one(TBL_PRODUCT_MASTER, { fields: [TBL_PURCHASE_INVOICE_DTL.PRODUCT_ID], references: [TBL_PRODUCT_MASTER.PRODUCT_ID] }),
 }));
 
-export const TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILSRelations = relations(TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS, ({ one, many }) => ({
+export const TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILSRelations = relations(TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS, ({ one }) => ({
   purchase_invoice_no: one(TBL_PURCHASE_ORDER_HDR, { fields: [TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS.PURCHASE_INVOICE_NO], references: [TBL_PURCHASE_ORDER_HDR.PO_REF_NO] }),
   additional_cost_type: one(TBL_ADDITIONAL_COST_TYPE_MASTER, { fields: [TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS.ADDITIONAL_COST_TYPE_ID], references: [TBL_ADDITIONAL_COST_TYPE_MASTER.ADDITIONAL_COST_TYPE_ID] }),
 }));
 
-export const TBL_PURCHASE_INVOICE_FILES_UPLOADRelations = relations(TBL_PURCHASE_INVOICE_FILES_UPLOAD, ({ one, many }) => ({
+export const TBL_PURCHASE_INVOICE_FILES_UPLOADRelations = relations(TBL_PURCHASE_INVOICE_FILES_UPLOAD, ({ one }) => ({
   purchase_invoice_ref_no: one(TBL_PURCHASE_ORDER_HDR, { fields: [TBL_PURCHASE_INVOICE_FILES_UPLOAD.PURCHASE_INVOICE_REF_NO], references: [TBL_PURCHASE_ORDER_HDR.PO_REF_NO] }),
 }));
 
-export const TBL_EXPENSE_HDRRelations = relations(TBL_EXPENSE_HDR, ({ one, many }) => ({
+export const TBL_EXPENSE_HDRRelations = relations(TBL_EXPENSE_HDR, ({ one }) => ({
   company: one(TBL_COMPANY_MASTER, { fields: [TBL_EXPENSE_HDR.COMPANY_ID], references: [TBL_COMPANY_MASTER.Company_Id] }),
   po_ref_no: one(TBL_PURCHASE_ORDER_HDR, { fields: [TBL_EXPENSE_HDR.PO_REF_NO], references: [TBL_PURCHASE_ORDER_HDR.PO_REF_NO] }),
   account_head: one(TBL_ACCOUNTS_HEAD_MASTER, { fields: [TBL_EXPENSE_HDR.ACCOUNT_HEAD_ID], references: [TBL_ACCOUNTS_HEAD_MASTER.ACCOUNT_HEAD_ID] }),
@@ -702,14 +702,14 @@ export const TBL_EXPENSE_HDRRelations = relations(TBL_EXPENSE_HDR, ({ one, many 
   currency: one(TBL_CURRENCY_MASTER, { fields: [TBL_EXPENSE_HDR.CURRENCY_ID], references: [TBL_CURRENCY_MASTER.CURRENCY_ID] }),
 }));
 
-export const TBL_EXPENSE_DTLRelations = relations(TBL_EXPENSE_DTL, ({ one, many }) => ({
+export const TBL_EXPENSE_DTLRelations = relations(TBL_EXPENSE_DTL, ({ one }) => ({
   expense_ref_no: one(TBL_EXPENSE_HDR, { fields: [TBL_EXPENSE_DTL.EXPENSE_REF_NO], references: [TBL_EXPENSE_HDR.EXPENSE_REF_NO] }),
   po_ref_no: one(TBL_PURCHASE_ORDER_HDR, { fields: [TBL_EXPENSE_DTL.PO_REF_NO], references: [TBL_PURCHASE_ORDER_HDR.PO_REF_NO] }),
   po_dtl_sno: one(TBL_PURCHASE_ORDER_DTL, { fields: [TBL_EXPENSE_DTL.PO_DTL_SNO], references: [TBL_PURCHASE_ORDER_DTL.SNO] }),
   product: one(TBL_PRODUCT_MASTER, { fields: [TBL_EXPENSE_DTL.PRODUCT_ID], references: [TBL_PRODUCT_MASTER.PRODUCT_ID] }),
 }));
 
-export const TBL_SALES_ORDER_HDRRelations = relations(TBL_SALES_ORDER_HDR, ({ one, many }) => ({
+export const TBL_SALES_ORDER_HDRRelations = relations(TBL_SALES_ORDER_HDR, ({ one }) => ({
   company: one(TBL_COMPANY_MASTER, { fields: [TBL_SALES_ORDER_HDR.COMPANY_ID], references: [TBL_COMPANY_MASTER.Company_Id] }),
   store: one(TBL_STORE_MASTER, { fields: [TBL_SALES_ORDER_HDR.STORE_ID], references: [TBL_STORE_MASTER.Store_Id] }),
   customer: one(TBL_CUSTOMER_MASTER, { fields: [TBL_SALES_ORDER_HDR.CUSTOMER_ID], references: [TBL_CUSTOMER_MASTER.Customer_Id] }),
@@ -718,7 +718,7 @@ export const TBL_SALES_ORDER_HDRRelations = relations(TBL_SALES_ORDER_HDR, ({ on
   currency: one(TBL_CURRENCY_MASTER, { fields: [TBL_SALES_ORDER_HDR.CURRENCY_ID], references: [TBL_CURRENCY_MASTER.CURRENCY_ID] }),
 }));
 
-export const TBL_SALES_ORDER_DTLRelations = relations(TBL_SALES_ORDER_DTL, ({ one, many }) => ({
+export const TBL_SALES_ORDER_DTLRelations = relations(TBL_SALES_ORDER_DTL, ({ one }) => ({
   sales_order_ref_no: one(TBL_SALES_ORDER_HDR, { fields: [TBL_SALES_ORDER_DTL.SALES_ORDER_REF_NO], references: [TBL_SALES_ORDER_HDR.SALES_ORDER_REF_NO] }),
   main_category: one(TBL_PRODUCT_MAIN_CATEGORY_MASTER, { fields: [TBL_SALES_ORDER_DTL.MAIN_CATEGORY_ID], references: [TBL_PRODUCT_MAIN_CATEGORY_MASTER.MAIN_CATEGORY_ID] }),
   sub_category: one(TBL_PRODUCT_SUB_CATEGORY_MASTER, { fields: [TBL_SALES_ORDER_DTL.SUB_CATEGORY_ID], references: [TBL_PRODUCT_SUB_CATEGORY_MASTER.SUB_CATEGORY_ID] }),
@@ -727,7 +727,7 @@ export const TBL_SALES_ORDER_DTLRelations = relations(TBL_SALES_ORDER_DTL, ({ on
   po_dtl_sno: one(TBL_PURCHASE_ORDER_DTL, { fields: [TBL_SALES_ORDER_DTL.PO_DTL_SNO], references: [TBL_PURCHASE_ORDER_DTL.SNO] }),
 }));
 
-export const TBL_DELIVERY_NOTE_HDRRelations = relations(TBL_DELIVERY_NOTE_HDR, ({ one, many }) => ({
+export const TBL_DELIVERY_NOTE_HDRRelations = relations(TBL_DELIVERY_NOTE_HDR, ({ one }) => ({
   company: one(TBL_COMPANY_MASTER, { fields: [TBL_DELIVERY_NOTE_HDR.COMPANY_ID], references: [TBL_COMPANY_MASTER.Company_Id] }),
   from_store: one(TBL_STORE_MASTER, { fields: [TBL_DELIVERY_NOTE_HDR.FROM_STORE_ID], references: [TBL_STORE_MASTER.Store_Id] }),
   to_store: one(TBL_STORE_MASTER, { fields: [TBL_DELIVERY_NOTE_HDR.TO_STORE_ID], references: [TBL_STORE_MASTER.Store_Id] }),
@@ -735,7 +735,7 @@ export const TBL_DELIVERY_NOTE_HDRRelations = relations(TBL_DELIVERY_NOTE_HDR, (
   currency: one(TBL_CURRENCY_MASTER, { fields: [TBL_DELIVERY_NOTE_HDR.CURRENCY_ID], references: [TBL_CURRENCY_MASTER.CURRENCY_ID] }),
 }));
 
-export const TBL_DELIVERY_NOTE_DTLRelations = relations(TBL_DELIVERY_NOTE_DTL, ({ one, many }) => ({
+export const TBL_DELIVERY_NOTE_DTLRelations = relations(TBL_DELIVERY_NOTE_DTL, ({ one }) => ({
   delivery_note_ref_no: one(TBL_DELIVERY_NOTE_HDR, { fields: [TBL_DELIVERY_NOTE_DTL.DELIVERY_NOTE_REF_NO], references: [TBL_DELIVERY_NOTE_HDR.DELIVERY_NOTE_REF_NO] }),
   po_dtl_sno: one(TBL_PURCHASE_ORDER_DTL, { fields: [TBL_DELIVERY_NOTE_DTL.PO_DTL_SNO], references: [TBL_PURCHASE_ORDER_DTL.SNO] }),
   po_ref_no: one(TBL_PURCHASE_ORDER_HDR, { fields: [TBL_DELIVERY_NOTE_DTL.PO_REF_NO], references: [TBL_PURCHASE_ORDER_HDR.PO_REF_NO] }),
@@ -744,7 +744,7 @@ export const TBL_DELIVERY_NOTE_DTLRelations = relations(TBL_DELIVERY_NOTE_DTL, (
   product: one(TBL_PRODUCT_MASTER, { fields: [TBL_DELIVERY_NOTE_DTL.PRODUCT_ID], references: [TBL_PRODUCT_MASTER.PRODUCT_ID] }),
 }));
 
-export const TBL_TAX_INVOICE_HDRRelations = relations(TBL_TAX_INVOICE_HDR, ({ one, many }) => ({
+export const TBL_TAX_INVOICE_HDRRelations = relations(TBL_TAX_INVOICE_HDR, ({ one }) => ({
   company: one(TBL_COMPANY_MASTER, { fields: [TBL_TAX_INVOICE_HDR.COMPANY_ID], references: [TBL_COMPANY_MASTER.Company_Id] }),
   from_store: one(TBL_STORE_MASTER, { fields: [TBL_TAX_INVOICE_HDR.FROM_STORE_ID], references: [TBL_STORE_MASTER.Store_Id] }),
   delivery_note_ref_no: one(TBL_DELIVERY_NOTE_HDR, { fields: [TBL_TAX_INVOICE_HDR.DELIVERY_NOTE_REF_NO], references: [TBL_DELIVERY_NOTE_HDR.DELIVERY_NOTE_REF_NO] }),
@@ -752,7 +752,7 @@ export const TBL_TAX_INVOICE_HDRRelations = relations(TBL_TAX_INVOICE_HDR, ({ on
   currency: one(TBL_CURRENCY_MASTER, { fields: [TBL_TAX_INVOICE_HDR.CURRENCY_ID], references: [TBL_CURRENCY_MASTER.CURRENCY_ID] }),
 }));
 
-export const TBL_TAX_INVOICE_DTLRelations = relations(TBL_TAX_INVOICE_DTL, ({ one, many }) => ({
+export const TBL_TAX_INVOICE_DTLRelations = relations(TBL_TAX_INVOICE_DTL, ({ one }) => ({
   tax_invoice_ref_no: one(TBL_TAX_INVOICE_HDR, { fields: [TBL_TAX_INVOICE_DTL.TAX_INVOICE_REF_NO], references: [TBL_TAX_INVOICE_HDR.TAX_INVOICE_REF_NO] }),
   po_dtl_sno: one(TBL_PURCHASE_ORDER_DTL, { fields: [TBL_TAX_INVOICE_DTL.PO_DTL_SNO], references: [TBL_PURCHASE_ORDER_DTL.SNO] }),
   po_ref_no: one(TBL_PURCHASE_ORDER_HDR, { fields: [TBL_TAX_INVOICE_DTL.PO_REF_NO], references: [TBL_PURCHASE_ORDER_HDR.PO_REF_NO] }),
@@ -761,7 +761,7 @@ export const TBL_TAX_INVOICE_DTLRelations = relations(TBL_TAX_INVOICE_DTL, ({ on
   product: one(TBL_PRODUCT_MASTER, { fields: [TBL_TAX_INVOICE_DTL.PRODUCT_ID], references: [TBL_PRODUCT_MASTER.PRODUCT_ID] }),
 }));
 
-export const TBL_CUSTOMER_RECEIPT_HDRRelations = relations(TBL_CUSTOMER_RECEIPT_HDR, ({ one, many }) => ({
+export const TBL_CUSTOMER_RECEIPT_HDRRelations = relations(TBL_CUSTOMER_RECEIPT_HDR, ({ one }) => ({
   company: one(TBL_COMPANY_MASTER, { fields: [TBL_CUSTOMER_RECEIPT_HDR.COMPANY_ID], references: [TBL_COMPANY_MASTER.Company_Id] }),
   customer: one(TBL_CUSTOMER_MASTER, { fields: [TBL_CUSTOMER_RECEIPT_HDR.CUSTOMER_ID], references: [TBL_CUSTOMER_MASTER.Customer_Id] }),
   payment_mode: one(TBL_CUSTOMER_PAYMENT_MODE_MASTER, { fields: [TBL_CUSTOMER_RECEIPT_HDR.PAYMENT_MODE_ID], references: [TBL_CUSTOMER_PAYMENT_MODE_MASTER.PAYMENT_MODE_ID] }),
@@ -771,7 +771,7 @@ export const TBL_CUSTOMER_RECEIPT_HDRRelations = relations(TBL_CUSTOMER_RECEIPT_
   currency: one(TBL_CURRENCY_MASTER, { fields: [TBL_CUSTOMER_RECEIPT_HDR.CURRENCY_ID], references: [TBL_CURRENCY_MASTER.CURRENCY_ID] }),
 }));
 
-export const TBL_CUSTOMER_RECEIPT_INVOICE_DTLRelations = relations(TBL_CUSTOMER_RECEIPT_INVOICE_DTL, ({ one, many }) => ({
+export const TBL_CUSTOMER_RECEIPT_INVOICE_DTLRelations = relations(TBL_CUSTOMER_RECEIPT_INVOICE_DTL, ({ one }) => ({
   receipt_ref_no: one(TBL_CUSTOMER_RECEIPT_HDR, { fields: [TBL_CUSTOMER_RECEIPT_INVOICE_DTL.RECEIPT_REF_NO], references: [TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_REF_NO] }),
   tax_invoice_ref_no: one(TBL_TAX_INVOICE_HDR, { fields: [TBL_CUSTOMER_RECEIPT_INVOICE_DTL.TAX_INVOICE_REF_NO], references: [TBL_TAX_INVOICE_HDR.TAX_INVOICE_REF_NO] }),
 }));

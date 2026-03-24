@@ -7,6 +7,7 @@ export default defineConfig({
   schema: './src/db/schema/index.ts',
   out: './drizzle',
   dialect: 'postgresql',
+  schemaFilter: ['stomaster', 'stoentries'],
   dbCredentials: {
     url: process.env.DATABASE_URL!,
   },
