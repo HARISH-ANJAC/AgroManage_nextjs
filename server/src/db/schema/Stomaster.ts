@@ -299,6 +299,20 @@ export const TBL_PRODUCT_SUB_CATEGORY_MASTER = stomasterSchema.table("TBL_PRODUC
   MODIFIED_MAC_ADDRESS: varchar("MODIFIED_MAC_ADDRESS", { length: 50 }),
 });
 
+export const TBL_PRODUCT_UOM_MASTER = stomasterSchema.table("TBL_PRODUCT_UOM_MASTER", {
+  UOM_ID: serial("UOM_ID").primaryKey(),
+  UOM_NAME: varchar("UOM_NAME", { length: 50 }).unique(),
+  UOM_SHORT_CODE: varchar("UOM_SHORT_CODE", { length: 15 }),
+  REMARKS: varchar("REMARKS", { length: 2000 }),
+  STATUS_MASTER: varchar("STATUS_MASTER", { length: 20 }),
+  CREATED_BY: varchar("CREATED_BY", { length: 50 }),
+  CREATED_DATE: timestamp("CREATED_DATE", { mode: "date" }),
+  CREATED_MAC_ADDRESS: varchar("CREATED_MAC_ADDRESS", { length: 50 }),
+  MODIFIED_BY: varchar("MODIFIED_BY", { length: 50 }),
+  MODIFIED_DATE: timestamp("MODIFIED_DATE", { mode: "date" }),
+  MODIFIED_MAC_ADDRESS: varchar("MODIFIED_MAC_ADDRESS", { length: 50 }),
+});
+
 export const TBL_PRODUCT_MASTER = stomasterSchema.table("TBL_PRODUCT_MASTER", {
   PRODUCT_ID: serial("PRODUCT_ID").primaryKey(),
   PRODUCT_NAME: varchar("PRODUCT_NAME", { length: 150 }).unique(),
@@ -836,6 +850,21 @@ export const TBL_DISTRICT_MASTERRelations = relations(TBL_DISTRICT_MASTER, ({ on
   country: one(TBL_COUNTRY_MASTER, { fields: [TBL_DISTRICT_MASTER.Country_Id], references: [TBL_COUNTRY_MASTER.Country_Id] }),
   region: one(TBL_REGION_MASTER, { fields: [TBL_DISTRICT_MASTER.Region_Id], references: [TBL_REGION_MASTER.REGION_ID] }),
 }));
+
+export const TBL_FINANCIAL_YEAR_MASTER = stomasterSchema.table("TBL_FINANCIAL_YEAR_MASTER", {
+  FY_ID: serial("FY_ID").primaryKey(),
+  FY_NAME: varchar("FY_NAME", { length: 50 }).unique(),
+  START_DATE: timestamp("START_DATE", { mode: "date" }),
+  END_DATE: timestamp("END_DATE", { mode: "date" }),
+  REMARKS: varchar("REMARKS", { length: 2000 }),
+  STATUS_MASTER: varchar("STATUS_MASTER", { length: 20 }),
+  CREATED_BY: varchar("CREATED_BY", { length: 50 }),
+  CREATED_DATE: timestamp("CREATED_DATE", { mode: "date" }),
+  CREATED_MAC_ADDRESS: varchar("CREATED_MAC_ADDRESS", { length: 50 }),
+  MODIFIED_BY: varchar("MODIFIED_BY", { length: 50 }),
+  MODIFIED_DATE: timestamp("MODIFIED_DATE", { mode: "date" }),
+  MODIFIED_MAC_ADDRESS: varchar("MODIFIED_MAC_ADDRESS", { length: 50 }),
+});
 
 export const TBL_CUSTOMER_MASTERRelations = relations(TBL_CUSTOMER_MASTER, ({ one, many }) => ({
   billing_location: one(TBL_BILLING_LOCATION_MASTER, { fields: [TBL_CUSTOMER_MASTER.Billing_Location_Id], references: [TBL_BILLING_LOCATION_MASTER.Billing_Location_Id] }),

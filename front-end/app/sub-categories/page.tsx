@@ -1,23 +1,41 @@
 "use client";
 
 import MasterCrudPage from "@/components/MasterCrudPage";
+import { useMasterData } from "@/hooks/useMasterData";
 
 export default function SubCategoriesPage() {
-  return <MasterCrudPage
-    domain="sub-categories" title="Sub Categories" description="Manage your sub categories" idPrefix="SUB" fields={[
-    { key: "subCategoryName", label: "Sub Category Name", type: "text", required: true },
-    { key: "mainCategory", label: "Main Category", type: "select", options: ["Grains", "Pulses", "Fertilizers", "Seeds", "Spices"] },
-    { key: "remarks", label: "Remarks", type: "textarea" },
-    { key: "status", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
-  ]} initialData={[
-    { id: "SUB001", subCategoryName: "Maize", mainCategory: "Grains", remarks: "", status: "Active" },
-    { id: "SUB002", subCategoryName: "Rice", mainCategory: "Grains", remarks: "", status: "Active" },
-    { id: "SUB003", subCategoryName: "Wheat", mainCategory: "Grains", remarks: "", status: "Active" },
-    { id: "SUB004", subCategoryName: "Beans", mainCategory: "Pulses", remarks: "", status: "Active" },
-    { id: "SUB005", subCategoryName: "NPK Fertilizer", mainCategory: "Fertilizers", remarks: "", status: "Active" },
-    { id: "SUB006", subCategoryName: "Karafu", mainCategory: "Spices", remarks: "", status: "Active" },
-  ]} columns={[
-    { key: "subCategoryName", label: "Sub Category" }, { key: "mainCategory", label: "Main Category" }, { key: "status", label: "Status" },
-  ]} />;
-}
+  const { data: categories, isLoading: loadingCats } = useMasterData("categories");
 
+  const categoryOptions = categories.map((c: any) => ({
+    value: c.id,
+    label: c.mainCategoryName
+  }));
+
+  if (loadingCats) return <div className="p-8 text-center text-muted-foreground">Loading Categories...</div>;
+
+  return <MasterCrudPage
+    domain="subcategories" 
+    title="Sub Categories" 
+    description="Manage your business sub categories" 
+    idPrefix="SUB" 
+    fields={[
+      { key: "subCategoryName", label: "Sub Category Name", type: "text", required: true },
+      { 
+        key: "mainCategoryId", 
+        label: "Main Category", 
+        type: "select", 
+        required: true,
+        options: categoryOptions,
+        placeholder: "Select Category"
+      },
+      { key: "remarks", label: "Remarks", type: "textarea" },
+      { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
+    ]} 
+    initialData={[]} 
+    columns={[
+      { key: "subCategoryName", label: "Sub Category" }, 
+      { key: "mainCategoryName", label: "Main Category" }, 
+      { key: "statusMaster", label: "Status" },
+    ]} 
+  />;
+}

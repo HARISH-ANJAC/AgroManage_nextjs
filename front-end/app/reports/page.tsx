@@ -14,12 +14,6 @@ const reportCards = [
 export default function ReportsPage() {
   const router = useRouter();
 
-  useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    if (isLoggedIn !== 'true') {
-      router.replace('/login');
-    }
-  }, [router]);
 
   return (
     <div className="animate-fade-in p-6 bg-background flex-1 overflow-auto">

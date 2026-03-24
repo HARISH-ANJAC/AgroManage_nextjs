@@ -11,15 +11,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -30,7 +30,7 @@ export interface MasterField {
   label: string;
   type: "text" | "number" | "select" | "textarea" | "date";
   required?: boolean;
-  options?: string[];
+  options?: (string | { value: string | number; label: string })[];
   placeholder?: string;
 }
 
@@ -40,21 +40,43 @@ interface MasterPageProps {
   title: string;
   description: string;
   idPrefix: string;
-  domain: string; 
+  domain: string;
   fields: MasterField[];
   initialData: Record<string, any>[];
   columns: { key: string; label: string }[];
   customAddUrl?: string;
   customEditUrl?: (id: string) => string;
+  customStoreOverrides?: {
+    data: any[];
+    add: (item: any) => Promise<any> | any;
+    update: (item: any) => Promise<any> | void;
+    remove: (id: string) => Promise<any> | void;
+    bulkRemove?: (ids: string[]) => Promise<any> | void;
+    isLoading?: boolean;
+  };
+  onPrint?: (item: any) => void;
 }
+
+const getNestedValue = (obj: any, path: string) => {
+  if (!obj || !path) return "";
+  const value = path.split('.').reduce((acc, part) => acc && acc[part], obj);
+  if (value !== undefined && value !== null) return value;
+  // Resilient fallback: if the path is nested (e.g. 'header.ref') but missing, try the flat property ('ref')
+  if (path.includes('.')) {
+    const parts = path.split('.');
+    return obj[parts[parts.length - 1]] || "";
+  }
+  return obj[path] || "";
+};
 
 const PAGE_SIZES = [5, 10, 25, 50, "ALL"] as const;
 
 import { useMasterData } from "@/hooks/useMasterData";
 
-export default function MasterCrudPage({ title, description, idPrefix, domain, fields, initialData, columns, customAddUrl, customEditUrl }: MasterPageProps) {
+export default function MasterCrudPage({ title, description, idPrefix, domain, fields, initialData, columns, customAddUrl, customEditUrl, customStoreOverrides, onPrint }: MasterPageProps) {
   const router = useRouter();
-  const { data, isLoading, add, update, remove, bulkRemove } = useMasterData(domain, initialData, idPrefix);
+  const masterData = useMasterData(domain, initialData, idPrefix);
+  const { data, isLoading, add, update, remove, bulkRemove } = customStoreOverrides || masterData;
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Record<string, any> | null>(null);
@@ -65,6 +87,21 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
+  const [role, setRole] = useState<string>("Manager");
+  useMemo(() => {
+    if (typeof window !== 'undefined') {
+      const userJson = localStorage.getItem('user');
+      if (userJson) {
+        try {
+          const u = JSON.parse(userJson);
+          setRole(u.role || 'Manager');
+        } catch (e) { }
+      }
+    }
+  }, []);
+
+  const isAdmin = role === "Admin";
 
   // Get unique statuses for the filter dropdown
   const uniqueStatuses = useMemo(() => {
@@ -78,12 +115,12 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
 
   const filtered = useMemo(() => {
     return data.filter((d: Record<string, any>) => {
-      const searchable = columns.map((c) => String(d[c.key] || "").toLowerCase()).join(" ");
+      const searchable = columns.map((c) => String(getNestedValue(d, c.key) || "").toLowerCase()).join(" ");
       const matchesSearch = searchable.includes(search.toLowerCase());
-      
-      const itemStatus = d.status || d.statusMaster;
+
+      const itemStatus = getNestedValue(d, "status") || getNestedValue(d, "header.status") || d.statusMaster;
       const matchesStatus = statusFilter === "ALL" || String(itemStatus) === statusFilter;
-      
+
       return matchesSearch && matchesStatus;
     });
   }, [data, search, columns, statusFilter]);
@@ -113,7 +150,14 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
 
   const handleBulkDeleteFinal = async () => {
     try {
-      await bulkRemove(Array.from(selectedIds));
+      const ids = Array.from(selectedIds);
+      if (bulkRemove) {
+        await bulkRemove(ids);
+      } else {
+        for (const id of ids) {
+          await remove(id);
+        }
+      }
       setSelectedIds(new Set());
       setIsBulkDeleting(false);
       toast.success(`${title} deleted successfully!`);
@@ -125,11 +169,11 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
   const handleSingleDeleteFinal = async () => {
     if (!deleteId) return;
     try {
-       await remove(deleteId);
-       setDeleteId(null);
-       toast.success(`${title.replace(/s$/, "")} deleted successfully!`);
+      await remove(deleteId);
+      setDeleteId(null);
+      toast.success(`${title.replace(/s$/, "")} deleted successfully!`);
     } catch (e) {
-       toast.error(`Failed to delete ${title.replace(/s$/, "")}!`);
+      toast.error(`Failed to delete ${title.replace(/s$/, "")}!`);
     }
   };
 
@@ -149,16 +193,16 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
       return;
     }
     try {
-       if (editing) {
-          await update({ ...editing, ...form });
-          toast.success(`${title.replace(/s$/, "")} updated successfully!`);
-       } else {
-          await add(form);
-          toast.success(`${title.replace(/s$/, "")} created successfully!`);
-       }
-       setDialogOpen(false);
+      if (editing) {
+        await update({ ...editing, ...form });
+        toast.success(`${title.replace(/s$/, "")} updated successfully!`);
+      } else {
+        await add(form);
+        toast.success(`${title.replace(/s$/, "")} created successfully!`);
+      }
+      setDialogOpen(false);
     } catch (e) {
-       toast.error(`Error saving ${title.toLowerCase()}!`);
+      toast.error(`Error saving ${title.toLowerCase()}!`);
     }
   };
 
@@ -175,13 +219,13 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
     doc.setFontSize(10);
     doc.text(`Exported: ${new Date().toLocaleString()}`, 14, 28);
     const headers = ["ID", ...columns.map(c => c.label)];
-    const rows = filtered.map((item: Record<string, any>) => [item.id, ...columns.map(c => String(item[c.key] || ""))]);
+    const rows = filtered.map((item: Record<string, any>) => [item.id, ...columns.map(c => String(getNestedValue(item, c.key) || ""))]);
     autoTable(doc, { head: [headers], body: rows, startY: 34, styles: { fontSize: 8 }, headStyles: { fillColor: [34, 68, 50] } });
     doc.save(`${title.toLowerCase().replace(/\s+/g, "_")}.pdf`);
   };
 
   const exportExcel = () => {
-    const wsData = [["ID", ...columns.map(c => c.label)], ...filtered.map((item: Record<string, any>) => [item.id, ...columns.map(c => item[c.key] || "")])];
+    const wsData = [["ID", ...columns.map(c => c.label)], ...filtered.map((item: Record<string, any>) => [item.id, ...columns.map(c => getNestedValue(item, c.key) || "")])];
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, title);
@@ -190,7 +234,7 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
 
   const exportCSV = () => {
     const headers = ["ID", ...columns.map(c => c.label)];
-    const rows = filtered.map((item: Record<string, any>) => [item.id, ...columns.map(c => `"${String(item[c.key] || "").replace(/"/g, '""')}"`)]);
+    const rows = filtered.map((item: Record<string, any>) => [item.id, ...columns.map(c => `"${String(getNestedValue(item, c.key) || "").replace(/"/g, '""')}"`)]);
     const csv = [headers.join(","), ...rows.map((r: string[]) => r.join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -231,7 +275,7 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input placeholder={`Search ${title.toLowerCase()}...`} value={search} onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} className="pl-9" />
             </div>
-            
+
             {uniqueStatuses.length > 0 && (
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-xs text-muted-foreground whitespace-nowrap font-medium">Filter Status:</span>
@@ -245,13 +289,13 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
               </div>
             )}
 
-            {selectedIds.size > 0 && (
+            {selectedIds.size > 0 && isAdmin && (
               <Button variant="destructive" size="sm" onClick={() => setIsBulkDeleting(true)} className="animate-in fade-in zoom-in duration-200 shadow-sm border border-red-200">
                 <Trash2 className="w-4 h-4 mr-2" /> Delete Selected ({selectedIds.size})
               </Button>
             )}
           </div>
-          
+
           <div className="flex items-center gap-2 self-end sm:self-auto shrink-0 w-full sm:w-auto justify-end">
             <span className="text-xs text-muted-foreground">Show</span>
             <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
@@ -275,15 +319,14 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
               <thead>
                 <tr className="border-b bg-muted/50 transition-colors">
                   <th className="p-3 w-10">
-                    <input 
-                      type="checkbox" 
-                      className="rounded border-border w-4 h-4 accent-primary" 
+                    <input
+                      type="checkbox"
+                      className="rounded border-border w-4 h-4 accent-primary"
                       checked={paginated.length > 0 && selectedIds.size === paginated.length}
                       onChange={toggleSelectAll}
                     />
                   </th>
                   <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Actions</th>
-                  <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">ID</th>
                   {columns.map((c) => (
                     <th key={c.key} className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">{c.label}</th>
                   ))}
@@ -293,42 +336,54 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
                 {paginated.map((item: Record<string, any>) => (
                   <tr key={item.id} className={`border-b hover:bg-muted/30 transition-colors ${selectedIds.has(item.id) ? 'bg-primary/5 border-primary/20' : ''}`}>
                     <td className="p-3 w-10">
-                       <input 
-                        type="checkbox" 
-                        className="rounded border-border w-4 h-4 accent-primary" 
+                      <input
+                        type="checkbox"
+                        className="rounded border-border w-4 h-4 accent-primary"
                         checked={selectedIds.has(item.id)}
                         onChange={() => toggleSelect(item.id)}
                       />
                     </td>
                     <td className="p-3 flex gap-2">
                       <button onClick={() => openEdit(item)} className="p-1.5 rounded hover:bg-muted transition-colors"><Pencil className="w-4 h-4 text-muted-foreground" /></button>
-                      <button onClick={() => setDeleteId(item.id)} className="p-1.5 rounded hover:bg-destructive/10 transition-colors"><Trash2 className="w-4 h-4 text-destructive" /></button>
+                      {onPrint && (
+                        <button onClick={() => onPrint(item)} className="p-1.5 rounded hover:bg-muted text-blue-600 transition-colors" title="Export as PDF">
+                          <FileText className="w-4 h-4" />
+                        </button>
+                      )}
+                      {isAdmin && <button onClick={() => setDeleteId(item.id)} className="p-1.5 rounded hover:bg-destructive/10 transition-colors"><Trash2 className="w-4 h-4 text-destructive" /></button>}
                     </td>
-                    <td className="p-3 font-mono text-xs">{item.id}</td>
                     {columns.map((c) => (
                       <td key={c.key} className="p-3">
-                        {c.key === "status" || c.key === "statusMaster" ? (
+                        {c.key.includes("status") ? (
                           <Badge variant="outline" className={`
-                            ${String(item[c.key]).toLowerCase().includes("active") || String(item[c.key]).toLowerCase().includes("approved") || String(item[c.key]).toLowerCase().includes("received") || String(item[c.key]).toLowerCase().includes("delivered") || String(item[c.key]).toLowerCase().includes("success") || String(item[c.key]).toLowerCase().includes("confirmed") || String(item[c.key]).toLowerCase().includes("paid")
-                              ? "bg-green-500/10 text-green-600 border-green-200" 
-                              : String(item[c.key]).toLowerCase().includes("draft") || String(item[c.key]).toLowerCase().includes("pending")
-                              ? "bg-amber-500/10 text-amber-600 border-amber-200"
-                              : String(item[c.key]).toLowerCase().includes("rejected") || String(item[c.key]).toLowerCase().includes("cancelled") || String(item[c.key]).toLowerCase().includes("inactive")
-                              ? "bg-red-500/10 text-red-600 border-red-200"
-                              : "bg-blue-500/10 text-blue-600 border-blue-200"}
+                            ${String(getNestedValue(item, c.key)).toLowerCase().includes("active") || String(getNestedValue(item, c.key)).toLowerCase().includes("approved") || String(getNestedValue(item, c.key)).toLowerCase().includes("received") || String(getNestedValue(item, c.key)).toLowerCase().includes("delivered") || String(getNestedValue(item, c.key)).toLowerCase().includes("success") || String(getNestedValue(item, c.key)).toLowerCase().includes("confirmed") || String(getNestedValue(item, c.key)).toLowerCase().includes("paid")
+                              ? "bg-green-500/10 text-green-600 border-green-200"
+                              : String(getNestedValue(item, c.key)).toLowerCase().includes("draft") || String(getNestedValue(item, c.key)).toLowerCase().includes("pending") || String(getNestedValue(item, c.key)).toLowerCase().includes("transit")
+                                ? "bg-amber-500/10 text-amber-600 border-amber-200"
+                                : String(getNestedValue(item, c.key)).toLowerCase().includes("rejected") || String(getNestedValue(item, c.key)).toLowerCase().includes("cancelled") || String(getNestedValue(item, c.key)).toLowerCase().includes("inactive")
+                                  ? "bg-red-500/10 text-red-600 border-red-200"
+                                  : "bg-blue-500/10 text-blue-600 border-blue-200"}
                             px-2 py-0.5 text-[10px] uppercase font-bold
                           `}>
-                            {item[c.key]}
+                            {getNestedValue(item, c.key)}
                           </Badge>
                         ) : (
-                          String(item[c.key] ?? "")
+                          (() => {
+                            const field = fields.find(f => f.key === c.key);
+                            const val = getNestedValue(item, c.key);
+                            if (field?.type === "select" && field.options) {
+                              const found = field.options.find((o: any) => typeof o === "object" && String(o.value) === String(val));
+                              if (found && typeof found === "object") return found.label;
+                            }
+                            return String(val ?? "");
+                          })()
                         )}
                       </td>
                     ))}
                   </tr>
                 ))}
                 {paginated.length === 0 && (
-                  <tr><td colSpan={columns.length + 3} className="p-8 text-center text-muted-foreground">No records found matching your filters</td></tr>
+                  <tr><td colSpan={columns.length + 2} className="p-8 text-center text-muted-foreground">No records found matching your filters</td></tr>
                 )}
               </tbody>
             </table>
@@ -374,9 +429,21 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
                 <div key={field.key} className={field.type === "textarea" ? "col-span-2" : ""}>
                   <Label className="text-xs">{field.label} {field.required && <span className="text-destructive">*</span>}</Label>
                   {field.type === "select" ? (
-                    <Select value={form[field.key] || ""} onValueChange={(v) => setForm({ ...form, [field.key]: v })}>
+                    <Select value={form[field.key] !== undefined && form[field.key] !== null ? String(form[field.key]) : ""} onValueChange={(v) => setForm({ ...form, [field.key]: v })}>
                       <SelectTrigger><SelectValue placeholder={field.placeholder || `Select ${field.label}`} /></SelectTrigger>
-                      <SelectContent>{(field.options || []).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                      <SelectContent>
+                        {(() => {
+                           const seen = new Set();
+                           return (field.options || []).map((o, idx) => {
+                             const val = typeof o === "string" ? o : String(o.value);
+                             const lab = typeof o === "string" ? o : o.label;
+                             if (seen.has(val)) return null;
+                             seen.add(val);
+                             // Use a safer key in case of empty strings or special characters
+                             return <SelectItem key={`${val}-${idx}`} value={val}>{lab}</SelectItem>;
+                           });
+                        })()}
+                      </SelectContent>
                     </Select>
                   ) : field.type === "textarea" ? (
                     <Textarea value={form[field.key] || ""} onChange={(e) => setForm({ ...form, [field.key]: e.target.value })} placeholder={field.placeholder} />

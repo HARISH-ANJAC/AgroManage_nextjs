@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { isAuthenticated } from "@/lib/auth";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -9,11 +10,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    const loggedIn = isAuthenticated();
     
-    if (!isLoggedIn && pathname !== "/login") {
+    if (!loggedIn && pathname !== "/login") {
       router.push("/login");
-    } else if (isLoggedIn && pathname === "/login") {
+    } else if (loggedIn && pathname === "/login") {
       router.push("/dashboard");
     } else {
       setIsChecking(false);

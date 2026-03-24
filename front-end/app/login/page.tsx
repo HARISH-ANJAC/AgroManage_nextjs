@@ -1,23 +1,102 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sprout, User, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { encryptData, decryptData } from '@/lib/cryptoUtils';
+import { API_URL } from '@/lib/config';
 
 export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    LOGIN_NAME: '',
+    PASSWORD_USER_HDR: ''
+  });
+  const [rememberMe, setRememberMe] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  // Load remembered credentials on mount
+  useEffect(() => {
+    const savedEncrypted = localStorage.getItem('rememberedLogin');
+    if (!savedEncrypted) return;
+
+    try {
+      const savedData = decryptData(savedEncrypted);
+      if (savedData?.LOGIN_NAME && savedData?.PASSWORD_USER_HDR) {
+        setFormData({
+          LOGIN_NAME: savedData.LOGIN_NAME,
+          PASSWORD_USER_HDR: savedData.PASSWORD_USER_HDR
+        });
+        setRememberMe(true);
+      }
+    } catch (err) {
+      console.error('Failed to load remembered login:', err);
+      localStorage.removeItem('rememberedLogin');
+    }
+  }, []);
+
+  // Clear credentials if Remember Me is unchecked
+  useEffect(() => {
+    if (!rememberMe) {
+      localStorage.removeItem('rememberedLogin');
+    }
+  }, [rememberMe]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate API call delay
-    setTimeout(() => {
-      localStorage.setItem('isLoggedIn', 'true');
-      router.push('/dashboard');
-    }, 1500);
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          LOGIN_NAME: formData.LOGIN_NAME,
+          PASSWORD_USER_HDR: formData.PASSWORD_USER_HDR
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.msg || 'Login failed');
+      }
+
+      // Store tokens and user info
+      localStorage.setItem('accessToken', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
+      // Dispatch custom event to update sidebar data without refresh
+      window.dispatchEvent(new Event('user-data-updated'));
+
+      // Save credentials only if Remember Me is checked
+      if (rememberMe) {
+        localStorage.setItem(
+          'rememberedLogin',
+          encryptData({ 
+            LOGIN_NAME: formData.LOGIN_NAME, 
+            PASSWORD_USER_HDR: formData.PASSWORD_USER_HDR 
+          })
+        );
+      }
+
+      // Success feedback
+      import('sonner').then(({ toast }) => toast.success('Login successful! Redirecting...'));
+
+      // Redirect to dashboard
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 1000);
+    } catch (error: any) {
+      console.error('Login error:', error);
+      import('sonner').then(({ toast }) => toast.error(error.message || 'Check your credentials and try again.'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -35,6 +114,7 @@ export default function LoginPage() {
         style={{ backgroundImage: "url('/login-bg.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}
       />
 
+
       <div className="relative z-10 w-full max-w-md px-6 py-4">
         {/* Branding Section */}
         <div className="flex flex-col items-center mb-4 group cursor-default animate-in fade-in slide-in-from-top-6 duration-1000">
@@ -48,13 +128,14 @@ export default function LoginPage() {
             </div>
             {/* Minimalist Professional Tagline */}
             <div className="mt-4 flex flex-col items-center gap-1.5 transform transition-all duration-700">
-              <div className="h-1 w-10 bg-gradient-to-r from-transparent via-primary/30 to-transparent rounded-full"></div>
+              <div className="h-1 w-10 bg-linear-to-r from-transparent via-primary/30 to-transparent rounded-full"></div>
               <p className="text-[10px] uppercase tracking-[0.4em] font-black text-primary/60">
                 ERP MANAGEMENT SYSTEM • v1.0
               </p>
             </div>
           </div>
         </div>
+
 
         {/* Login Card (Using Theme Card Component) */}
         <div className="bg-card/80 backdrop-blur-2xl border border-border rounded-2xl shadow-xl p-6 md:p-8 transition-all duration-300 hover:shadow-primary/5">
@@ -63,7 +144,7 @@ export default function LoginPage() {
             <p className="text-xs text-muted-foreground mt-1 font-medium leading-relaxed">Secure access to your enterprise dashboard</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-6">
             {/* Email Field */}
             <div className="space-y-2">
               <label className="text-sm font-bold text-foreground/80 ml-1" htmlFor="email">
@@ -74,11 +155,13 @@ export default function LoginPage() {
                   <User size={18} />
                 </div>
                 <input
-                  id="email"
-                  type="email"
-                  placeholder="name@agro-manage.com"
+                  id="login_name"
+                  type="text"
+                  placeholder="Admin"
+                  value={formData.LOGIN_NAME}
+                  onChange={(e) => setFormData({ ...formData, LOGIN_NAME: e.target.value })}
                   className="block w-full pl-11 pr-4 py-3 bg-muted/30 border border-border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-foreground placeholder:text-muted-foreground/60 text-sm"
-                  required
+
                 />
               </div>
             </div>
@@ -101,6 +184,8 @@ export default function LoginPage() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
+                  value={formData.PASSWORD_USER_HDR}
+                  onChange={(e) => setFormData({ ...formData, PASSWORD_USER_HDR: e.target.value })}
                   className="block w-full pl-11 pr-12 py-3 bg-muted/30 border border-border rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-foreground placeholder:text-muted-foreground/60 text-sm"
                   required
                 />
@@ -120,14 +205,15 @@ export default function LoginPage() {
                 <input
                   id="remember"
                   type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                   className="h-4 w-4 rounded border-border text-primary focus:ring-primary/20 transition-all cursor-pointer accent-primary"
                 />
               </div>
               <label htmlFor="remember" className="ml-2 block text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
-                Stay logged in for 30 days
+                Remember Me
               </label>
             </div>
-
             {/* Login Button */}
             <button
               type="submit"

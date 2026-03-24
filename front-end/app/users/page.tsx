@@ -1,8 +1,11 @@
 "use client";
 
 import MasterCrudPage from "@/components/MasterCrudPage";
+import { useMasterData } from "@/hooks/useMasterData";
 
 export default function UsersPage() {
+  const { data: users, isLoading: loadingUsers } = useMasterData("users");
+
   return <MasterCrudPage
     domain="users" title="Users" description="Manage your users" idPrefix="USR" fields={[
     { key: "loginName", label: "Login Name", type: "text", required: true },
@@ -13,11 +16,7 @@ export default function UsersPage() {
     { key: "outsideAccess", label: "Outside Access", type: "select", options: ["Yes", "No"] },
     { key: "remarks", label: "Remarks", type: "textarea" },
     { key: "status", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
-  ]} initialData={[
-    { id: "USR001", loginName: "julian.thorne", role: "Administrator", mobileNo: "+255 754 100200", mailId: "julian@agromanage.co.tz", stockShowStatus: "Yes", outsideAccess: "Yes", remarks: "", status: "Active" },
-    { id: "USR002", loginName: "sarah.kimani", role: "Manager", mobileNo: "+255 712 300400", mailId: "sarah@agromanage.co.tz", stockShowStatus: "Yes", outsideAccess: "No", remarks: "", status: "Active" },
-  ]} columns={[
+  ]} initialData={users} columns={[
     { key: "loginName", label: "Login" }, { key: "role", label: "Role" }, { key: "mobileNo", label: "Mobile" }, { key: "mailId", label: "Email" }, { key: "status", label: "Status" },
   ]} />;
 }
-

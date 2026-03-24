@@ -1,22 +1,33 @@
 "use client";
 
 import MasterCrudPage from "@/components/MasterCrudPage";
+import { useMasterData } from "@/hooks/useMasterData";
 
 export default function LedgerMasterPage() {
+  const { data: ledgerGroups } = useMasterData("ledger-groups");
+  const { data: accountHeads } = useMasterData("account-heads");
+
+  const ledgerGroupOptions = ledgerGroups?.map((g: any) => ({
+    value: g.id,
+    label: g.ledgerGroupName
+  })) || [];
+
+  const accountHeadOptions = accountHeads?.map((h: any) => ({
+    value: h.id,
+    label: h.accountHeadName
+  })) || [];
+
   return <MasterCrudPage
-    domain="ledger-master" title="Ledger Master" description="Manage your ledger master" idPrefix="LED" fields={[
-    { key: "company", label: "Company", type: "text" },
-    { key: "ledgerType", label: "Ledger Type", type: "select", options: ["Asset", "Liability", "Income", "Expense"] },
-    { key: "ledgerGroupId", label: "Ledger Group", type: "text" },
+    domain="ledger-master" title="Ledger Master" description="Manage your ledgers" idPrefix="LDG" fields={[
     { key: "ledgerName", label: "Ledger Name", type: "text", required: true },
-    { key: "ledgerDesc", label: "Description", type: "text" },
+    { key: "ledgerGroupId", label: "Ledger Group", type: "select", required: true, options: ledgerGroupOptions },
+    { key: "accountHeadId", label: "Account Head", type: "select", required: true, options: accountHeadOptions },
     { key: "remarks", label: "Remarks", type: "textarea" },
-    { key: "status", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
-  ]} initialData={[
-    { id: "LED001", company: "AgroTanzania Ltd", ledgerType: "Expense", ledgerGroupId: "Expenses", ledgerName: "Purchase Account", ledgerDesc: "All purchases", remarks: "", status: "Active" },
-    { id: "LED002", company: "AgroTanzania Ltd", ledgerType: "Income", ledgerGroupId: "Income", ledgerName: "Sales Account", ledgerDesc: "All sales", remarks: "", status: "Active" },
-  ]} columns={[
-    { key: "ledgerName", label: "Ledger" }, { key: "ledgerType", label: "Type" }, { key: "ledgerDesc", label: "Description" }, { key: "status", label: "Status" },
+    { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
+  ]} initialData={[]} columns={[
+    { key: "ledgerName", label: "Ledger Name" }, 
+    { key: "ledgerGroupName", label: "Group" }, 
+    { key: "accountHeadName", label: "Head" }, 
+    { key: "statusMaster", label: "Status" },
   ]} />;
 }
-

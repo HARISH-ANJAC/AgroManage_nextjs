@@ -1,0 +1,14 @@
+CREATE TABLE "Stomaster"."TBL_PRODUCT_UOM_MASTER" (
+	"UOM_ID" serial PRIMARY KEY NOT NULL,
+	"UOM_NAME" varchar(50),
+	"UOM_SHORT_CODE" varchar(15),
+	"REMARKS" varchar(2000),
+	"STATUS_MASTER" varchar(20),
+	"CREATED_BY" varchar(50),
+	"CREATED_DATE" timestamp,
+	"CREATED_MAC_ADDRESS" varchar(50),
+	"MODIFIED_BY" varchar(50),
+	"MODIFIED_DATE" timestamp,
+	"MODIFIED_MAC_ADDRESS" varchar(50),
+	CONSTRAINT "TBL_PRODUCT_UOM_MASTER_UOM_NAME_unique" UNIQUE("UOM_NAME")
+);

@@ -8,15 +8,13 @@ import { useRouter } from 'next/navigation';
  * It removes the previous landing page and performs a quick authentication check
  * to redirect the user to either the Dashboard or the Login page.
  */
+import { isAuthenticated } from '@/lib/auth';
+
 export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    // Basic mock authentication check
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    
-    // Smooth transition to the appropriate page
-    if (isLoggedIn === 'true') {
+    if (isAuthenticated()) {
       router.replace('/dashboard');
     } else {
       router.replace('/login');

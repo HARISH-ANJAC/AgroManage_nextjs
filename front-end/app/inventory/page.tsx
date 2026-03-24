@@ -31,12 +31,6 @@ export default function InventoryPage() {
   const router = useRouter();
   const { data, loading } = useMockCrud<StockRecord>({ table: "product_opening_stock" });
 
-  useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    if (isLoggedIn !== 'true') {
-      router.replace('/login');
-    }
-  }, [router]);
 
   return (
     <div className="animate-fade-in p-6 bg-background flex-1 overflow-auto">

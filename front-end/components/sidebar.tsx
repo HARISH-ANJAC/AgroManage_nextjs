@@ -17,6 +17,7 @@ import {
   FileText,
   Receipt,
   DollarSign,
+  Sprout,
   Settings,
   LogOut,
   X,
@@ -49,18 +50,32 @@ import {
 import { useIsMobile } from '@/hooks/use-mobile';
 
 // Context for managing sidebar state across the layout
+interface UserData {
+  id: number;
+  loginName: string;
+  mailId: string;
+  role: string;
+}
+
 const SidebarContext = createContext({
   isCollapsed: false,
   toggleSidebar: () => { },
   isMobileOpen: false,
   setIsMobileOpen: (open: boolean) => { },
+  user: null as UserData | null,
+  refreshUser: () => { },
 });
 
 export const useSidebar = () => useContext(SidebarContext);
 
 export function Header() {
-  const { toggleSidebar, isCollapsed } = useSidebar();
+  const { toggleSidebar, isCollapsed, user } = useSidebar();
   const pathname = usePathname();
+
+  // Helper to get initials
+  const getInitials = (name: string) => {
+    return name?.charAt(0).toUpperCase() || 'U';
+  };
 
   // Simple breadcrumb logic
   const pathSegments = pathname.split('/').filter(Boolean);
@@ -101,7 +116,7 @@ export function Header() {
         </button>
         <div className="flex items-center gap-3">
           <div className="size-8 sm:size-9 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-lg shadow-primary/20 shrink-0">
-            SR
+            {getInitials(user?.loginName || 'User')}
           </div>
         </div>
       </div>
@@ -176,8 +191,10 @@ const navigation = [
   {
     group: 'Purchasing',
     items: [
+      // { name: 'Quotations(RFQ)', href: '/quotations-rfq', icon: FileText },
       { name: 'Purchase Orders', href: '/purchase-orders', icon: ShoppingCart },
       { name: 'Goods Receipts', href: '/goods-receipts', icon: ClipboardCheck },
+      { name: 'Supplier Invoices', href: '/supplier-invoices', icon: Receipt },
       { name: 'Purchase Invoices', href: '/purchase-booking', icon: FileText },
     ]
   },
@@ -209,7 +226,40 @@ const navigation = [
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [user, setUser] = useState<UserData | null>(null);
   const isMobile = useIsMobile();
+
+  const refreshUser = React.useCallback(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        console.error('Failed to parse user data');
+        setUser(null);
+      }
+    } else {
+      setUser(null);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    refreshUser();
+
+    // Listen for storage changes (works across tabs and same window if manually triggered)
+    const handleStorageChange = () => {
+      refreshUser();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    // Custom event to handle updates in the same window
+    window.addEventListener('user-data-updated', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('user-data-updated', handleStorageChange);
+    };
+  }, [refreshUser]);
 
   const toggleSidebar = () => {
     if (isMobile) {
@@ -220,7 +270,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <SidebarContext.Provider value={{ isCollapsed, toggleSidebar, isMobileOpen, setIsMobileOpen }}>
+    <SidebarContext.Provider value={{ isCollapsed, toggleSidebar, isMobileOpen, setIsMobileOpen, user, refreshUser }}>
       {children}
     </SidebarContext.Provider>
   );
@@ -228,7 +278,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { isCollapsed, toggleSidebar, isMobileOpen, setIsMobileOpen } = useSidebar();
+  const { isCollapsed, toggleSidebar, isMobileOpen, setIsMobileOpen, user } = useSidebar();
   const isMobile = useIsMobile();
   const router = useRouter();
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
@@ -238,8 +288,10 @@ export function Sidebar() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    router.push('/login');
+    import('@/lib/auth').then(({ logout }) => {
+      logout();
+      router.push('/login');
+    });
   };
 
   // Don't show sidebar on login or root home pages
@@ -330,11 +382,17 @@ export function Sidebar() {
         {/* User Profile / Footer */}
         <div className="px-3 py-4 border-t border-white/10 space-y-3">
           <div className={`flex items-center gap-3 px-3 py-3 rounded-xl bg-white/5 border border-white/5 ${isCollapsed && !isMobile ? 'justify-center px-0' : ''}`}>
-            <div className="size-10 rounded-full bg-white/10 flex items-center justify-center font-bold text-sm shrink-0">JT</div>
+            <div className="size-10 rounded-full bg-white/10 flex items-center justify-center font-bold text-sm shrink-0">
+              {user?.loginName?.charAt(0).toUpperCase() || 'U'}
+            </div>
             {(!isCollapsed || isMobile) && (
               <div className="overflow-hidden animate-in fade-in slide-in-from-left-2 duration-300">
-                <p className="text-sm font-semibold text-white truncate leading-none mb-1">Srinivas</p>
-                <p className="text-[10px] uppercase tracking-wider text-white/30 truncate">Admin</p>
+                <p className="text-sm font-semibold text-white truncate leading-none mb-1">
+                  {user?.loginName || 'User'}
+                </p>
+                <p className="text-[10px] uppercase tracking-wider text-white/30 truncate">
+                  {user?.role || 'Guest'}
+                </p>
               </div>
             )}
           </div>

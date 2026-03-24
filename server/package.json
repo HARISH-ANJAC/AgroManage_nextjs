@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon",
+    "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "db:generate": "tsx node_modules/drizzle-kit/bin.cjs generate",
@@ -14,6 +14,7 @@
     "db:push": "tsx node_modules/drizzle-kit/bin.cjs push",
     "db:studio": "tsx node_modules/drizzle-kit/bin.cjs studio",
     "db:seed": "tsx src/db/seed.ts",
+    "db:seed:transactional": "tsx src/db/seedTransactional.ts",
     "db:drop": "tsx src/db/seed/drop-tables.ts",
     "db:truncate": "tsx src/db/seed/truncate-tables.ts",
     "db:reset": "tsx src/db/seed/reset-and-seed.ts",
@@ -26,11 +27,13 @@
   "dependencies": {
     "@sparticuz/chromium": "^143.0.4",
     "bcryptjs": "^3.0.3",
+    "compression": "^1.8.1",
     "cors": "^2.8.6",
     "crypto-js": "^4.2.0",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.1",
     "express": "^5.2.1",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
@@ -41,6 +44,8 @@
     "qrcode": "^1.5.4"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^3.0.0",
+    "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.19",
     "@types/crypto-js": "^4.2.2",
     "@types/express": "^5.0.6",

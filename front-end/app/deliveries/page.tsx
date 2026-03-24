@@ -45,12 +45,6 @@ export default function DeliveriesPage() {
   const [deleteTarget, setDeleteTarget] = useState<DeliveryNoteWithId | null>(null);
   const [form, setForm] = useState(emptyForm);
 
-  useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    if (isLoggedIn !== 'true') {
-      router.replace('/login');
-    }
-  }, [router]);
 
   const openAdd = () => {
     const nextNo = `DN/${new Date().toISOString().slice(5,7)}/${String(data.length + 1).padStart(3, "0")}`;
