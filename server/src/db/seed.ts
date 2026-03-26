@@ -134,10 +134,10 @@ async function main() {
       .values(seedRoles)
       .onConflictDoNothing()
       .returning();
-    const superAdminRoleId = insertedRoles.find((r: any) => r.ROLE_NAME === "Super Admin")?.ROLE_ID || 1;
-    const adminRoleId = insertedRoles.find((r: any) => r.ROLE_NAME === "Admin")?.ROLE_ID || 2;
-    const managerRoleId = insertedRoles.find((r: any) => r.ROLE_NAME === "Manager")?.ROLE_ID || 3;
-    const userRoleId = insertedRoles.find((r: any) => r.ROLE_NAME === "User")?.ROLE_ID || 4;
+    const superAdminRoleId = insertedRoles.find(r => r.ROLE_NAME === "Super Admin")?.ROLE_ID || 1;
+    const adminRoleId = insertedRoles.find(r => r.ROLE_NAME === "Admin")?.ROLE_ID || 2;
+    const managerRoleId = insertedRoles.find(r => r.ROLE_NAME === "Manager")?.ROLE_ID || 3;
+    const userRoleId = insertedRoles.find(r => r.ROLE_NAME === "User")?.ROLE_ID || 4;
 
     // 2. Users
     console.log("Seeding Users...");
@@ -164,7 +164,7 @@ async function main() {
       .values(users)
       .onConflictDoNothing()
       .returning();
-    const sriUserId = insertedUsers.find((u: any) => u.LOGIN_NAME === "Sri")?.LOGIN_ID_USER_HDR || 1;
+    const sriUserId = insertedUsers.find(u => u.LOGIN_NAME === "Sri")?.LOGIN_ID_USER_HDR || 1;
 
     // 3. Currencies
     console.log("Seeding Currencies...");
