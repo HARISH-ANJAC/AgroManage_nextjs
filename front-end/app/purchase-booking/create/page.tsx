@@ -133,7 +133,13 @@ function CreatePurchaseBookingContent() {
     }, [items, additionalCosts, header.exchangeRate]);
 
     const approvedPOs = useMemo(() => pos.filter((p: any) => (p.header?.status || p.status || p.STATUS_ENTRY) === "Approved"), [pos]);
-    const availableGRNs = useMemo(() => header.poRefNo ? grns.filter((g: any) => (g.header?.poRefNo || g.poRefNo || g.PO_REF_NO) === header.poRefNo) : [], [header.poRefNo, grns]);
+    const availableGRNs = useMemo(() => {
+        if (!header.poRefNo) return [];
+        return grns.filter((g: any) => {
+            const grnPo = g.PO_REF_NO || g.poRefNo || g.header?.poRefNo || g.header?.PO_REF_NO;
+            return String(grnPo).trim() === String(header.poRefNo).trim();
+        });
+    }, [header.poRefNo, grns]);
 
     // Item Calc
     const updateItem = (id: number, field: keyof InvoiceItem, value: any) => {
@@ -412,52 +418,101 @@ function CreatePurchaseBookingContent() {
                                     <Badge variant="secondary" className="rounded-lg">{items.length} lines imported</Badge>
                                 </div>
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-xs">
-                                        <thead><tr className="bg-slate-50 border-b text-slate-400 font-bold uppercase tracking-wider text-[10px]"><th className="p-4 text-left">GRN / Product</th><th className="p-4 text-center">Qty</th><th className="p-4 text-center">Rate</th><th className="p-4 text-center">Disc%</th><th className="p-4 text-center">VAT%</th><th className="p-4 text-right">Final Amount</th><th className="p-4"></th></tr></thead>
-                                        <tbody>
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className="bg-slate-50/80 border-b text-slate-400 font-bold uppercase tracking-widest text-[10px]">
+                                                <th className="p-4 text-left">GRN / Product</th>
+                                                <th className="p-4 text-center">Qty / Packing</th>
+                                                <th className="p-4 text-center">Rate / Item</th>
+                                                <th className="p-4 text-center">Disc% / VAT%</th>
+                                                <th className="p-4 text-right">Final Amount</th>
+                                                <th className="p-4"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
                                             {items.map(item => {
                                                 const hasQtyMismatch = item.totalQty > item.grnQty;
                                                 const hasRateMismatch = item.ratePerQty > item.poRate;
                                                 
                                                 return (
-                                                    <tr key={item.id} className={`border-b transition-colors ${hasQtyMismatch || hasRateMismatch ? 'bg-red-50/30' : 'hover:bg-slate-50/50'}`}>
+                                                    <tr key={item.id} className={`group transition-all ${hasQtyMismatch || hasRateMismatch ? 'bg-red-50/40' : 'hover:bg-slate-50/50'}`}>
                                                         <td className="p-4">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="font-bold text-slate-900">{item.productName}</div>
-                                                                {(hasQtyMismatch || hasRateMismatch) && <Badge className="bg-red-500 text-[8px] h-4">Mismatch</Badge>}
-                                                            </div>
-                                                            <div className="font-mono text-[9px] text-emerald-600 font-bold">{item.grnRefNo}</div>
-                                                        </td>
-                                                        <td className="p-4 text-center">
-                                                            <div className="space-y-1">
-                                                                <Input 
-                                                                    type="number" 
-                                                                    value={item.totalQty} 
-                                                                    onChange={(e) => updateItem(item.id, "totalQty", Number(e.target.value))} 
-                                                                    className={`w-16 h-8 text-center mx-auto rounded-lg ${hasQtyMismatch ? 'border-red-500 bg-red-50' : ''}`} 
-                                                                />
-                                                                <div className="text-[9px] text-slate-400">Max: {item.grnQty}</div>
+                                                            <div className="flex flex-col gap-0.5">
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="font-bold text-slate-900 text-sm tracking-tight">{item.productName}</div>
+                                                                    {hasQtyMismatch && <Badge className="bg-orange-500 hover:bg-orange-600 text-[8px] h-4 rounded-md uppercase font-black">Qty Error</Badge>}
+                                                                    {hasRateMismatch && <Badge className="bg-red-500 hover:bg-red-600 text-[8px] h-4 rounded-md uppercase font-black">Rate Error</Badge>}
+                                                                </div>
+                                                                <div className="flex items-center gap-1.5 font-mono text-[10px] text-emerald-600/70 font-bold">
+                                                                    <LinkIcon className="w-3 h-3" />
+                                                                    {item.grnRefNo}
+                                                                </div>
                                                             </div>
                                                         </td>
-                                                        <td className="p-4 text-center">
-                                                            <div className="space-y-1">
+                                                        <td className="p-4">
+                                                            <div className="flex flex-col items-center gap-1.5">
+                                                                <div className="flex items-center gap-1">
+                                                                    <Input 
+                                                                        type="number" 
+                                                                        value={item.totalQty} 
+                                                                        onChange={(e) => updateItem(item.id, "totalQty", Number(e.target.value))} 
+                                                                        className={`w-20 h-9 text-center rounded-xl font-bold bg-white shadow-sm border-slate-200 focus:ring-emerald-500/10 ${hasQtyMismatch ? 'border-red-500 ring-2 ring-red-500/10' : ''}`} 
+                                                                    />
+                                                                    <span className="text-[10px] font-bold text-slate-400">{item.uom}</span>
+                                                                </div>
+                                                                <div className={`text-[9px] font-bold uppercase tracking-tight ${hasQtyMismatch ? 'text-red-500' : 'text-slate-400'}`}>
+                                                                    GRN Max: <span className="font-black underline">{item.grnQty}</span>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-4">
+                                                            <div className="flex flex-col items-center gap-1.5">
                                                                 <Input 
                                                                     type="number" 
                                                                     value={item.ratePerQty} 
                                                                     onChange={(e) => updateItem(item.id, "ratePerQty", Number(e.target.value))} 
-                                                                    className={`w-20 h-8 text-center mx-auto rounded-lg ${hasRateMismatch ? 'border-red-500 bg-red-50' : ''}`} 
+                                                                    className={`w-24 h-9 text-center rounded-xl font-bold bg-white shadow-sm border-slate-200 focus:ring-emerald-500/10 ${hasRateMismatch ? 'border-red-500 ring-2 ring-red-500/10' : ''}`} 
                                                                 />
-                                                                <div className="text-[9px] text-slate-400">PO: {item.poRate}</div>
+                                                                <div className={`text-[9px] font-bold uppercase tracking-tight ${hasRateMismatch ? 'text-red-500' : 'text-slate-400'}`}>
+                                                                    PO Rate: <span className="font-black underline">{item.poRate}</span>
+                                                                </div>
                                                             </div>
                                                         </td>
-                                                        <td className="p-4 text-center"><Input type="number" value={item.discountPercentage} onChange={(e) => updateItem(item.id, "discountPercentage", Number(e.target.value))} className="w-12 h-8 text-center mx-auto rounded-lg" /></td>
-                                                        <td className="p-4 text-center"><Input type="number" value={item.vatPercentage} onChange={(e) => updateItem(item.id, "vatPercentage", Number(e.target.value))} className="w-12 h-8 text-center mx-auto rounded-lg" /></td>
-                                                        <td className="p-4 text-right font-bold tabular-nums text-slate-900">{item.finalProductAmount.toLocaleString()}</td>
-                                                        <td className="p-4 text-center"><button onClick={() => setItems(items.filter(i => i.id !== item.id))} className="p-2 text-slate-300 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button></td>
+                                                        <td className="p-4">
+                                                            <div className="flex items-center justify-center gap-2">
+                                                                <div className="flex flex-col items-center gap-1">
+                                                                    <Input type="number" value={item.discountPercentage} onChange={(e) => updateItem(item.id, "discountPercentage", Number(e.target.value))} className="w-16 h-9 text-center rounded-xl bg-slate-50/50" />
+                                                                    <span className="text-[8px] font-black text-slate-400">DISC%</span>
+                                                                </div>
+                                                                <div className="flex flex-col items-center gap-1">
+                                                                    <Input type="number" value={item.vatPercentage} onChange={(e) => updateItem(item.id, "vatPercentage", Number(e.target.value))} className="w-16 h-9 text-center rounded-xl bg-slate-50/50" />
+                                                                    <span className="text-[8px] font-black text-slate-400">VAT%</span>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-4 text-right">
+                                                            <div className="text-sm font-black tabular-nums text-slate-900">{item.finalProductAmount.toLocaleString()}</div>
+                                                            <div className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">Verified Total</div>
+                                                        </td>
+                                                        <td className="p-4 text-center">
+                                                            <button onClick={() => setItems(items.filter(i => i.id !== item.id))} className="p-2.5 rounded-xl text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100">
+                                                                <Trash2 className="w-4.5 h-4.5" />
+                                                            </button>
+                                                        </td>
                                                     </tr>
                                                 );
                                             })}
-                                            {items.length === 0 && <tr><td colSpan={7} className="p-20 text-center text-slate-300 italic">No products added. Pull items from a GRN above.</td></tr>}
+                                            {items.length === 0 && (
+                                                <tr>
+                                                    <td colSpan={6} className="p-24 text-center">
+                                                        <div className="flex flex-col items-center gap-3">
+                                                            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 border border-slate-100 italic">...</div>
+                                                            <p className="text-slate-400 font-bold text-sm">Waiting for inventory data...</p>
+                                                            <p className="text-[10px] text-slate-300 uppercase font-black tracking-widest">Select a GRN from above to proceed</p>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
                                         </tbody>
                                     </table>
                                 </div>
@@ -470,19 +525,51 @@ function CreatePurchaseBookingContent() {
                                     <h2 className="text-lg font-bold text-slate-800">Additional Charges / Landed Costs</h2>
                                     <Button variant="outline" size="sm" onClick={() => setAdditionalCosts([...additionalCosts, { id: Date.now(), typeId: "", amount: 0, remarks: "" }])} className="rounded-xl border-emerald-100 text-emerald-600 hover:bg-emerald-50"><Plus className="w-4 h-4 mr-2" /> Add Charge</Button>
                                 </div>
-                                <div className="space-y-4">
+                                 <div className="space-y-4">
                                     {additionalCosts.map(cost => (
-                                        <div key={cost.id} className="flex gap-4 items-end bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
-                                            <div className="flex-1 space-y-1.5"><Label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Cost Type</Label>
+                                        <div key={cost.id} className="flex gap-4 items-end bg-slate-50/50 p-4 rounded-2xl border border-slate-100 group transition-all hover:border-emerald-200">
+                                            <div className="flex-1 space-y-1.5 text-center">
+                                                <Label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Landed Cost Category</Label>
                                                 <Select value={String(cost.typeId)} onValueChange={(v) => setAdditionalCosts(prev => prev.map(c => c.id === cost.id ? { ...c, typeId: v } : c))}>
-                                                    <SelectTrigger className="h-10 rounded-xl bg-white"><SelectValue /></SelectTrigger>
-                                                    <SelectContent>{costTypes.map((ct: any) => <SelectItem key={ct.id || ct.ADDITIONAL_COST_TYPE_ID} value={String(ct.id || ct.ADDITIONAL_COST_TYPE_ID)}>{ct.costTypeName || ct.ADDITIONAL_COST_TYPE_NAME}</SelectItem>)}</SelectContent>
+                                                    <SelectTrigger className="h-11 rounded-xl bg-white shadow-sm border-slate-200">
+                                                        <SelectValue placeholder="Select type" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {costTypes.length === 0 && <div className="p-4 text-center text-xs text-slate-400">No cost categories found</div>}
+                                                        {costTypes.map((ct: any) => (
+                                                            <SelectItem key={ct.id} value={String(ct.id)}>
+                                                                {ct.additionalCostTypeName || ct.costTypeName || ct.ADDITIONAL_COST_TYPE_NAME || `Type #${ct.id}`}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
                                                 </Select>
                                             </div>
-                                            <div className="w-40 space-y-1.5"><Label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Landed Amount</Label><Input type="number" value={cost.amount} onChange={(e) => setAdditionalCosts(prev => prev.map(c => c.id === cost.id ? { ...c, amount: Number(e.target.value) } : c))} className="h-10 rounded-xl bg-white" /></div>
-                                            <Button variant="ghost" onClick={() => setAdditionalCosts(additionalCosts.filter(c => c.id !== cost.id))} className="text-red-300 hover:text-red-500 h-10"><Trash2 className="w-4 h-4" /></Button>
+                                            <div className="w-48 space-y-1.5 text-center">
+                                                <Label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Amount (TZS)</Label>
+                                                <div className="relative">
+                                                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
+                                                    <Input 
+                                                        type="number" 
+                                                        value={cost.amount} 
+                                                        onChange={(e) => setAdditionalCosts(prev => prev.map(c => c.id === cost.id ? { ...c, amount: Number(e.target.value) } : c))} 
+                                                        className="h-11 rounded-xl bg-white pl-8 font-bold text-slate-900 border-slate-200 shadow-sm"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <Button 
+                                                variant="ghost" 
+                                                onClick={() => setAdditionalCosts(additionalCosts.filter(c => c.id !== cost.id))} 
+                                                className="text-slate-300 hover:text-red-500 hover:bg-red-50 h-11 w-11 p-0 rounded-xl transition-colors"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
                                         </div>
                                     ))}
+                                    {additionalCosts.length === 0 && (
+                                        <div className="text-center py-10 border-2 border-dashed rounded-[32px] border-slate-100">
+                                            <p className="text-slate-400 text-sm font-medium">No additional costs added for this booking.</p>
+                                        </div>
+                                    )}
                                 </div>
                              </div>
                         </TabsContent>

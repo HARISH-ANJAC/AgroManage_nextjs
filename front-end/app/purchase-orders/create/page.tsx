@@ -126,6 +126,24 @@ function CreatePurchaseOrderContent() {
     loadPo();
   }, [editId]);
 
+  // Step 1.5: Set default master IDs for new PO automatically from master data
+  useEffect(() => {
+    if (editId) return; // Only for new orders
+    
+    const shouldUpdate = !header.companyId || !header.supplierId || !header.storeId || !header.paymentTermId || !header.currencyId;
+    if (!shouldUpdate) return;
+
+    setHeader(prev => ({
+      ...prev,
+      companyId: prev.companyId || (companies[0]?.id || 0),
+      supplierId: prev.supplierId || (suppliers[0]?.id || 0),
+      storeId: prev.storeId || (stores[0]?.id || 0),
+      paymentTermId: prev.paymentTermId || (paymentTerms[0]?.id || 0),
+      currencyId: prev.currencyId || (currencies[0]?.id || 0),
+      modeOfPayment: prev.modeOfPayment || "Cash"
+    }));
+  }, [editId, companies, suppliers, stores, paymentTerms, currencies]);
+
   // Step 2: Once master data arrives, resolve product names and cost type names
   useEffect(() => {
     if (!editId || rawDbItems.length === 0 || productsData.length === 0) return;
@@ -178,6 +196,11 @@ function CreatePurchaseOrderContent() {
       toast.error("Approval action failed");
     }
   };
+
+  const selectedCurrency = useMemo(() => {
+    const curr = currencies.find((c: any) => Number(c.id) === Number(header.currencyId));
+    return curr?.currencyCode || curr?.currencyName || "$";
+  }, [header.currencyId, currencies]);
 
   // Calculations
   const subtotal = useMemo(() => items.reduce((sum, i) => sum + i.amount, 0), [items]);
@@ -433,7 +456,7 @@ function CreatePurchaseOrderContent() {
                       <td className="p-4"><Input type="number" value={item.rate} onChange={e => handleUpdateItem(item.id, "rate", Number(e.target.value))} className="w-24 mx-auto text-center border-none" /></td>
                       <td className="p-4"><Input type="number" value={item.discPercent} onChange={e => handleUpdateItem(item.id, "discPercent", Number(e.target.value))} className="w-16 mx-auto text-center border-none" /></td>
                       <td className="p-4"><Input type="number" value={item.vatPercent} onChange={e => handleUpdateItem(item.id, "vatPercent", Number(e.target.value))} className="w-16 mx-auto text-center border-none" /></td>
-                      <td className="p-4 text-right font-bold text-[#0F172A]">${finalAmount.toFixed(2)}</td>
+                      <td className="p-4 text-right font-bold text-[#0F172A]">{selectedCurrency} {finalAmount.toFixed(2)}</td>
                       <td className="p-4"><button onClick={() => setItems(items.filter(i => i.id !== item.id))}><Trash2 className="w-4 h-4 text-destructive" /></button></td>
                     </tr>
                   );
@@ -539,14 +562,14 @@ function CreatePurchaseOrderContent() {
           <div className="bg-[#1A2E28] rounded-[32px] p-8 text-white shadow-xl">
             <h3 className="text-lg font-bold mb-8">Order Summary</h3>
             <div className="space-y-4 text-sm opacity-80">
-              <div className="flex justify-between"><span>Product Amount</span><span>${subtotal.toFixed(2)}</span></div>
-              <div className="flex justify-between"><span>Discount</span><span>-${totalDisc.toFixed(2)}</span></div>
-              <div className="flex justify-between"><span>Tax (VAT)</span><span>${totalVat.toFixed(2)}</span></div>
-              <div className="flex justify-between"><span>Add. Costs</span><span>${totalAdditional.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span>Product Amount</span><span>{selectedCurrency} {subtotal.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span>Discount</span><span>-{selectedCurrency} {totalDisc.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span>Tax (VAT)</span><span>{selectedCurrency} {totalVat.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span>Add. Costs</span><span>{selectedCurrency} {totalAdditional.toFixed(2)}</span></div>
             </div>
             <div className="mt-10 pt-8 border-t border-white/10">
               <p className="text-[10px] uppercase font-bold tracking-widest opacity-50 mb-1">Grand Total</p>
-              <p className="text-4xl font-extrabold">${grandTotal.toFixed(2)}</p>
+              <p className="text-4xl font-extrabold">{selectedCurrency} {grandTotal.toFixed(2)}</p>
               <Button onClick={() => handleSave(true)} className="w-full mt-10 bg-[#059669] hover:bg-[#059669]/90 h-14 rounded-2xl font-bold">Confirm and Submit</Button>
             </div>
           </div>

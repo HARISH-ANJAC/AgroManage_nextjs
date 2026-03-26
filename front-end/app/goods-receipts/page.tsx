@@ -41,14 +41,23 @@ export default function GoodsReceiptsPage() {
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { grns, isLoading } = useGoodsReceiptStore();
+  const { grns, isLoading, getGRNById } = useGoodsReceiptStore();
   const { data: stores } = useMasterData("stores");
   const { data: suppliers } = useMasterData("suppliers");
 
   const storeMap = Object.fromEntries(stores.map((s: any) => [s.id, s.storeName]));
   const supplierMap = Object.fromEntries(suppliers.map((s: any) => [s.id, s.supplierName]));
 
-  const handleExportPDF = async (grn: any) => {
+  const handleExportPDF = async (grnHeader: any) => {
+    toast.loading("Fetching GRN details...", { id: "grn-pdf" });
+    const fullGrn = await getGRNById(grnHeader.GRN_REF_NO || grnHeader.grnRefNo);
+    
+    if (!fullGrn) {
+      toast.error("Failed to load GRN details", { id: "grn-pdf" });
+      return;
+    }
+
+    const grn = { ...fullGrn.header, items: fullGrn.items };
     const doc = new jsPDF();
     const refNo = grn.GRN_REF_NO || grn.grnRefNo || "GRN";
     const date = formatDate(grn.GRN_DATE || grn.grnDate);
@@ -101,9 +110,17 @@ export default function GoodsReceiptsPage() {
       startY: 88,
       head: [["#", "Product", "PO Qty", "Received Qty", "UOM", "Shortage", "Remarks"]],
       body: (grn.items || []).map((item: any, idx: number) => {
-        const poQty = Number(item.poQty || 0);
+        const poQty = Number(item.poQty || item.PO_QTY || 0);
         const recQty = Number(item.TOTAL_QTY || item.receivedQty || 0);
-        return [idx + 1, item.productName || item.PRODUCT_NAME || "—", poQty, recQty, item.UOM || item.uom || "KG", poQty - recQty, item.REMARKS || ""];
+        return [
+          idx + 1, 
+          item.productName || item.PRODUCT_NAME || "—", 
+          poQty, 
+          recQty, 
+          item.UOM || item.uom || "KG", 
+          poQty - recQty, 
+          item.REMARKS || ""
+        ];
       }),
       styles: { fontSize: 9, cellPadding: 3 },
       headStyles: { fillColor: [26, 46, 40], textColor: [255, 255, 255] },
@@ -119,7 +136,7 @@ export default function GoodsReceiptsPage() {
     doc.text("__________________", 120, finalY + 10);
 
     doc.save(`${refNo}.pdf`);
-    toast.success("GRN PDF generated successfully");
+    toast.success("GRN PDF generated successfully", { id: "grn-pdf" });
   };
 
   const confirmDelete = async () => {

@@ -16,12 +16,23 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+import { sql } from "drizzle-orm";
+
 export const getPurchaseInvoices = async (req: Request, res: Response): Promise<Response> => {
     try {
-        const data = await db.select().from(TBL_PURCHASE_INVOICE_HDR);
+        // Aggregating unique GRN references from the detail table
+        const data = await db.select({
+            ...Object.fromEntries(Object.keys(TBL_PURCHASE_INVOICE_HDR).map(k => [k, TBL_PURCHASE_INVOICE_HDR[k as keyof typeof TBL_PURCHASE_INVOICE_HDR]])),
+            GRN_REF_NO: sql<string>`(
+                SELECT string_agg(DISTINCT "GRN_REF_NO", ', ') 
+                FROM "stoentries"."TBL_PURCHASE_INVOICE_DTL" 
+                WHERE "PURCHASE_INVOICE_REF_NO" = ${TBL_PURCHASE_INVOICE_HDR.PURCHASE_INVOICE_REF_NO}
+            )`
+        }).from(TBL_PURCHASE_INVOICE_HDR);
+        
         return res.status(200).json(data);
     } catch (error) {
-        console.error(error);
+        console.error("Get Purchase Invoices Error:", error);
         return res.status(500).json({ msg: "Internal server error" });
     }
 };
@@ -287,7 +298,7 @@ export const updatePurchaseInvoice = async (req: Request, res: Response): Promis
 
 export const uploadInvoiceFile = async (req: Request, res: Response): Promise<Response> => {
     try {
-        let rawId = req.params[0] || req.params.id;
+        let rawId = req.query.id || req.params.id || req.params[0];
         if (Array.isArray(rawId)) rawId = rawId.join('/');
         const id = decodeURIComponent(rawId as string);
         const { documentType, description, fileName, contentType, contentData, audit } = req.body;

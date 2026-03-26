@@ -44,16 +44,24 @@ const formatDate = (dateStr: string) => {
 };
 
 export default function PurchaseOrdersPage() {
-  const { orders, deleteOrder, isLoading } = usePurchaseOrderStore();
+  const { orders, deleteOrder, isLoading, getOrderById } = usePurchaseOrderStore();
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const navigate = useRouter();
 
-  const handleExportPDF = async (order: any) => {
-    const h = order.header || order;
-    const items = order.items || [];
+  const handleExportPDF = async (orderHeader: any) => {
+    toast.loading("Fetching PO details...", { id: "po-pdf" });
+    const fullOrder = await getOrderById(orderHeader.PO_REF_NO || orderHeader.poRefNo);
+    
+    if (!fullOrder) {
+      toast.error("Failed to load PO details", { id: "po-pdf" });
+      return;
+    }
+
+    const h = fullOrder.header;
+    const items = fullOrder.items || [];
     const doc = new jsPDF();
-    const currency = h.currency || "$";
+    const currency = h.CURRENCY_ID === 2 ? "TZS" : "$";
 
     // Header & Logo
     doc.setFontSize(22);
@@ -80,11 +88,11 @@ export default function PurchaseOrdersPage() {
     
     doc.setFontSize(10);
     doc.setTextColor(100, 116, 139); // #64748B
-    doc.text(`Reference: ${h.poRefNo || h.poNumber}`, 14, 30);
-    doc.text(`Date: ${h.poDate || "N/A"}`, 14, 35);
-    doc.text(`Status: ${h.status || "Draft"}`, 14, 40);
+    doc.text(`Reference: ${h.PO_REF_NO}`, 14, 30);
+    doc.text(`Date: ${formatDate(h.PO_DATE)}`, 14, 35);
+    doc.text(`Status: ${h.STATUS_ENTRY || "Draft"}`, 14, 40);
 
-    // Supplier & Store Info
+    // Supplier & Store Info - using IDs as a fallback if names not joined
     doc.setFontSize(12);
     doc.setTextColor(15, 23, 42);
     doc.text("Supplier Details", 14, 55);
@@ -92,11 +100,11 @@ export default function PurchaseOrdersPage() {
 
     doc.setFontSize(10);
     doc.setTextColor(71, 85, 105);
-    doc.text(h.supplier || "N/A", 14, 62);
-    doc.text(h.store || "Main Warehouse", 120, 62);
+    doc.text(`Supplier: ${h.SUPPLIER_ID}`, 14, 62);
+    doc.text(`Store: ${h.PO_STORE_ID}`, 120, 62);
     
-    if (h.purchaseType) doc.text(`Type: ${h.purchaseType}`, 14, 67);
-    if (h.paymentTerm) doc.text(`Payment: ${h.paymentTerm}`, 14, 72);
+    if (h.PURCHASE_TYPE) doc.text(`Type: ${h.PURCHASE_TYPE}`, 14, 67);
+    if (h.PAYMENT_TERM_ID) doc.text(`Payment Term ID: ${h.PAYMENT_TERM_ID}`, 14, 72);
 
     // Item Table
     autoTable(doc, {
@@ -104,12 +112,12 @@ export default function PurchaseOrdersPage() {
       head: [['#', 'Product', 'Qty/Pack', 'Total Qty', 'UOM', 'Rate', 'Amount']],
       body: items.map((item: any, index: number) => [
         index + 1,
-        item.product,
-        item.qtyPerPack,
-        item.totalQty,
-        item.uom,
-        `${currency} ${item.rate.toLocaleString()}`,
-        `${currency} ${item.amount.toLocaleString()}`
+        item.PRODUCT_NAME || item.PRODUCT_ID || "—",
+        item.QTY_PER_PACKING || "—",
+        item.TOTAL_QTY || 0,
+        item.UOM || "—",
+        `${currency} ${(Number(item.RATE_PER_QTY) || 0).toLocaleString()}`,
+        `${currency} ${(Number(item.PRODUCT_AMOUNT) || 0).toLocaleString()}`
       ]),
       styles: { fontSize: 9, cellPadding: 3 },
       headStyles: { fillColor: [26, 46, 40], textColor: [255, 255, 255] }, // #1A2E28
@@ -130,22 +138,22 @@ export default function PurchaseOrdersPage() {
     doc.text("Grand Total:", marginX, finalY + 16);
 
     doc.setFontSize(10);
-    doc.text(`${currency} ${(h.productAmount || 0).toLocaleString()}`, 190, finalY, { align: 'right' });
-    doc.text(`${currency} ${(h.totalVatAmount || 0).toLocaleString()}`, 190, finalY + 7, { align: 'right' });
+    doc.text(`${currency} ${(Number(h.PRODUCT_HDR_AMOUNT) || 0).toLocaleString()}`, 190, finalY, { align: 'right' });
+    doc.text(`${currency} ${(Number(h.TOTAL_VAT_HDR_AMOUNT) || 0).toLocaleString()}`, 190, finalY + 7, { align: 'right' });
     
     doc.setFontSize(14);
-    doc.text(`${currency} ${(h.finalAmount || 0).toLocaleString()}`, 190, finalY + 16, { align: 'right' });
+    doc.text(`${currency} ${(Number(h.FINAL_PURCHASE_HDR_AMOUNT) || 0).toLocaleString()}`, 190, finalY + 16, { align: 'right' });
 
     // Footer note
-    if (h.shipmentRemarks) {
+    if (h.SHIPMENT_REMARKS) {
         doc.setFontSize(9);
         doc.setTextColor(100, 116, 139);
         doc.text("Remarks:", 14, finalY + 30);
-        doc.text(h.shipmentRemarks, 14, finalY + 35, { maxWidth: 100 });
+        doc.text(h.SHIPMENT_REMARKS, 14, finalY + 35, { maxWidth: 100 });
     }
 
-    doc.save(`${h.poRefNo || "Purchase_Order"}.pdf`);
-    toast.success("PDF generated successfully");
+    doc.save(`${h.PO_REF_NO || "Purchase_Order"}.pdf`);
+    toast.success("PDF generated successfully", { id: "po-pdf" });
   };
 
   if (isLoading) {

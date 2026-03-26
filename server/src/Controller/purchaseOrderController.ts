@@ -8,7 +8,7 @@ import {
     TBL_PURCHASE_ORDER_CONVERSATION_DTL,
     TBL_PRODUCT_MASTER
 } from "../db/schema/index.js";
-import { eq, and, sql, like, desc } from "drizzle-orm";
+import { eq, and, sql, like, desc, getTableColumns } from "drizzle-orm";
 
 export const getPurchaseOrders = async (req: Request, res: Response): Promise<Response> => {
     try {
@@ -28,7 +28,13 @@ export const getPurchaseOrderById = async (req: Request, res: Response): Promise
         const header = await db.select().from(TBL_PURCHASE_ORDER_HDR).where(eq(TBL_PURCHASE_ORDER_HDR.PO_REF_NO, id)).limit(1);
         if (!header.length) return res.status(404).json({ msg: "Purchase Order not found" });
 
-        const items = await db.select().from(TBL_PURCHASE_ORDER_DTL).where(eq(TBL_PURCHASE_ORDER_DTL.PO_REF_NO, id as string));
+        const items = await db.select({
+            ...getTableColumns(TBL_PURCHASE_ORDER_DTL),
+            PRODUCT_NAME: TBL_PRODUCT_MASTER.PRODUCT_NAME
+        })
+        .from(TBL_PURCHASE_ORDER_DTL)
+        .leftJoin(TBL_PRODUCT_MASTER, eq(TBL_PURCHASE_ORDER_DTL.PRODUCT_ID, TBL_PRODUCT_MASTER.PRODUCT_ID))
+        .where(eq(TBL_PURCHASE_ORDER_DTL.PO_REF_NO, id as string));
         const additionalCosts = await db.select().from(TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS).where(eq(TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS.PO_REF_NO, id as string));
         const files = await db.select().from(TBL_PURCHASE_ORDER_FILES_UPLOAD).where(eq(TBL_PURCHASE_ORDER_FILES_UPLOAD.PO_REF_NO, id as string));
         const conversations = await db.select().from(TBL_PURCHASE_ORDER_CONVERSATION_DTL).where(eq(TBL_PURCHASE_ORDER_CONVERSATION_DTL.PO_REF_NO, id as string)).orderBy(sql`${TBL_PURCHASE_ORDER_CONVERSATION_DTL.CREATED_DATE} ASC`);

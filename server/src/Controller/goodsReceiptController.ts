@@ -1,11 +1,13 @@
 import { Request, Response } from "express";
 import { db } from "../db/index.js";
 import { 
-    TBL_GOODS_INWARD_GRN_HDR, 
+    TBL_GOODS_INWARD_GRN_HDR,
     TBL_GOODS_INWARD_GRN_DTL,
-    TBL_PURCHASE_ORDER_HDR
+    TBL_PURCHASE_ORDER_HDR,
+    TBL_PRODUCT_MASTER,
+    TBL_PURCHASE_ORDER_DTL
 } from "../db/schema/index.js";
-import { eq } from "drizzle-orm";
+import { eq, getTableColumns } from "drizzle-orm";
 
 export const getGoodsReceipts = async (req: Request, res: Response): Promise<Response> => {
     try {
@@ -23,7 +25,15 @@ export const getGoodsReceiptById = async (req: Request, res: Response): Promise<
         const header = await db.select().from(TBL_GOODS_INWARD_GRN_HDR).where(eq(TBL_GOODS_INWARD_GRN_HDR.GRN_REF_NO, id)).limit(1);
         if (!header.length) return res.status(404).json({ msg: "Goods Receipt not found" });
 
-        const items = await db.select().from(TBL_GOODS_INWARD_GRN_DTL).where(eq(TBL_GOODS_INWARD_GRN_DTL.GRN_REF_NO, id as string));
+        const items = await db.select({
+            ...getTableColumns(TBL_GOODS_INWARD_GRN_DTL),
+            productName: TBL_PRODUCT_MASTER.PRODUCT_NAME,
+            poQty: TBL_PURCHASE_ORDER_DTL.TOTAL_QTY
+        })
+        .from(TBL_GOODS_INWARD_GRN_DTL)
+        .leftJoin(TBL_PRODUCT_MASTER, eq(TBL_GOODS_INWARD_GRN_DTL.PRODUCT_ID, TBL_PRODUCT_MASTER.PRODUCT_ID))
+        .leftJoin(TBL_PURCHASE_ORDER_DTL, eq(TBL_GOODS_INWARD_GRN_DTL.PO_DTL_SNO, TBL_PURCHASE_ORDER_DTL.SNO))
+        .where(eq(TBL_GOODS_INWARD_GRN_DTL.GRN_REF_NO, id as string));
 
         return res.status(200).json({
             header: header[0],
