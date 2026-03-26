@@ -134,10 +134,10 @@ async function main() {
       .values(seedRoles)
       .onConflictDoNothing()
       .returning();
-    const superAdminRoleId = insertedRoles.find(r => r.ROLE_NAME === "Super Admin")?.ROLE_ID || 1;
-    const adminRoleId = insertedRoles.find(r => r.ROLE_NAME === "Admin")?.ROLE_ID || 2;
-    const managerRoleId = insertedRoles.find(r => r.ROLE_NAME === "Manager")?.ROLE_ID || 3;
-    const userRoleId = insertedRoles.find(r => r.ROLE_NAME === "User")?.ROLE_ID || 4;
+    const superAdminRoleId = insertedRoles.find((r: any) => r.ROLE_NAME === "Super Admin")?.ROLE_ID || 1;
+    const adminRoleId = insertedRoles.find((r: any) => r.ROLE_NAME === "Admin")?.ROLE_ID || 2;
+    const managerRoleId = insertedRoles.find((r: any) => r.ROLE_NAME === "Manager")?.ROLE_ID || 3;
+    const userRoleId = insertedRoles.find((r: any) => r.ROLE_NAME === "User")?.ROLE_ID || 4;
 
     // 2. Users
     console.log("Seeding Users...");
@@ -164,7 +164,7 @@ async function main() {
       .values(users)
       .onConflictDoNothing()
       .returning();
-    const sriUserId = insertedUsers.find(u => u.LOGIN_NAME === "Sri")?.LOGIN_ID_USER_HDR || 1;
+    const sriUserId = insertedUsers.find((u: any) => u.LOGIN_NAME === "Sri")?.LOGIN_ID_USER_HDR || 1;
 
     // 3. Currencies
     console.log("Seeding Currencies...");
@@ -195,8 +195,8 @@ async function main() {
       .values(currencies)
       .onConflictDoNothing()
       .returning();
-    const tzsId = insertedCurrencies.find((c) => c.ADDRESS === "TZS")?.CURRENCY_ID || 1;
-    const usdId = insertedCurrencies.find((c) => c.ADDRESS === "USD")?.CURRENCY_ID || 2;
+    const tzsId = insertedCurrencies.find((c: any) => c.ADDRESS === "TZS")?.CURRENCY_ID || 1;
+    const usdId = insertedCurrencies.find((c: any) => c.ADDRESS === "USD")?.CURRENCY_ID || 2;
 
     // 4. Countries
     console.log("Seeding Countries...");
@@ -294,11 +294,11 @@ async function main() {
       .values(regionsData)
       .onConflictDoNothing()
       .returning();
-    const arushaId = insertedRegions.find((r) => r.REGION_NAME === "Arusha")?.REGION_ID || 1;
-    const darId = insertedRegions.find((r) => r.REGION_NAME === "Dar es Salaam")?.REGION_ID || 2;
-    const dodomaId = insertedRegions.find((r) => r.REGION_NAME === "Dodoma")?.REGION_ID || 3;
-    const mwanzaId = insertedRegions.find((r) => r.REGION_NAME === "Mwanza")?.REGION_ID || 4;
-    const kilimanjaroId = insertedRegions.find((r) => r.REGION_NAME === "Kilimanjaro")?.REGION_ID || 5;
+    const arushaId = insertedRegions.find((r: any) => r.REGION_NAME === "Arusha")?.REGION_ID || 1;
+    const darId = insertedRegions.find((r: any) => r.REGION_NAME === "Dar es Salaam")?.REGION_ID || 2;
+    const dodomaId = insertedRegions.find((r: any) => r.REGION_NAME === "Dodoma")?.REGION_ID || 3;
+    const mwanzaId = insertedRegions.find((r: any) => r.REGION_NAME === "Mwanza")?.REGION_ID || 4;
+    const kilimanjaroId = insertedRegions.find((r: any) => r.REGION_NAME === "Kilimanjaro")?.REGION_ID || 5;
 
     // 6. Districts
     console.log("Seeding Districts...");
@@ -357,8 +357,8 @@ async function main() {
       .values(districtsData)
       .onConflictDoNothing()
       .returning();
-    const arushaUrbanId = insertedDistricts.find(d => d.District_Name === "Arusha Urban")?.District_id || 1;
-    const ilalaId = insertedDistricts.find(d => d.District_Name === "Ilala")?.District_id || 3;
+    const arushaUrbanId = insertedDistricts.find((d: any) => d.District_Name === "Arusha Urban")?.District_id || 1;
+    const ilalaId = insertedDistricts.find((d: any) => d.District_Name === "Ilala")?.District_id || 3;
 
     // 7. Billing Locations
     console.log("Seeding Billing Locations...");
@@ -796,11 +796,11 @@ async function main() {
       .values(mainCategories)
       .onConflictDoNothing()
       .returning();
-    const fertMainId = insertedMainCats.find(c => c.MAIN_CATEGORY_NAME === "Fertilizers")?.MAIN_CATEGORY_ID || 1;
-    const pesticideMainId = insertedMainCats.find(c => c.MAIN_CATEGORY_NAME === "Pesticides")?.MAIN_CATEGORY_ID || 2;
-    const seedsMainId = insertedMainCats.find(c => c.MAIN_CATEGORY_NAME === "Seeds")?.MAIN_CATEGORY_ID || 3;
-    const herbicidesMainId = insertedMainCats.find(c => c.MAIN_CATEGORY_NAME === "Herbicides")?.MAIN_CATEGORY_ID || 4;
-    const fungicidesMainId = insertedMainCats.find(c => c.MAIN_CATEGORY_NAME === "Fungicides")?.MAIN_CATEGORY_ID || 5;
+    const fertMainId = insertedMainCats.find((c: any) => c.MAIN_CATEGORY_NAME === "Fertilizers")?.MAIN_CATEGORY_ID || 1;
+    const pesticideMainId = insertedMainCats.find((c: any) => c.MAIN_CATEGORY_NAME === "Pesticides")?.MAIN_CATEGORY_ID || 2;
+    const seedsMainId = insertedMainCats.find((c: any) => c.MAIN_CATEGORY_NAME === "Seeds")?.MAIN_CATEGORY_ID || 3;
+    const herbicidesMainId = insertedMainCats.find((c: any) => c.MAIN_CATEGORY_NAME === "Herbicides")?.MAIN_CATEGORY_ID || 4;
+    const fungicidesMainId = insertedMainCats.find((c: any) => c.MAIN_CATEGORY_NAME === "Fungicides")?.MAIN_CATEGORY_ID || 5;
 
     // 19. Product Sub Categories
     console.log("Seeding Product Sub Categories...");
@@ -874,10 +874,10 @@ async function main() {
       .values(subCategories)
       .onConflictDoNothing()
       .returning();
-    const npkSubId = insertedSubCats.find(c => c.SUB_CATEGORY_NAME === "NPK Fertilizers")?.SUB_CATEGORY_ID || 1;
-    const ureaSubId = insertedSubCats.find(c => c.SUB_CATEGORY_NAME === "Urea")?.SUB_CATEGORY_ID || 2;
-    const insecticidesSubId = insertedSubCats.find(c => c.SUB_CATEGORY_NAME === "Insecticides")?.SUB_CATEGORY_ID || 3;
-    const maizeSubId = insertedSubCats.find(c => c.SUB_CATEGORY_NAME === "Maize Seeds")?.SUB_CATEGORY_ID || 4;
+    const npkSubId = insertedSubCats.find((c: any) => c.SUB_CATEGORY_NAME === "NPK Fertilizers")?.SUB_CATEGORY_ID || 1;
+    const ureaSubId = insertedSubCats.find((c: any) => c.SUB_CATEGORY_NAME === "Urea")?.SUB_CATEGORY_ID || 2;
+    const insecticidesSubId = insertedSubCats.find((c: any) => c.SUB_CATEGORY_NAME === "Insecticides")?.SUB_CATEGORY_ID || 3;
+    const maizeSubId = insertedSubCats.find((c: any) => c.SUB_CATEGORY_NAME === "Maize Seeds")?.SUB_CATEGORY_ID || 4;
 
     // 20. Products
     console.log("Seeding Products...");
@@ -940,8 +940,8 @@ async function main() {
       .values(products)
       .onConflictDoNothing()
       .returning();
-    const yaraProductId = insertedProducts.find(p => p.PRODUCT_NAME === "Yara Mila Winner 25kg")?.PRODUCT_ID || 1;
-    const ureaProductId = insertedProducts.find(p => p.PRODUCT_NAME === "Urea 46% 50kg")?.PRODUCT_ID || 2;
+    const yaraProductId = insertedProducts.find((p: any) => p.PRODUCT_NAME === "Yara Mila Winner 25kg")?.PRODUCT_ID || 1;
+    const ureaProductId = insertedProducts.find((p: any) => p.PRODUCT_NAME === "Urea 46% 50kg")?.PRODUCT_ID || 2;
 
     // 21. Suppliers
     console.log("Seeding Suppliers...");
