@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useCallback, useEffect } from "react";
-import { mockData } from "@/app/mock";
 import { toast } from "@/hooks/use-toast";
 
 interface UseCrudOptions {
@@ -14,7 +13,7 @@ export function useMockCrud<T extends { id: number | string }>({ table }: UseCru
 
   // Initialize from mockData if available
   useEffect(() => {
-    const initialData = (mockData as any)[table] || [];
+    const initialData: any[] = [];
     // Convert sno to id if needed for compatibility
     const mapped = initialData.map((item: any) => ({
       ...item,

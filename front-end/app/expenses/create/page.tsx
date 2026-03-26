@@ -100,7 +100,7 @@ function CreateExpenseContent() {
   // Handle PO Selection -> Auto-populate allocations
   const handlePOChange = (ref: string) => {
     setHeader(prev => ({ ...prev, poRefNo: ref }));
-    const selectedPO = poList.find(po =>
+    const selectedPO = poList.find((po: any) =>
       (po.header?.poRefNo || po.poRefNo || po.id) === ref
     );
 
@@ -117,7 +117,7 @@ function CreateExpenseContent() {
   };
 
   const updateAllocation = (id: string, amount: number) => {
-    setAllocations(prev => prev.map(item =>
+    setAllocations(prev => prev.map((item: any) =>
       item.id === id ? { ...item, allocatedAmount: amount } : item
     ));
   };

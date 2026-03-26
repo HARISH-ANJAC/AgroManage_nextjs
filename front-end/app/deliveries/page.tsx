@@ -12,7 +12,33 @@ import { Input } from "@/components/ui/input";
 import { FormLabel as Label } from "@/components/FormLabel";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { DeliveryNote } from "@/app/mock/types/sales.types";
+
+interface DeliveryNote {
+  sno?: string;
+  deliveryNoteRefNo: string;
+  deliveryDate: string;
+  deliverySourceType: 'Sales Order' | 'Direct';
+  deliverySourceRefNo: string;
+  truckNo: string;
+  trailerNo?: string;
+  driverName: string;
+  driverContactNumber?: string;
+  sealNo?: string;
+  remarks?: string;
+  statusEntry: 'Draft' | 'Dispatched' | 'Delivered' | 'Cancelled';
+  companyId?: string;
+  fromStoreId?: string;
+  customerId?: string;
+  currencyId?: string;
+  exchangeRate?: number;
+  totalProductAmount?: number;
+  vatAmount?: number;
+  finalSalesAmount?: number;
+  createdBy?: string;
+  createdDate?: string;
+  submittedBy?: string;
+  submittedDate?: string;
+}
 
 type DeliveryNoteWithId = DeliveryNote & { id: string | number };
 

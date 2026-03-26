@@ -22,7 +22,9 @@ export const getPurchaseOrders = async (req: Request, res: Response): Promise<Re
 
 export const getPurchaseOrderById = async (req: Request, res: Response): Promise<Response> => {
     try {
-        const id = decodeURIComponent(req.params.id);
+        let idRaw = (req.query.id || req.params.id || req.params[0]) as string;
+        if (Array.isArray(idRaw)) idRaw = idRaw.join('/');
+        const id = decodeURIComponent(idRaw);
         const header = await db.select().from(TBL_PURCHASE_ORDER_HDR).where(eq(TBL_PURCHASE_ORDER_HDR.PO_REF_NO, id)).limit(1);
         if (!header.length) return res.status(404).json({ msg: "Purchase Order not found" });
 
@@ -179,7 +181,9 @@ export const createPurchaseOrder = async (req: Request, res: Response): Promise<
 
 export const approvePurchaseOrder = async (req: Request, res: Response): Promise<Response> => {
     try {
-        const id = decodeURIComponent(req.params.id);
+        let idRaw = (req.query.id || req.params.id || req.params[0]) as string;
+        if (Array.isArray(idRaw)) idRaw = idRaw.join('/');
+        const id = decodeURIComponent(idRaw);
         const { status, remarks, user, level } = req.body; // level: "head" | "1" | "2" | "final"
         const updateObj: any = {};
         const ip = req.ip || "127.0.0.1";
@@ -234,7 +238,9 @@ export const approvePurchaseOrder = async (req: Request, res: Response): Promise
 };
 
 export const updatePurchaseOrder = async (req: Request, res: Response): Promise<Response> => {
-    const id = decodeURIComponent(req.params.id);
+    let idRaw = (req.query.id || req.params.id || req.params[0]) as string;
+    if (Array.isArray(idRaw)) idRaw = idRaw.join('/');
+    const id = decodeURIComponent(idRaw);
     const transaction = await db.transaction(async (tx) => {
         try {
             const { header, items, additionalCosts, files, audit } = req.body;
@@ -332,7 +338,9 @@ export const updatePurchaseOrder = async (req: Request, res: Response): Promise<
 
 export const archivePurchaseOrder = async (req: Request, res: Response): Promise<Response> => {
     try {
-        const id = decodeURIComponent(req.params.id);
+        let idRaw = (req.query.id || req.params.id || req.params[0]) as string;
+        if (Array.isArray(idRaw)) idRaw = idRaw.join('/');
+        const id = decodeURIComponent(idRaw);
         await db.update(TBL_PURCHASE_ORDER_HDR)
             .set({ STATUS_ENTRY: "Archived" })
             .where(eq(TBL_PURCHASE_ORDER_HDR.PO_REF_NO, id as string));
