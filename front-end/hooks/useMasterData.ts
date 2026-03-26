@@ -54,15 +54,22 @@ export function useMasterData(domain: string, initialData: any[] = [], idPrefix:
   const mapItem = (item: any, index: number) => {
     const normalized: any = {};
     const keys = Object.keys(item);
-    // Be more thorough in finding the ID column (Case Insensitive)
-    const idKey = keys.find(k => k.toUpperCase() === 'SNO') || 
+    
+    // Find the ID column (Case Insensitive)
+    const idKey = keys.find(k => k.toUpperCase() === 'ID' || k.toLowerCase() === 'id') || 
+                  keys.find(k => k.toUpperCase() === 'SNO') || 
                   keys.find(k => k.toUpperCase().endsWith('_REF_NO')) ||
                   keys.find(k => k.toUpperCase().endsWith('_ID')) || 
-                  keys.find(k => k.toUpperCase() === 'ID') ||
                   keys[0]; 
     
-    Object.keys(item).forEach(key => {
-      normalized[toCamel(key)] = item[key];
+    keys.forEach(key => {
+      // If the key is already camelCase (contains uppercase but no underscore), leave it.
+      // Otherwise, if it has underscores or is all caps, convert it.
+      if (key.includes('_') || key === key.toUpperCase()) {
+        normalized[toCamel(key)] = item[key];
+      } else {
+        normalized[key] = item[key];
+      }
     });
     
     return { ...normalized, id: item[idKey] ?? `temp-id-${index}` };

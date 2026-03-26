@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Send, CheckCircle2, Info, Truck, User, Package, Calendar, Warehouse as WarehouseIcon } from "lucide-react";
+import { ArrowLeft, Save, Send, Info, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,14 +14,15 @@ import { useGoodsReceiptStore } from "@/hooks/useGoodsReceiptStore";
 
 interface GRNItem {
   id: number;
+  poDtlSno: number | null;
+  productId: number | null;
   productName: string;
+  mainCategoryId: number | null;
+  subCategoryId: number | null;
   poQty: number;
   receivedQty: number;
   uom: string;
   qtyPerPack: number;
-  packing: string;
-  qualityCheck: string;
-  condition: string;
   remarks: string;
 }
 
@@ -31,177 +32,253 @@ function CreateGRNContent() {
   const editId = searchParams.get("id");
   const today = new Date().toISOString().split("T")[0];
 
-  // Master Data
-  const { orders: pos } = usePurchaseOrderStore();
+  const { orders: pos, getOrderById, isLoading: posLoading } = usePurchaseOrderStore();
   const { data: stores } = useMasterData("stores");
-  const { addGRN, updateGRN, getGRNById } = useGoodsReceiptStore();
+  const { addGRN, updateGRN, getGRNById, grns = [], isLoading: grnsLoading } = useGoodsReceiptStore();
+
+  const [poLoading, setPoLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Compute next GRN ref no from existing GRNs
+  const nextGrnRefNo = useMemo(() => {
+    const year = new Date().getFullYear();
+    const month = String(new Date().getMonth() + 1).padStart(2, "0");
+    const prefix = `GRN/${year}/${month}/`;
+    const existing = grns
+      .map((g: any) => {
+        const ref = g.GRN_REF_NO || g.grnRefNo || "";
+        if (ref.startsWith(prefix)) {
+          return parseInt(ref.replace(prefix, ""), 10) || 0;
+        }
+        return 0;
+      })
+      .filter(Boolean);
+    const next = existing.length > 0 ? Math.max(...existing) + 1 : 1;
+    return `${prefix}${String(next).padStart(3, "0")}`;
+  }, [grns]);
+
+  // POs that are Approved and don't have an existing GRN
+  const usedPoRefs = useMemo(() => {
+    return new Set(grns.map((g: any) => g.PO_REF_NO || g.poRefNo || "").filter(Boolean));
+  }, [grns]);
+
+  const availablePOs = useMemo(() => {
+    return pos.filter((p: any) => {
+      const h = p.header || p;
+      const refNo = h.PO_REF_NO || h.poRefNo || "";
+      const status = h.STATUS_ENTRY || h.status || "";
+      const isApproved = status === "Approved";
+      const alreadyUsed = usedPoRefs.has(refNo);
+      return isApproved && !alreadyUsed;
+    });
+  }, [pos, usedPoRefs]);
 
   const [header, setHeader] = useState({
-    grnRefNo: `GRN/${new Date().getFullYear()}/${String(new Date().getMonth() + 1).padStart(2, "0")}/001`,
+    grnRefNo: nextGrnRefNo,
     grnDate: today,
     poRefNo: "",
-    supplierId: "",
+    supplierId: "" as string | number,
     supplierName: "",
-    companyId: "",
-    grnStoreId: "",
+    companyId: "" as string | number,
+    grnStoreId: "" as string | number,
+    grnSource: "Purchase Order",
+    supplierInvoiceNo: "",
+    deliveryNoteRefNo: "",
     driverName: "",
     driverContact: "",
     vehicleNo: "",
     containerNo: "",
     sealNo: "",
+    remarks: "",
     status: "Received",
   });
 
   const [items, setItems] = useState<GRNItem[]>([]);
 
-  // Effect to load items when PO is selected
+  // Update GRN ref no once grns load (only for new GRN)
   useEffect(() => {
-    // If editing, we skip the auto-populator unless specifically requested or if data is missing
-    if (editId) return;
-
-    if (header.poRefNo) {
-      const selectedPO = pos.find((p: any) => (p.header?.poRefNo || p.poRefNo) === header.poRefNo);
-      
-      if (selectedPO) {
-        // Automatically link the backend identifiers
-        setHeader(prev => ({
-           ...prev,
-           supplierId: selectedPO.header?.supplierId || selectedPO.supplierId || "",
-           supplierName: selectedPO.header?.supplier || selectedPO.supplier || "",
-           companyId: selectedPO.header?.companyId || selectedPO.companyId || "",
-        }));
-      }
-
-      if (selectedPO && selectedPO.items) {
-        const grnItems = selectedPO.items.map((item: any, index: number) => ({
-          id: index + 1,
-          productName: item.product || item.productName || "Product",
-          poQty: item.totalQty || item.quantity || 0,
-          receivedQty: item.totalQty || item.quantity || 0,
-          uom: item.uom || "KG",
-          qtyPerPack: item.qtyPerPack || 0,
-          packing: item.packing || "",
-          qualityCheck: "Good",
-          condition: "Perfect",
-          remarks: "",
-        }));
-        setItems(grnItems);
-      } else {
-        // Mock items if selectedPO does not have items (for demo)
-        setItems([
-          { 
-            id: 1, 
-            productName: "Premium White Maize", 
-            poQty: 500, 
-            receivedQty: 500, 
-            uom: "KG",
-            qtyPerPack: 50,
-            packing: "Bags",
-            qualityCheck: "Good", 
-            condition: "Perfect", 
-            remarks: "" 
-          }
-        ]);
-      }
+    if (!editId) {
+      setHeader(prev => ({ ...prev, grnRefNo: nextGrnRefNo }));
     }
-  }, [header.poRefNo, pos, editId]);
+  }, [nextGrnRefNo, editId]);
+
+  // Auto-populate from PO when selected
+  useEffect(() => {
+    if (editId || !header.poRefNo) return;
+
+    const load = async () => {
+      setPoLoading(true);
+      try {
+        // Try full fetch for items
+        const full = await getOrderById(header.poRefNo);
+        const h = full?.header || full;
+        const poItems: any[] = full?.items || [];
+
+        if (h) {
+          setHeader(prev => ({
+            ...prev,
+            supplierId: h.SUPPLIER_ID || h.supplierId || prev.supplierId,
+            supplierName: h.supplierName || h.supplier || h.Supplier_Name || "",
+            companyId: h.COMPANY_ID || h.companyId || prev.companyId,
+          }));
+        }
+
+        if (poItems.length > 0) {
+          setItems(poItems.map((item: any, idx: number) => ({
+            id: idx + 1,
+            poDtlSno: item.SNO || item.poDtlSno || null,
+            productId: item.PRODUCT_ID || item.productId || null,
+            productName: item.PRODUCT_NAME || item.productName || item.product || "Product",
+            mainCategoryId: item.MAIN_CATEGORY_ID || item.mainCategoryId || null,
+            subCategoryId: item.SUB_CATEGORY_ID || item.subCategoryId || null,
+            poQty: Number(item.TOTAL_QTY || item.totalQty || 0),
+            receivedQty: Number(item.TOTAL_QTY || item.totalQty || 0),
+            uom: item.UOM || item.uom || "KG",
+            qtyPerPack: Number(item.QTY_PER_PACKING || item.qtyPerPack || 0),
+            remarks: "",
+          })));
+        } else {
+          setItems([]);
+        }
+      } catch (e) {
+        toast.error("Failed to load PO details");
+      } finally {
+        setPoLoading(false);
+      }
+    };
+
+    load();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [header.poRefNo, editId]);
 
   // Load GRN for Editing
   useEffect(() => {
-    if (editId) {
-      const existing = getGRNById(editId);
-      if (existing) {
-        setHeader({
-          grnRefNo: existing.grnRefNo || "",
-          grnDate: existing.grnDate ? new Date(existing.grnDate).toISOString().split('T')[0] : today,
-          poRefNo: existing.poRefNo || "",
-          supplierId: existing.supplierId || "",
-          supplierName: existing.supplierName || "",
-          companyId: existing.companyId || "",
-          grnStoreId: existing.grnStoreId || "",
-          driverName: existing.driverName || "",
-          driverContact: existing.driverContact || "",
-          vehicleNo: existing.vehicleNo || "",
-          containerNo: existing.containerNo || "",
-          sealNo: existing.sealNo || "",
-          status: existing.status || "Received",
-        });
-        setItems(existing.items || []);
-      } else {
-        toast.error("GRN not found.");
-      }
-    }
-  }, [editId, getGRNById, today]);
+    if (!editId) return;
+
+    const loadEdit = async () => {
+      const existing = await getGRNById(editId);
+      if (!existing) { toast.error("GRN not found."); return; }
+
+      const eHeader = existing.header || existing;
+      setHeader({
+        grnRefNo: eHeader.GRN_REF_NO || eHeader.grnRefNo || "",
+        grnDate: eHeader.GRN_DATE ? new Date(eHeader.GRN_DATE).toISOString().split("T")[0] : today,
+        poRefNo: eHeader.PO_REF_NO || eHeader.poRefNo || "",
+        supplierId: eHeader.SUPPLIER_ID || eHeader.supplierId || "",
+        supplierName: eHeader.supplierName || "",
+        companyId: eHeader.COMPANY_ID || eHeader.companyId || "",
+        grnStoreId: eHeader.GRN_STORE_ID || eHeader.grnStoreId || "",
+        grnSource: eHeader.GRN_SOURCE || "Purchase Order",
+        supplierInvoiceNo: eHeader.SUPPLIER_INVOICE_NUMBER || "",
+        deliveryNoteRefNo: eHeader.DELIVERY_NOTE_REF_NO || "",
+        driverName: eHeader.DRIVER_NAME || "",
+        driverContact: eHeader.DRIVER_CONTACT_NUMBER || "",
+        vehicleNo: eHeader.VEHICLE_NO || "",
+        containerNo: eHeader.CONTAINER_NO || "",
+        sealNo: eHeader.SEAL_NO || "",
+        remarks: eHeader.REMARKS || "",
+        status: eHeader.STATUS_ENTRY || "Received",
+      });
+
+      const rawItems: any[] = existing.items || [];
+      setItems(rawItems.map((item: any, idx: number) => ({
+        id: idx + 1,
+        poDtlSno: item.PO_DTL_SNO || item.poDtlSno || null,
+        productId: item.PRODUCT_ID || item.productId || null,
+        productName: item.productName || item.PRODUCT_NAME || "Product",
+        mainCategoryId: item.MAIN_CATEGORY_ID || null,
+        subCategoryId: item.SUB_CATEGORY_ID || null,
+        poQty: Number(item.poQty || item.PO_QTY || item.TOTAL_QTY || 0),
+        receivedQty: Number(item.TOTAL_QTY || item.receivedQty || 0),
+        uom: item.UOM || item.uom || "KG",
+        qtyPerPack: Number(item.QTY_PER_PACKING || item.qtyPerPack || 0),
+        remarks: item.REMARKS || "",
+      })));
+    };
+
+    loadEdit();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editId]);
 
   const updateItem = (id: number, field: string, value: string | number) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
-    );
+    setItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
 
-  const handleGenerateGRN = async () => {
-    if (!header.poRefNo) {
-      toast.error("Please select a PO Reference");
-      return;
-    }
-    if (!header.grnStoreId) {
-      toast.error("Please select a Warehouse/Store");
-      return;
-    }
+  const handleSubmit = async () => {
+    if (!header.poRefNo) { toast.error("Please select a PO Reference"); return; }
+    if (!header.grnStoreId) { toast.error("Please select a GRN Store"); return; }
+    if (items.length === 0) { toast.error("No items loaded from PO"); return; }
 
-    let resolvedSupplierId = header.supplierId;
-    let resolvedCompanyId = header.companyId;
-
-    const selectedPO = pos.find((p: any) => (p.header?.poRefNo || p.poRefNo) === header.poRefNo);
-    if (selectedPO) {
-        resolvedSupplierId = selectedPO.header?.supplierId || selectedPO.supplierId || selectedPO.header?.supplier || selectedPO.supplier || resolvedSupplierId;
-        resolvedCompanyId = selectedPO.header?.companyId || selectedPO.companyId || selectedPO.header?.company || selectedPO.company || resolvedCompanyId;
-    }
-
-    // Validation: Check Qty ≤ PO Qty
     for (const item of items) {
       if (item.receivedQty > item.poQty) {
-        toast.error(`Received quantity for ${item.productName} (${item.receivedQty}) cannot exceed PO quantity (${item.poQty})`);
+        toast.error(`Received qty for ${item.productName} (${item.receivedQty}) exceeds PO qty (${item.poQty})`);
         return;
       }
       if (item.receivedQty < 0) {
-        toast.error(`Received quantity for ${item.productName} cannot be negative`);
+        toast.error(`Received qty for ${item.productName} cannot be negative`);
         return;
       }
     }
 
+    setSubmitting(true);
     try {
       const payload = {
-        ...header,
-        supplierId: resolvedSupplierId,
-        companyId: resolvedCompanyId,
-        items,
-        audit: {
-          user: "Admin", // Should come from auth context
-          macAddress: "MAC-ADDR-GRN"
-        }
+        header: {
+          grnRefNo: header.grnRefNo,
+          grnDate: header.grnDate,
+          poRefNo: header.poRefNo,
+          supplierId: header.supplierId ? Number(header.supplierId) : undefined,
+          companyId: header.companyId ? Number(header.companyId) : undefined,
+          grnStoreId: header.grnStoreId ? Number(header.grnStoreId) : undefined,
+          grnSource: header.grnSource,
+          supplierInvoiceNo: header.supplierInvoiceNo,
+          deliveryNoteRefNo: header.deliveryNoteRefNo,
+          driverName: header.driverName,
+          driverContact: header.driverContact,
+          vehicleNo: header.vehicleNo,
+          containerNo: header.containerNo,
+          sealNo: header.sealNo,
+          remarks: header.remarks,
+          status: header.status,
+        },
+        items: items.map(item => ({
+          poDtlSno: item.poDtlSno,
+          productId: item.productId,
+          productName: item.productName,
+          mainCategoryId: item.mainCategoryId,
+          subCategoryId: item.subCategoryId,
+          totalQty: item.receivedQty,
+          qtyPerPacking: item.qtyPerPack,
+          uom: item.uom,
+          remarks: item.remarks,
+        })),
+        audit: { user: typeof window !== "undefined" ? (localStorage.getItem("userName") || "Admin") : "Admin" }
       };
-      
+
       if (editId) {
-        updateGRN(editId, payload);
+        await updateGRN(editId, payload);
         toast.success("Goods Receipt Note updated successfully!");
       } else {
-        addGRN(payload);
-        toast.success("Goods Receipt Note generated successfully!");
+        await addGRN(payload);
+        toast.success("Goods Receipt Note created successfully!");
       }
       navigate.push("/goods-receipts");
-    } catch (error) {
-      toast.error("Failed to process GRN");
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to process GRN");
+    } finally {
+      setSubmitting(false);
     }
   };
 
+  const isLoading = posLoading || grnsLoading;
+
   return (
     <div className="max-w-full mx-auto pb-20 px-4 sm:px-6">
-      {/* Header Section */}
+      {/* Page Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4 mt-4">
         <div className="flex items-center gap-4">
-          <button 
-            onClick={() => navigate.push("/goods-receipts")} 
+          <button
+            onClick={() => navigate.push("/goods-receipts")}
             className="p-2.5 rounded-full border border-border hover:bg-muted transition-colors bg-white shadow-sm"
           >
             <ArrowLeft className="w-5 h-5 text-foreground" />
@@ -213,129 +290,262 @@ function CreateGRNContent() {
             <div className="flex items-center gap-1.5 mt-1 text-[#059669] font-medium text-[13px]">
               <Info className="w-4 h-4" />
               <span>
-                {editId 
-                  ? "Update received quantities and logistics details" 
-                  : "Step 2: Verify Quantity, Quality, and Condition of goods upon arrival"}
+                {editId
+                  ? "Update received quantities and logistics details"
+                  : "Step 2: Select Approved PO → Verify quantities upon arrival"}
               </span>
             </div>
           </div>
         </div>
-        <Button 
-          onClick={handleGenerateGRN} 
+        <Button
+          onClick={handleSubmit}
+          disabled={submitting}
           className="bg-[#1A2E28] hover:bg-[#1A2E28]/90 text-white font-bold rounded-xl px-6 h-11 transition-all active:scale-95 shadow-md shadow-black/10"
         >
-          {editId ? <Save className="w-4 h-4 mr-2" /> : <Send className="w-4 h-4 mr-2" />} 
+          {submitting ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : editId ? (
+            <Save className="w-4 h-4 mr-2" />
+          ) : (
+            <Send className="w-4 h-4 mr-2" />
+          )}
           {editId ? "Save Changes" : "Generate GRN"}
         </Button>
       </div>
 
       <div className="space-y-6">
-        {/* Main Details Card */}
+        {/* Header Card */}
         <div className="bg-white rounded-[24px] border border-[#E2E8F0] p-8 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 mb-10">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-[#94A3B8] mb-6">Header Details</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
+            
+            {/* GRN Ref No */}
             <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">GRN Date</Label>
-                <Input type="date" value={header.grnDate} onChange={(e) => setHeader({ ...header, grnDate: e.target.value })} className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11" />
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">GRN Ref No</Label>
+              <Input value={header.grnRefNo} disabled className="bg-[#F1F5F9] border-[#E2E8F0] rounded-xl h-11 font-mono font-bold text-[#0F172A]" />
             </div>
+
+            {/* GRN Date */}
             <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">PO Reference*</Label>
-                <Select value={header.poRefNo} onValueChange={(v) => setHeader({ ...header, poRefNo: v })}>
-                    <SelectTrigger className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11"><SelectValue placeholder="Select PO" /></SelectTrigger>
-                    <SelectContent>
-                        {pos.map((p: any) => {
-                            const refNo = p.header?.poRefNo || p.poRefNo;
-                            return refNo ? <SelectItem key={p.id} value={refNo}>{refNo}</SelectItem> : null;
-                        })}
-                    </SelectContent>
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">GRN Date</Label>
+              <Input type="date" value={header.grnDate} onChange={(e) => setHeader({ ...header, grnDate: e.target.value })} className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11" />
+            </div>
+
+            {/* PO Reference — excludes already-GRN'd POs */}
+            <div className="space-y-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">
+                PO Reference *{" "}
+                {editId && <span className="text-[#059669]">(Locked)</span>}
+              </Label>
+              {editId ? (
+                <Input value={header.poRefNo} disabled className="bg-[#F1F5F9] border-[#E2E8F0] rounded-xl h-11 font-mono font-bold" />
+              ) : (
+                <Select value={header.poRefNo} onValueChange={(v) => { setHeader({ ...header, poRefNo: v }); setItems([]); }}>
+                  <SelectTrigger className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11">
+                    <SelectValue placeholder={isLoading ? "Loading POs..." : availablePOs.length === 0 ? "No approved POs available" : "Select approved PO"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availablePOs.map((p: any) => {
+                      const h2 = p.header || p;
+                      const refNo = h2.PO_REF_NO || h2.poRefNo || "";
+                      return refNo ? <SelectItem key={refNo} value={refNo}>{refNo}</SelectItem> : null;
+                    })}
+                  </SelectContent>
                 </Select>
+              )}
             </div>
+
+            {/* Supplier (auto-filled) */}
             <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Supplier</Label>
-                <Input value={header.supplierName} disabled className="bg-[#F1F5F9] border-[#E2E8F0] rounded-xl h-11" />
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Supplier (Auto)</Label>
+              <Input value={header.supplierName || String(header.supplierId) || ""} disabled placeholder="Auto-filled from PO" className="bg-[#F1F5F9] border-[#E2E8F0] rounded-xl h-11" />
             </div>
+
+            {/* GRN Store */}
             <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">GRN Store</Label>
-                <Select value={header.grnStoreId} onValueChange={(v) => setHeader({ ...header, grnStoreId: v })}>
-                    <SelectTrigger className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11"><SelectValue placeholder="Select Store" /></SelectTrigger>
-                    <SelectContent>
-                        {stores.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.storeName}</SelectItem>)}
-                    </SelectContent>
-                </Select>
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">GRN Store *</Label>
+              <Select value={String(header.grnStoreId)} onValueChange={(v) => setHeader({ ...header, grnStoreId: Number(v) })}>
+                <SelectTrigger className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11"><SelectValue placeholder="Select Store" /></SelectTrigger>
+                <SelectContent>
+                  {stores.map((s: any) => <SelectItem key={s.id} value={String(s.id)}>{s.storeName}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
+
+            {/* GRN Source */}
             <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Driver Name</Label>
-                <Input value={header.driverName} onChange={(e) => setHeader({ ...header, driverName: e.target.value })} placeholder="Enter Name" className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11" />
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">GRN Source</Label>
+              <Select value={header.grnSource} onValueChange={(v) => setHeader({ ...header, grnSource: v })}>
+                <SelectTrigger className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Purchase Order">Purchase Order</SelectItem>
+                  <SelectItem value="Stock Transfer">Stock Transfer</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+
+            {/* Driver */}
             <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Driver Contact</Label>
-                <Input value={header.driverContact} onChange={(e) => setHeader({ ...header, driverContact: e.target.value })} placeholder="Enter Contact" className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11" />
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Driver Name</Label>
+              <Input value={header.driverName} onChange={(e) => setHeader({ ...header, driverName: e.target.value })} placeholder="Enter driver name" className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11" />
             </div>
+
+            {/* Driver Contact */}
             <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Vehicle No</Label>
-                <Input value={header.vehicleNo} onChange={(e) => setHeader({ ...header, vehicleNo: e.target.value })} placeholder="Enter Vehicle No" className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11" />
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Driver Contact</Label>
+              <Input value={header.driverContact} onChange={(e) => setHeader({ ...header, driverContact: e.target.value })} placeholder="Enter contact number" className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11" />
             </div>
+
+            {/* Vehicle */}
             <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Container No</Label>
-                <Input value={header.containerNo} onChange={(e) => setHeader({ ...header, containerNo: e.target.value })} placeholder="Enter Container No" className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11" />
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Vehicle No</Label>
+              <Input value={header.vehicleNo} onChange={(e) => setHeader({ ...header, vehicleNo: e.target.value })} placeholder="e.g. T 123 AAA" className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11" />
             </div>
+
+            {/* Container */}
             <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Seal No</Label>
-                <Input value={header.sealNo} onChange={(e) => setHeader({ ...header, sealNo: e.target.value })} placeholder="Enter Seal No" className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11" />
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Container No</Label>
+              <Input value={header.containerNo} onChange={(e) => setHeader({ ...header, containerNo: e.target.value })} placeholder="Enter container no" className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11" />
             </div>
+
+            {/* Seal */}
             <div className="space-y-2">
-                <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Status</Label>
-                <Select value={header.status} onValueChange={(v) => setHeader({ ...header, status: v })}>
-                    <SelectTrigger className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="Received">Received</SelectItem>
-                        <SelectItem value="Pending">Pending</SelectItem>
-                    </SelectContent>
-                </Select>
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Seal No</Label>
+              <Input value={header.sealNo} onChange={(e) => setHeader({ ...header, sealNo: e.target.value })} placeholder="Enter seal no" className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11" />
+            </div>
+
+            {/* Supplier Invoice */}
+            <div className="space-y-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Supplier Invoice No</Label>
+              <Input value={header.supplierInvoiceNo} onChange={(e) => setHeader({ ...header, supplierInvoiceNo: e.target.value })} placeholder="Supplier invoice ref" className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11" />
+            </div>
+
+            {/* Delivery Note */}
+            <div className="space-y-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Delivery Note Ref</Label>
+              <Input value={header.deliveryNoteRefNo} onChange={(e) => setHeader({ ...header, deliveryNoteRefNo: e.target.value })} placeholder="DN reference" className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11" />
+            </div>
+
+            {/* Status */}
+            <div className="space-y-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Status</Label>
+              <Select value={header.status} onValueChange={(v) => setHeader({ ...header, status: v })}>
+                <SelectTrigger className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Received">Received</SelectItem>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="Partial">Partial</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Remarks */}
+            <div className="space-y-2 xl:col-span-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Remarks</Label>
+              <Input value={header.remarks} onChange={(e) => setHeader({ ...header, remarks: e.target.value })} placeholder="Any remarks..." className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11" />
             </div>
           </div>
+        </div>
 
-          {/* Items Section */}
+        {/* Items Table Card */}
+        <div className="bg-white rounded-[24px] border border-[#E2E8F0] p-8 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-[#94A3B8]">
+              Goods Line Items {items.length > 0 && <span className="text-[#059669]">({items.length} items)</span>}
+            </h2>
+            {poLoading && (
+              <div className="flex items-center gap-2 text-xs text-[#64748B]">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Loading PO items...
+              </div>
+            )}
+          </div>
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b bg-[#F8FAFC]/30">
+                <tr className="border-b bg-[#F8FAFC]/50">
+                  <th className="text-left p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">#</th>
                   <th className="text-left p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Product</th>
                   <th className="text-center p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">PO Qty</th>
                   <th className="text-center p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Received Qty *</th>
+                  <th className="text-center p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Shortage</th>
                   <th className="text-center p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">UOM</th>
                   <th className="text-center p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Qty/Pack</th>
-                  <th className="text-center p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Packing</th>
+                  <th className="text-left p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Remarks</th>
                 </tr>
               </thead>
               <tbody>
                 {items.length > 0 ? (
-                  items.map((item) => (
-                    <tr key={item.id} className="border-b transition-colors hover:bg-[#F8FAFC]/50">
-                      <td className="p-4 font-bold text-[#0F172A]">{item.productName}</td>
-                      <td className="p-4 text-center font-medium text-[#64748B]">{item.poQty}</td>
-                      <td className="p-4 text-center">
-                        <Input 
-                          type="number" 
-                          value={item.receivedQty}
-                          onChange={(e) => updateItem(item.id, "receivedQty", Number(e.target.value))}
-                          className="w-24 mx-auto bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-10 text-center font-bold"
-                        />
-                      </td>
-                      <td className="p-4 text-center text-[#64748B] font-medium">{item.uom}</td>
-                      <td className="p-4 text-center text-[#64748B] font-medium">{item.qtyPerPack}</td>
-                      <td className="p-4 text-center text-[#64748B] font-medium">{item.packing}</td>
-                    </tr>
-                  ))
+                  items.map((item, idx) => {
+                    const shortage = item.poQty - item.receivedQty;
+                    return (
+                      <tr key={item.id} className="border-b transition-colors hover:bg-[#F8FAFC]/50">
+                        <td className="p-4 text-[#94A3B8] font-medium text-sm">{idx + 1}</td>
+                        <td className="p-4 font-bold text-[#0F172A]">{item.productName}</td>
+                        <td className="p-4 text-center font-medium text-[#64748B]">{item.poQty}</td>
+                        <td className="p-4 text-center">
+                          <Input
+                            type="number"
+                            min={0}
+                            max={item.poQty}
+                            value={item.receivedQty}
+                            onChange={(e) => updateItem(item.id, "receivedQty", Number(e.target.value))}
+                            className={`w-28 mx-auto border rounded-xl h-10 text-center font-bold ${
+                              item.receivedQty > item.poQty
+                                ? "border-red-400 bg-red-50 text-red-600"
+                                : "bg-[#F8FAFC]/50 border-[#E2E8F0]"
+                            }`}
+                          />
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className={`font-bold text-sm ${shortage > 0 ? "text-amber-600" : shortage < 0 ? "text-red-500" : "text-[#059669]"}`}>
+                            {shortage > 0 ? `-${shortage}` : shortage < 0 ? `+${Math.abs(shortage)}` : "✓"}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center text-[#64748B] font-medium">{item.uom}</td>
+                        <td className="p-4 text-center text-[#64748B] font-medium">{item.qtyPerPack}</td>
+                        <td className="p-4">
+                          <Input
+                            value={item.remarks}
+                            onChange={(e) => updateItem(item.id, "remarks", e.target.value)}
+                            placeholder="Remarks..."
+                            className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-9 text-xs"
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr>
-                    <td colSpan={6} className="p-12 text-center text-[#94A3B8] font-medium">
-                      Select a PO Reference to load item details
+                    <td colSpan={8} className="p-16 text-center">
+                      {poLoading ? (
+                        <div className="flex flex-col items-center gap-3">
+                          <Loader2 className="w-8 h-8 animate-spin text-[#059669]" />
+                          <p className="text-[#94A3B8] font-medium">Loading items from PO...</p>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-2">
+                          <p className="text-[#94A3B8] font-medium">
+                            {header.poRefNo ? "No items found in selected PO" : "Select an Approved PO Reference above to load items"}
+                          </p>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
+
+          {/* Summary Row */}
+          {items.length > 0 && (
+            <div className="mt-6 pt-5 border-t border-[#E2E8F0] flex flex-wrap gap-6 justify-end text-sm">
+              <div className="text-[#94A3B8]">Total PO Qty: <span className="font-bold text-[#0F172A]">{items.reduce((s, i) => s + i.poQty, 0)}</span></div>
+              <div className="text-[#94A3B8]">Total Received: <span className="font-bold text-[#059669]">{items.reduce((s, i) => s + i.receivedQty, 0)}</span></div>
+              <div className="text-[#94A3B8]">Total Shortage: <span className={`font-bold ${items.reduce((s, i) => s + (i.poQty - i.receivedQty), 0) > 0 ? "text-amber-600" : "text-[#059669]"}`}>{items.reduce((s, i) => s + (i.poQty - i.receivedQty), 0)}</span></div>
+            </div>
+          )}
         </div>
       </div>
     </div>

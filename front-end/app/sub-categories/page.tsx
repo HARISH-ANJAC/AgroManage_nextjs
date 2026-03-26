@@ -4,17 +4,18 @@ import MasterCrudPage from "@/components/MasterCrudPage";
 import { useMasterData } from "@/hooks/useMasterData";
 
 export default function SubCategoriesPage() {
+  const { data: subcategories, isLoading: loadingSubs } = useMasterData("sub-categories");
   const { data: categories, isLoading: loadingCats } = useMasterData("categories");
 
-  const categoryOptions = categories.map((c: any) => ({
+  const categoryOptions = (categories || []).map((c: any) => ({
     value: c.id,
     label: c.mainCategoryName
   }));
 
-  if (loadingCats) return <div className="p-8 text-center text-muted-foreground">Loading Categories...</div>;
+  if (loadingCats || loadingSubs) return <div className="p-8 text-center text-muted-foreground font-medium">Loading catalog data...</div>;
 
   return <MasterCrudPage
-    domain="subcategories" 
+    domain="sub-categories" 
     title="Sub Categories" 
     description="Manage your business sub categories" 
     idPrefix="SUB" 
@@ -31,7 +32,7 @@ export default function SubCategoriesPage() {
       { key: "remarks", label: "Remarks", type: "textarea" },
       { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
     ]} 
-    initialData={[]} 
+    initialData={subcategories || []} 
     columns={[
       { key: "subCategoryName", label: "Sub Category" }, 
       { key: "mainCategoryName", label: "Main Category" }, 

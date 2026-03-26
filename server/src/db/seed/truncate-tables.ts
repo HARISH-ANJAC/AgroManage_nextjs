@@ -1,43 +1,32 @@
-import pg from 'pg';
-import 'dotenv/config';
-
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-
-const SCHEMAS = ['stomaster', 'stoentries'];
+import { db } from '../index.js';
+import * as schema from '../schema/index.js';
+import { sql } from 'drizzle-orm';
+import { getTableConfig } from 'drizzle-orm/pg-core';
 
 async function truncateTables() {
-    const client = await pool.connect();
+  console.log('Truncating tables...');
+  let truncatedCount = 0;
+  
+  for (const [key, item] of Object.entries(schema)) {
     try {
-        console.log("🗑️  Truncating all tables...");
-
-        // Get all tables in both schemas
-        const result = await client.query(`
-            SELECT table_schema, table_name
-            FROM information_schema.tables
-            WHERE table_schema = ANY($1::text[])
-            AND table_type = 'BASE TABLE'
-            ORDER BY table_schema, table_name;
-        `, [SCHEMAS]);
-
-        if (result.rows.length === 0) {
-            console.log("   No tables found to truncate.");
-            return;
+        const config = getTableConfig(item as any);
+        if (config && config.name) {
+            const schemaName = config.schema || 'public';
+            const fullName = `"${schemaName}"."${config.name}"`;
+            console.log(`Truncating ${fullName}...`);
+            await db.execute(sql.raw(`TRUNCATE TABLE ${fullName} CASCADE`));
+            truncatedCount++;
         }
-
-        // Build truncate command with CASCADE to handle FK constraints
-        const tableList = result.rows
-            .map(r => `"${r.table_schema}"."${r.table_name}"`)
-            .join(', ');
-
-        await client.query(`TRUNCATE TABLE ${tableList} RESTART IDENTITY CASCADE;`);
-        console.log(`✅ Truncated ${result.rows.length} tables successfully.`);
-    } finally {
-        client.release();
-        await pool.end();
+    } catch (e) {
+        // Not a table, skip
     }
+  }
+
+  console.log(`Truncated ${truncatedCount} tables successfully!`);
+  process.exit(0);
 }
 
 truncateTables().catch(err => {
-    console.error("❌ Truncation failed:", err.message);
-    process.exit(1);
+  console.error(err);
+  process.exit(1);
 });

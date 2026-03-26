@@ -1,2 +1,2 @@
-export * from "./Stomaster.js";
+export * from "./StoMaster.js";
 export * from "./StoEntries.js";

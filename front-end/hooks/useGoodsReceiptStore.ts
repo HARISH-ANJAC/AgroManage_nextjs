@@ -1,79 +1,98 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 
-/**
- * Global State for Goods Receipts (GRN) with LocalStorage Persistence
- * This allows managing GRNs without a backend while maintaining data across page refreshes.
- */
-
-const STORAGE_KEY = "agromanage_goods_receipts";
-
-// Simple event emitter to sync state across different instances of the hook
-const listeners = new Set<Function>();
-const notify = () => listeners.forEach(l => l());
-
-const getStoredGRNs = (): any[] => {
-  if (typeof window === "undefined") return [];
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch (e) {
-    console.error("Failed to load GRNs from storage", e);
-    return [];
-  }
-};
-
-const saveGRNs = (grns: any[]) => {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(grns));
-  notify();
-};
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export function useGoodsReceiptStore() {
-  const [grns, setGrns] = useState<any[]>(getStoredGRNs());
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const handleChange = () => setGrns(getStoredGRNs());
-    listeners.add(handleChange);
-    return () => {
-      listeners.delete(handleChange);
-    };
+  const getAuthToken = () => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("accessToken");
+  };
+
+  const { data: grns = [], isLoading, refetch: refetchGrns } = useQuery({
+    queryKey: ["goods-receipts"],
+    queryFn: async () => {
+      const response = await fetch(`${API_URL}/goods-receipts`, {
+        headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+      });
+      if (!response.ok) throw new Error("Failed to fetch GRNs");
+      return response.json();
+    }
+  });
+
+  const getGRNById = useCallback(async (id: string) => {
+    // Double encoding for slash safety
+    const encodedId = encodeURIComponent(encodeURIComponent(id));
+    const response = await fetch(`${API_URL}/goods-receipts/${encodedId}`, {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+    if (!response.ok) return null;
+    return response.json();
   }, []);
 
-  const addGRN = useCallback((grn: any) => {
-    const current = getStoredGRNs();
-    const newGRN = { 
-      ...grn, 
-      id: grn.id || `GRN-${Date.now()}`,
-      createdAt: new Date().toISOString() 
-    };
-    saveGRNs([newGRN, ...current]);
-    return newGRN;
-  }, []);
+  const addMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const response = await fetch(`${API_URL}/goods-receipts`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${getAuthToken()}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["goods-receipts"] });
+    }
+  });
 
-  const updateGRN = useCallback((id: string, updatedData: any) => {
-    const current = getStoredGRNs();
-    const updated = current.map(g => (g.id === id || g.grnRefNo === id) ? { ...g, ...updatedData } : g);
-    saveGRNs(updated);
-  }, []);
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, payload }: { id: string, payload: any }) => {
+      const encodedId = encodeURIComponent(encodeURIComponent(id));
+      const response = await fetch(`${API_URL}/goods-receipts/${encodedId}`, {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${getAuthToken()}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["goods-receipts"] });
+    }
+  });
 
-  const deleteGRN = useCallback((id: string) => {
-    const current = getStoredGRNs();
-    const filtered = current.filter(g => g.id !== id && g.grnRefNo !== id);
-    saveGRNs(filtered);
-  }, []);
-
-  const getGRNById = useCallback((id: string) => {
-    return getStoredGRNs().find(g => g.id === id || g.grnRefNo === id);
-  }, []);
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const encodedId = encodeURIComponent(encodeURIComponent(id));
+      const response = await fetch(`${API_URL}/goods-receipts/${encodedId}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${getAuthToken()}` }
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["goods-receipts"] });
+    }
+  });
 
   return {
     grns,
-    addGRN,
-    updateGRN,
-    deleteGRN,
-    getGRNById,
-    isLoading: false // Local state is instantaneous
+    isLoading,
+    refetchGrns,
+    addGRN: addMutation.mutateAsync,
+    updateGRN: (id: string, payload: any) => updateMutation.mutateAsync({ id, payload }),
+    deleteGRN: deleteMutation.mutateAsync,
+    getGRNById
   };
 }

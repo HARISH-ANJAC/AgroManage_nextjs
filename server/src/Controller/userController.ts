@@ -17,33 +17,31 @@ export const getUsers = async (req: Request, res: Response): Promise<Response> =
 export const createUser = async (req: Request, res: Response): Promise<Response> => {
     try {
         const { 
-            loginName, role, mobileNo, mailId, stockShowStatus, outsideAccess, remarks, status, user 
-        } = req.body as {
-            loginName?: string;
-            role?: string;
-            mobileNo?: string;
-            mailId?: string;
-            stockShowStatus?: string;
-            outsideAccess?: string;
-            remarks?: string;
-            status?: string;
-            user: string;
-        };
+            loginName, 
+            role, roleUserHdr, 
+            mobileNo, mobileNoUserHdr,
+            mailId, mailIdUserHdr,
+            stockShowStatus, 
+            outsideAccess, outsideAccessYN,
+            remarks, remarksUserHdr,
+            status, statusUserHdr,
+            user 
+        } = req.body as any;
         const systemMac = getSystemMacAddress();
         
         const values: any = {
             LOGIN_NAME: loginName,
-            ROLE_USER_HDR: role,
-            MOBILE_NO_USER_HDR: mobileNo,
-            MAIL_ID_USER_HDR: mailId,
+            ROLE_USER_HDR: roleUserHdr || role,
+            MOBILE_NO_USER_HDR: mobileNoUserHdr || mobileNo,
+            MAIL_ID_USER_HDR: mailIdUserHdr || mailId,
             STOCK_SHOW_STATUS: stockShowStatus,
-            OUTSIDE_ACCESS_Y_N: outsideAccess,
+            OUTSIDE_ACCESS_Y_N: outsideAccessYN || outsideAccess,
             CREATED_USER_USER_HDR: user,
             CREATED_MAC_ADDR_USER_HDR: systemMac,
         };
         
-        if (remarks !== undefined) values.REMARKS_USER_HDR = remarks;
-        if (status !== undefined) values.STATUS_USER_HDR = status || "Active";
+        if (remarksUserHdr !== undefined || remarks !== undefined) values.REMARKS_USER_HDR = remarksUserHdr ?? remarks;
+        if (statusUserHdr !== undefined || status !== undefined) values.STATUS_USER_HDR = statusUserHdr ?? (status || "Active");
         
         const result = await db.insert(TBL_USER_INFO_HDR).values(values).returning();
         return res.status(201).json(result[0]);
@@ -60,33 +58,31 @@ export const updateUser = async (req: Request, res: Response): Promise<Response>
         if (isNaN(userId)) return res.status(400).json({ msg: "Invalid ID" });
 
         const { 
-            loginName, role, mobileNo, mailId, stockShowStatus, outsideAccess, remarks, status, user 
-        } = req.body as {
-            loginName?: string;
-            role?: string;
-            mobileNo?: string;
-            mailId?: string;
-            stockShowStatus?: string;
-            outsideAccess?: string;
-            remarks?: string;
-            status?: string;
-            user: string;
-        };
+            loginName, 
+            role, roleUserHdr, 
+            mobileNo, mobileNoUserHdr,
+            mailId, mailIdUserHdr,
+            stockShowStatus, 
+            outsideAccess, outsideAccessYN,
+            remarks, remarksUserHdr,
+            status, statusUserHdr,
+            user 
+        } = req.body as any;
         const systemMac = getSystemMacAddress();
         
         const updates: any = {
             LOGIN_NAME: loginName,
-            ROLE_USER_HDR: role,
-            MOBILE_NO_USER_HDR: mobileNo,
-            MAIL_ID_USER_HDR: mailId,
+            ROLE_USER_HDR: roleUserHdr || role,
+            MOBILE_NO_USER_HDR: mobileNoUserHdr || mobileNo,
+            MAIL_ID_USER_HDR: mailIdUserHdr || mailId,
             STOCK_SHOW_STATUS: stockShowStatus,
-            OUTSIDE_ACCESS_Y_N: outsideAccess,
+            OUTSIDE_ACCESS_Y_N: outsideAccessYN || outsideAccess,
             MODIFIED_USER_USER_HDR: user,
             MODIFIED_MAC_ADDR_USER_HDR: systemMac,
         };
         
-        if (remarks !== undefined) updates.REMARKS_USER_HDR = remarks;
-        if (status !== undefined) updates.STATUS_USER_HDR = status;
+        if (remarksUserHdr !== undefined || remarks !== undefined) updates.REMARKS_USER_HDR = remarksUserHdr ?? remarks;
+        if (statusUserHdr !== undefined || status !== undefined) updates.STATUS_USER_HDR = statusUserHdr ?? (status);
 
         const result = await db.update(TBL_USER_INFO_HDR)
             .set(updates)

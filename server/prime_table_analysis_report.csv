@@ -1,0 +1,71 @@
+S.no,Schema,Table Name,Description
+1,StoMaster,TBL_CUSTOMER_PAYMENT_MODE_MASTER,Master for customer payment modes
+2,StoMaster,tbl_Billing_Location_Master,Master for billing locations
+3,StoMaster,TBL_BANK_MASTER,Master list of banks
+4,StoMaster,TBL_ROLE_MASTER,User role definitions
+5,StoMaster,TBL_CURRENCY_MASTER,Currency master with exchange rates
+6,StoMaster,tbl_Company_Master,Core company profile information
+7,StoMaster,TBL_EXCHANGE_RATE_MASTER,History of currency exchange rates
+8,StoMaster,TBL_USER_INFO_HDR,User account and login headers
+9,StoMaster,TBL_VAT_PERCENTAGE_SETTING,Company-level VAT settings
+10,StoMaster,tbl_Location_Master,Geographical location master
+11,StoMaster,tbl_Store_Master,Physical store/warehouse master
+12,StoMaster,TBL_USER_TO_STORE_MAPPING,Mapping users to specific stores
+13,StoMaster,TBL_PAYMENT_MODE_MASTER,General payment mode master
+14,StoMaster,TBL_ADDITIONAL_COST_TYPE_MASTER,Master for additional cost types
+15,StoMaster,TBL_PAYMENT_TERM_MASTER,Master for payment terms
+16,StoMaster,TBL_ACCOUNTS_LEDGER_GROUP_MASTER,Accounting ledger groups
+17,StoMaster,TBL_ACCOUNTS_HEAD_MASTER,Accounting head master
+18,StoMaster,TBL_PRODUCT_MAIN_CATEGORY_MASTER,Main product categories
+19,StoMaster,TBL_PRODUCT_SUB_CATEGORY_MASTER,Sub product categories
+20,StoMaster,TBL_PRODUCT_MASTER,Full product details
+21,StoMaster,tbl_country_master,Master list of countries
+22,StoMaster,TBL_REGION_MASTER,Regional data within countries
+23,StoMaster,TBL_PRODUCT_OPENING_STOCK,Initial stock levels for products
+24,StoMaster,tbl_field_hdr,Dynamic field headers
+25,StoMaster,tbl_field_dtl,Dynamic field details
+26,StoMaster,tbl_Product_Company_Main_Category_Mapping,Company-category mapping
+27,StoMaster,tbl_Store_Product_Minimum_Stock,Minimum stock/MOQ settings
+28,StoMaster,tbl_Supplier_Master,Supplier/Vendor profile master
+29,StoMaster,tbl_Company_Bank_Account_Master,Company's own bank accounts
+30,StoMaster,tbl_Change_Password_Log,History of password changes
+31,StoMaster,tbl_District_Master,District master list
+32,StoMaster,tbl_Customer_Master,Detailed customer profiles
+33,StoMaster,tbl_Customer_Address_Details,Multiple addresses for customers
+34,StoMaster,TBL_CUSTOMER_MASTER_FILES_UPLOAD,Uploaded files for customers
+35,StoMaster,TBL_CUSTOMER_COMPANY_WISE_BILLING_LOCATION_MAPPING,Customer billing loc mapping
+36,StoMaster,TBL_CUSTOMER_PRODUCT_VAT_PERCENTAGE_SETTINGS,Customer-product tax rates
+37,StoMaster,tbl_Customer_Wise_Product_Price_Settings,Custom pricing per customer
+38,StoMaster,tbl_Customer_Credit_Limit_Details,Customer credit limit tracking
+39,StoMaster,CUSTOMER_CREDIT_LIMIT_FILE_UPLOAD,Credit limit document uploads
+40,StoMaster,TBL_ACCOUNTS_LEDGER_MASTER,Individual accounting ledgers
+41,StoMaster,TBL_PRODUCT_MASTER_FILES_UPLOAD,Uploaded files for products
+,,,
+42,StoEntries,TBL_SUPPLIER_PURCHASE_ORDER_HDR,Purchase order header
+43,StoEntries,TBL_SUPPLIER_PURCHASE_ORDER_DTL,Purchase order details
+44,StoEntries,TBL_SUPPLIER_PURCHASE_ORDER_FILES_UPLOAD,PO document uploads
+45,StoEntries,TBL_PURCHASE_GRN_HDR,Goods Received Note header
+46,StoEntries,TBL_PURCHASE_GRN_DTL,Goods Received Note details
+47,StoEntries,TBL_PURCHASE_GRN_ADDITIONAL_COST_DETAILS,Extra costs for GRN
+48,StoEntries,TBL_PURCHASE_GRN_FILES_UPLOAD,GRN document uploads
+49,StoEntries,TBL_PURCHASE_INVOICE_HDR,Supplier invoice header
+50,StoEntries,TBL_PURCHASE_INVOICE_DTL,Supplier invoice details
+51,StoEntries,TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS,Extra costs for invoices
+52,StoEntries,TBL_PURCHASE_INVOICE_FILES_UPLOAD,Invoice document uploads
+53,StoEntries,TBL_SUPPLIER_PAYMENT_HDR,Supplier payment header
+54,StoEntries,TBL_SUPPLIER_PAYMENT_DTL,Supplier payment details
+55,StoEntries,TBL_SUPPLIER_PAYMENT_FILES_UPLOAD,Payment document uploads
+56,StoEntries,TBL_STOCK_TRANSFER_HDR,Stock transfer header
+57,StoEntries,TBL_STOCK_TRANSFER_DTL,Stock transfer details
+58,StoEntries,TBL_STOCK_TRANSFER_FILES_UPLOAD,Transfer document uploads
+59,StoEntries,TBL_CUSTOMER_SALES_ORDER_HDR,Sales order header
+60,StoEntries,TBL_CUSTOMER_SALES_ORDER_DTL,Sales order details
+61,StoEntries,TBL_CUSTOMER_SALES_ORDER_FILES_UPLOAD,Sales order document uploads
+62,StoEntries,TBL_TAX_INVOICE_HDR,Tax invoice header
+63,StoEntries,TBL_TAX_INVOICE_DTL,Tax invoice details
+64,StoEntries,TBL_TAX_INVOICE_ADDITIONAL_COST_DETAILS,Extra costs for tax invoices
+65,StoEntries,TBL_TAX_INVOICE_FILES_UPLOAD,Tax invoice document uploads
+66,StoEntries,TBL_CUSTOMER_RECEIPT_HDR,Customer receipt header
+67,StoEntries,TBL_CUSTOMER_RECEIPT_DTL,Customer receipt details
+68,StoEntries,TBL_CUSTOMER_RECEIPT_INVOICE_DTL,Receipt-to-invoice mapping
+69,StoEntries,TBL_CUSTOMER_RECEIPT_FILES_UPLOAD,Receipt document uploads

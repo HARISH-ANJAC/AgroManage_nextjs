@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Plus, Search, Pencil, Trash2, Download, FileSpreadsheet, FileText } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -88,20 +88,20 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
-  const [role, setRole] = useState<string>("Manager");
-  useMemo(() => {
+  const role = useMemo(() => {
     if (typeof window !== 'undefined') {
       const userJson = localStorage.getItem('user');
       if (userJson) {
         try {
           const u = JSON.parse(userJson);
-          setRole(u.role || 'Manager');
+          return u.role || 'Manager';
         } catch (e) { }
       }
     }
+    return 'Manager';
   }, []);
 
-  const isAdmin = role === "Admin";
+  const isAdmin = role === "Admin" || role === "Super Admin" || role === "Administrator";
 
   // Get unique statuses for the filter dropdown
   const uniqueStatuses = useMemo(() => {
@@ -212,10 +212,30 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
   };
 
   // Export functions
-  const exportPDF = () => {
+  const exportPDF = async () => {
     const doc = new jsPDF();
     doc.setFontSize(16);
+
     doc.text(title, 14, 20);
+
+    // Handle logo with proper aspect ratio
+    try {
+      const logoImg = new Image();
+      logoImg.src = "/assets/logo.png";
+      await new Promise((resolve) => {
+        logoImg.onload = resolve;
+        logoImg.onerror = resolve; // Continue even if logo fails
+      });
+      
+      if (logoImg.complete && logoImg.naturalWidth) {
+        const imgWidth = 30; // Slightly smaller for list reports
+        const imgHeight = (logoImg.naturalHeight * imgWidth) / logoImg.naturalWidth;
+        doc.addImage(logoImg, "PNG", 165, 8, imgWidth, imgHeight);
+      }
+    } catch (e) {
+      console.warn("Logo failed to load", e);
+    }
+
     doc.setFontSize(10);
     doc.text(`Exported: ${new Date().toLocaleString()}`, 14, 28);
     const headers = ["ID", ...columns.map(c => c.label)];
@@ -433,15 +453,15 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
                       <SelectTrigger><SelectValue placeholder={field.placeholder || `Select ${field.label}`} /></SelectTrigger>
                       <SelectContent>
                         {(() => {
-                           const seen = new Set();
-                           return (field.options || []).map((o, idx) => {
-                             const val = typeof o === "string" ? o : String(o.value);
-                             const lab = typeof o === "string" ? o : o.label;
-                             if (seen.has(val)) return null;
-                             seen.add(val);
-                             // Use a safer key in case of empty strings or special characters
-                             return <SelectItem key={`${val}-${idx}`} value={val}>{lab}</SelectItem>;
-                           });
+                          const seen = new Set();
+                          return (field.options || []).map((o, idx) => {
+                            const val = typeof o === "string" ? o : String(o.value);
+                            const lab = typeof o === "string" ? o : o.label;
+                            if (seen.has(val)) return null;
+                            seen.add(val);
+                            // Use a safer key in case of empty strings or special characters
+                            return <SelectItem key={`${val}-${idx}`} value={val}>{lab}</SelectItem>;
+                          });
                         })()}
                       </SelectContent>
                     </Select>

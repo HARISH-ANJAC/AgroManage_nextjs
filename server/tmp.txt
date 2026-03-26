@@ -1,0 +1,34 @@
+﻿Checking PO rate for PO/YA/03/001...
+PO Items: [
+  {
+    "SNO": 1,
+    "PO_REF_NO": "PO/YA/03/001",
+    "REQUEST_STORE_ID": 1,
+    "MAIN_CATEGORY_ID": null,
+    "SUB_CATEGORY_ID": null,
+    "PRODUCT_ID": 1,
+    "QTY_PER_PACKING": "25.00",
+    "TOTAL_QTY": "10.0000",
+    "UOM": "BAG",
+    "TOTAL_PACKING": "0.4000",
+    "ALTERNATE_UOM": null,
+    "RATE_PER_QTY": "20.000000",
+    "PRODUCT_AMOUNT": "200.0000",
+    "DISCOUNT_PERCENTAGE": "5.00",
+    "DISCOUNT_AMOUNT": null,
+    "TOTAL_PRODUCT_AMOUNT": null,
+    "VAT_PERCENTAGE": "18.00",
+    "VAT_AMOUNT": null,
+    "FINAL_PRODUCT_AMOUNT": "224.2000",
+    "TOTAL_PRODUCT_AMOUNT_LC": null,
+    "FINAL_PRODUCT_AMOUNT_LC": null,
+    "REMARKS": null,
+    "STATUS_ENTRY": "Active",
+    "CREATED_BY": "Sri",
+    "CREATED_DATE": null,
+    "CREATED_IP_ADDRESS": null,
+    "MODIFIED_BY": null,
+    "MODIFIED_DATE": null,
+    "MODIFIED_IP_ADDRESS": null
+  }
+]

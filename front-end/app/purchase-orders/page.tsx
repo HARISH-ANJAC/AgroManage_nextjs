@@ -49,16 +49,34 @@ export default function PurchaseOrdersPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const navigate = useRouter();
 
-  const handleExportPDF = (order: any) => {
+  const handleExportPDF = async (order: any) => {
     const h = order.header || order;
     const items = order.items || [];
     const doc = new jsPDF();
     const currency = h.currency || "$";
 
-    // Header
+    // Header & Logo
     doc.setFontSize(22);
     doc.setTextColor(15, 23, 42); // #0F172A
     doc.text("PURCHASE ORDER", 14, 22);
+
+    // Handle logo with proper aspect ratio
+    try {
+      const logoImg = new Image();
+      logoImg.src = "/assets/logo.png";
+      await new Promise((resolve) => {
+        logoImg.onload = resolve;
+        logoImg.onerror = resolve; // Continue even if logo fails
+      });
+      
+      if (logoImg.complete && logoImg.naturalWidth) {
+        const imgWidth = 40;
+        const imgHeight = (logoImg.naturalHeight * imgWidth) / logoImg.naturalWidth;
+        doc.addImage(logoImg, "PNG", 155, 10, imgWidth, imgHeight);
+      }
+    } catch (e) {
+      console.warn("Logo failed to load", e);
+    }
     
     doc.setFontSize(10);
     doc.setTextColor(100, 116, 139); // #64748B
@@ -194,31 +212,39 @@ export default function PurchaseOrdersPage() {
             <tbody>
               {filtered.map((o: any) => {
                 const h = o.header || o;
-                const itemsCount = o.items?.length || 0;
-                const firstProduct = o.items?.[0]?.product || "-";
-                const currency = h.currency || "$";
+                const itemsCount = o.items?.length || h.itemsCount || 0;
+                const currency = h.CURRENCY_ID === 2 ? "TZS" : "$";
+                
+                // Approval summary
+                const headStatus = h.PURCHASE_HEAD_RESPONSE_STATUS || "Pending";
+                const finalStatus = h.STATUS_ENTRY || "Draft";
 
                 return (
-                  <tr key={o.id} className="border-b hover:bg-muted/30 transition-colors">
+                  <tr key={h.PO_REF_NO} className="border-b hover:bg-muted/30 transition-colors">
                     <td className="p-3">
                       <div className="flex gap-1">
-                        <button className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors" title="View Details"><Eye className="w-4 h-4" /></button>
-                        <button onClick={() => navigate.push(`/purchase-orders/create?id=${encodeURIComponent(o.id)}`)} className="p-1.5 rounded-lg hover:bg-muted text-[#059669] transition-colors" title="Edit PO"><Pencil className="w-4 h-4" /></button>
+                        <button onClick={() => navigate.push(`/purchase-orders/create?id=${encodeURIComponent(h.PO_REF_NO)}`)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors" title="View Details"><Eye className="w-4 h-4" /></button>
+                        <button onClick={() => navigate.push(`/purchase-orders/create?id=${encodeURIComponent(h.PO_REF_NO)}`)} className="p-1.5 rounded-lg hover:bg-muted text-[#059669] transition-colors" title="Edit PO"><Pencil className="w-4 h-4" /></button>
                         <button onClick={() => handleExportPDF(o)} className="p-1.5 rounded-lg hover:bg-muted text-blue-600 transition-colors" title="Export as PDF"><FileText className="w-4 h-4" /></button>
-                        <button onClick={() => setDeleteId(o.id)} className="p-1.5 rounded-lg hover:bg-destructive/5 text-destructive/40 hover:text-destructive transition-colors" title="Delete PO"><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={() => setDeleteId(h.PO_REF_NO)} className="p-1.5 rounded-lg hover:bg-destructive/5 text-destructive/40 hover:text-destructive transition-colors" title="Delete PO"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
-                    <td className="p-3 font-mono text-xs font-bold text-[#0F172A]">{h.poRefNo || h.poNumber || "-"}</td>
-                    <td className="p-3 text-muted-foreground">{h.poDate || "-"}</td>
-                    <td className="p-3"><Badge variant="secondary" className="bg-[#F1F5F9] text-[#64748B] border-none font-bold text-[10px]">{h.purchaseType || "Local"}</Badge></td>
-                    <td className="p-3 font-semibold text-[#0F172A]">{h.supplier || "-"}</td>
-                    <td className="p-3 text-xs text-[#64748B]">{h.store || "-"}</td>
+                    <td className="p-3 font-mono text-xs font-bold text-[#0F172A]">{h.PO_REF_NO || "-"}</td>
+                    <td className="p-3 text-muted-foreground text-xs">{formatDate(h.PO_DATE)}</td>
+                    <td className="p-3"><Badge variant="secondary" className="bg-[#F1F5F9] text-[#64748B] border-none font-bold text-[10px] whitespace-nowrap">{h.PURCHASE_TYPE || "Local"}</Badge></td>
+                    <td className="p-3 font-semibold text-[#0F172A] text-xs max-w-[150px] truncate">{h.SUPPLIER_ID || "-"}</td>
+                    <td className="p-3 text-[10px] text-[#64748B]">{h.PO_STORE_ID || "-"}</td>
                     <td className="p-3 text-center font-bold text-[#0F172A]">{itemsCount}</td>
-                    <td className="p-3 text-xs font-medium text-[#475569] truncate max-w-[120px]">{firstProduct}</td>
-                    <td className="p-3 text-right font-medium text-[#64748B]">{currency} {(h.productAmount || 0).toLocaleString()}</td>
-                    <td className="p-3 text-right font-medium text-[#64748B]">{currency} {(h.totalVatAmount || 0).toLocaleString()}</td>
-                    <td className="p-3 text-right font-bold text-[#0F172A]">{currency} {(h.finalAmount || 0).toLocaleString()}</td>
-                    <td className="p-3 text-center"><Badge variant="outline" className={`${statusColors[h.status] || ""} font-bold text-[10px]`}>{h.status || "Draft"}</Badge></td>
+                    <td className="p-3 text-[10px] font-medium text-[#475569]">{h.SHIPMENT_MODE}</td>
+                    <td className="p-3 text-right font-medium text-[#64748B] text-xs">{(Number(h.PRODUCT_HDR_AMOUNT) || 0).toLocaleString()}</td>
+                    <td className="p-3 text-right font-medium text-[#64748B] text-xs">{(Number(h.TOTAL_VAT_HDR_AMOUNT) || 0).toLocaleString()}</td>
+                    <td className="p-3 text-right font-bold text-[#0F172A] text-xs">{currency} {(Number(h.FINAL_PURCHASE_HDR_AMOUNT) || 0).toLocaleString()}</td>
+                    <td className="p-3 text-center">
+                      <div className="flex flex-col gap-1 items-center">
+                        <Badge variant="outline" className={`${statusColors[finalStatus] || ""} font-bold text-[9px] px-1 h-5`}>{finalStatus}</Badge>
+                        <span className="text-[8px] text-muted-foreground uppercase tracking-tighter">Head: {headStatus}</span>
+                      </div>
+                    </td>
                   </tr>
                 );
               })}

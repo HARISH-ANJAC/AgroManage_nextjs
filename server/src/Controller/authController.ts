@@ -80,7 +80,9 @@ export const login = async (req: Request, res: Response) => {
                 id: user.LOGIN_ID_USER_HDR,
                 loginName: user.LOGIN_NAME,
                 mailId: user.MAIL_ID_USER_HDR,
-                role: user.ROLE_USER_HDR
+                role: user.ROLE_USER_HDR,
+                stockShowStatus: user.STOCK_SHOW_STATUS,
+                outsideAccessYn: user.OUTSIDE_ACCESS_Y_N
             }
         });
     } catch (error) {

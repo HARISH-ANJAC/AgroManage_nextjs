@@ -1,7 +1,14 @@
 import express from "express";
-import { getDeliveryNotes, createDeliveryNote, deleteDeliveryNote } from "../Controller/deliveryNoteController.js";
+import { 
+    getDeliveryNotes, 
+    getDeliveryNoteById, 
+    createDeliveryNote, 
+    updateDeliveryNote
+} from "../Controller/deliveryNoteController.js";
 
 export const deliveryNoteRoute = express.Router();
+
 deliveryNoteRoute.get("/", getDeliveryNotes);
+deliveryNoteRoute.get("/:id", getDeliveryNoteById);
 deliveryNoteRoute.post("/", createDeliveryNote);
-deliveryNoteRoute.delete("/:id", deleteDeliveryNote);
+deliveryNoteRoute.put("/:id", updateDeliveryNote);

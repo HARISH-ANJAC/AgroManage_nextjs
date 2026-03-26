@@ -4,18 +4,19 @@ import MasterCrudPage from "@/components/MasterCrudPage";
 import { useMasterData } from "@/hooks/useMasterData";
 
 export default function DistrictsPage() {
+  const { data: districts } = useMasterData("districts");
   const { data: countries } = useMasterData("countries");
   const { data: regions } = useMasterData("regions");
   
-  const countryOptions = countries?.map((c: any) => ({
+  const countryOptions = (countries || []).map((c: any) => ({
     value: c.id,
     label: c.countryName
-  })) || [];
+  }));
 
-  const regionOptions = regions?.map((r: any) => ({
+  const regionOptions = (regions || []).map((r: any) => ({
     value: r.id,
     label: r.regionName
-  })) || [];
+  }));
 
   return <MasterCrudPage
     domain="districts" title="Districts" description="Manage your districts" idPrefix="DST" fields={[
@@ -26,7 +27,7 @@ export default function DistrictsPage() {
     { key: "zoneName", label: "Zone Name", type: "text" },
     { key: "distanceFromArusha", label: "Distance from Arusha (km)", type: "number" },
     { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
-  ]} initialData={[]} columns={[
+  ]} initialData={districts || []} columns={[
     { key: "districtName", label: "District" }, 
     { key: "regionName", label: "Region" }, 
     { key: "countryName", label: "Country" }, 

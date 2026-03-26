@@ -45,7 +45,8 @@ import {
   CircleDollarSign,
   Coins,
   Hash,
-  ChevronDown
+  ChevronDown,
+  CheckSquare
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -55,6 +56,8 @@ interface UserData {
   loginName: string;
   mailId: string;
   role: string;
+  stockShowStatus?: string;
+  outsideAccessYn?: string;
 }
 
 const SidebarContext = createContext({
@@ -147,7 +150,6 @@ const navigation = [
       { name: 'Products', href: '/products', icon: Package },
       { name: 'Main Categories', href: '/categories', icon: Tag },
       { name: 'Sub Categories', href: '/sub-categories', icon: Layers },
-      { name: 'UOM', href: '/uom', icon: Ruler },
       { name: 'Min Stock Settings', href: '/store-product-min-stock', icon: Database },
       { name: 'Opening Stock', href: '/product-opening-stock', icon: Database },
       { name: 'Category Mapping', href: '/product-company-category-mapping', icon: Link2 },
@@ -191,10 +193,10 @@ const navigation = [
   {
     group: 'Purchasing',
     items: [
-      // { name: 'Quotations(RFQ)', href: '/quotations-rfq', icon: FileText },
+
       { name: 'Purchase Orders', href: '/purchase-orders', icon: ShoppingCart },
+      { name: 'Purchase Approval', href: '/purchase-approvals', icon: CheckSquare },
       { name: 'Goods Receipts', href: '/goods-receipts', icon: ClipboardCheck },
-      { name: 'Supplier Invoices', href: '/supplier-invoices', icon: Receipt },
       { name: 'Purchase Invoices', href: '/purchase-booking', icon: FileText },
     ]
   },
@@ -338,45 +340,61 @@ export function Sidebar() {
 
         {/* Navigation Section */}
         <nav className="flex-1 overflow-y-auto custom-scrollbar px-3 py-2 space-y-1">
-          {navigation.map((group) => (
-            <div key={group.group} className="mb-2">
-              {(!isCollapsed || isMobile) ? (
-                <button
-                  onClick={() => toggleSection(group.group)}
-                  className="flex items-center justify-between w-full px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-white/40 hover:text-white/60 transition-colors"
-                >
-                  {group.group}
-                  <ChevronDown className={`w-3 h-3 transition-transform ${collapsedSections[group.group] ? "-rotate-90" : ""}`} />
-                </button>
-              ) : (
-                <div className="h-4" />
-              )}
+          {navigation
+            .filter((group) => {
+              // RBAC Filtering Logic
+              // If outsideAccessYn is 'Y', show everything.
+              if (user?.outsideAccessYn === 'Y') return true;
 
-              {(!collapsedSections[group.group] || isCollapsed) && (
-                <div className="space-y-0.5">
-                  {group.items.map((item) => {
-                    const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className={`flex items-center gap-3.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 relative ${isActive
-                          ? "bg-accent text-accent-foreground shadow-lg shadow-accent/20"
-                          : "text-white/70 hover:bg-white/10 hover:text-white"
-                          } ${isCollapsed && !isMobile ? 'justify-center px-0 mx-1' : ''}`}
-                        title={isCollapsed ? item.name : ''}
-                      >
-                        <item.icon className={`size-5 shrink-0 transition-transform duration-300 ${isActive ? 'scale-110' : 'opacity-70 group-hover:opacity-100'}`} />
-                        {(!isCollapsed || isMobile) && (
-                          <span className="truncate whitespace-nowrap animate-in fade-in slide-in-from-left-1 duration-300">{item.name}</span>
-                        )}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          ))}
+              // Groups allowed for outsideAccessYn === 'N'
+              const defaultGroups = ['Overview', 'Purchasing', 'Sales', 'Finance'];
+
+              if (defaultGroups.includes(group.group)) return true;
+
+              // Inventory group special check
+              if (group.group === 'Inventory' && user?.stockShowStatus === 'Y') return true;
+
+              return false;
+            })
+            .map((group) => (
+              <div key={group.group} className="mb-2">
+                {(!isCollapsed || isMobile) ? (
+                  <button
+                    onClick={() => toggleSection(group.group)}
+                    className="flex items-center justify-between w-full px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-white/40 hover:text-white/60 transition-colors"
+                  >
+                    {group.group}
+                    <ChevronDown className={`w-3 h-3 transition-transform ${collapsedSections[group.group] ? "-rotate-90" : ""}`} />
+                  </button>
+                ) : (
+                  <div className="h-4" />
+                )}
+
+                {(!collapsedSections[group.group] || isCollapsed) && (
+                  <div className="space-y-0.5">
+                    {group.items.map((item) => {
+                      const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className={`flex items-center gap-3.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 relative ${isActive
+                            ? "bg-accent text-accent-foreground shadow-lg shadow-accent/20"
+                            : "text-white/70 hover:bg-white/10 hover:text-white"
+                            } ${isCollapsed && !isMobile ? 'justify-center px-0 mx-1' : ''}`}
+                          title={isCollapsed ? item.name : ''}
+                        >
+                          <item.icon className={`size-5 shrink-0 transition-transform duration-300 ${isActive ? 'scale-110' : 'opacity-70 group-hover:opacity-100'}`} />
+                          {(!isCollapsed || isMobile) && (
+                            <span className="truncate whitespace-nowrap animate-in fade-in slide-in-from-left-1 duration-300">{item.name}</span>
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ))}
         </nav>
 
         {/* User Profile / Footer */}

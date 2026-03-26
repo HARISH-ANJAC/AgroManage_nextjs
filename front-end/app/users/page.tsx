@@ -9,14 +9,14 @@ export default function UsersPage() {
   return <MasterCrudPage
     domain="users" title="Users" description="Manage your users" idPrefix="USR" fields={[
     { key: "loginName", label: "Login Name", type: "text", required: true },
-    { key: "role", label: "Role", type: "select", options: ["Administrator", "Manager", "User", "Viewer"] },
-    { key: "mobileNo", label: "Mobile No", type: "text" },
-    { key: "mailId", label: "Email", type: "text" },
-    { key: "stockShowStatus", label: "Stock Show Status", type: "select", options: ["Yes", "No"] },
-    { key: "outsideAccess", label: "Outside Access", type: "select", options: ["Yes", "No"] },
-    { key: "remarks", label: "Remarks", type: "textarea" },
-    { key: "status", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
+    { key: "roleUserHdr", label: "Role", type: "select", options: ["Super Admin", "Manager", "User", "Viewer"] },
+    { key: "mobileNoUserHdr", label: "Mobile No", type: "text" },
+    { key: "mailIdUserHdr", label: "Email", type: "text" },
+    { key: "stockShowStatus", label: "Stock Show Status", type: "select", options: ["Y", "N"] },
+    { key: "outsideAccessYN", label: "Outside Access", type: "select", options: ["Y", "N"] },
+    { key: "remarksUserHdr", label: "Remarks", type: "textarea" },
+    { key: "statusUserHdr", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
   ]} initialData={users} columns={[
-    { key: "loginName", label: "Login" }, { key: "role", label: "Role" }, { key: "mobileNo", label: "Mobile" }, { key: "mailId", label: "Email" }, { key: "status", label: "Status" },
+    { key: "loginName", label: "Login" }, { key: "roleUserHdr", label: "Role" }, { key: "mobileNoUserHdr", label: "Mobile" }, { key: "mailIdUserHdr", label: "Email" }, { key: "statusUserHdr", label: "Status" },
   ]} />;
 }

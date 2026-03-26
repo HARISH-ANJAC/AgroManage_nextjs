@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="favicon.png" rel="icon" />
+<title>General Invoice - Maize Grade A</title>
+<meta name="author" content="harnishdesign.net">
+
+<!-- Web Fonts
+======================= -->
+<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Poppins:100,200,300,400,500,600,700,800,900' type='text/css'>
+
+<!-- Stylesheet
+======================= -->
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css"/>
+<style>
+/* CSS Variables */
+:root { --bs-themecolor: #0071cc; }
+
+/* Base Styles */
+body { 
+    font-family: 'Poppins', sans-serif; 
+    color: #333; 
+    background-color: #e7e9ed; 
+    margin: 0; 
+    padding: 0;
+}
+
+/* A4 Container Setup */
+.invoice-container { 
+    background: #fff; 
+    width: 210mm; /* A4 Width */
+    min-height: 297mm; /* A4 Height */
+    margin: 20px auto; 
+    padding: 20mm; /* Standard Print Margin */
+    border-radius: 5px; 
+    box-shadow: 0 0 15px rgba(0,0,0,0.1); 
+    box-sizing: border-box;
+}
+
+/* Table Styles */
+.table thead th { 
+    border-bottom: 2px solid #dee2e6; 
+    background-color: #f8f9fa !important; 
+    -webkit-print-color-adjust: exact;
+}
+.text-1 { font-size: 14px; }
+.text-end { text-align: right !important; }
+.summary-table { width: 300px; margin-left: auto; }
+.mb-4 { margin-bottom: 1.5rem !important; }
+
+/* Print Specific Settings */
+@media print {
+    body { 
+        background: none; 
+        margin: 0; 
+    }
+    .invoice-container { 
+        margin: 0; 
+        box-shadow: none; 
+        width: 100%;
+        height: auto;
+    }
+    footer { 
+        position: fixed; 
+        bottom: 20mm; 
+        left: 0; 
+        right: 0; 
+    }
+    .no-print { display: none; }
+    /* Ensure background colors print */
+    .bg-light { background-color: #f8f9fa !important; -webkit-print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+<!-- Container -->
+<div class="container-fluid invoice-container">
+  <!-- Header -->
+  <header>
+	  <div class="row align-items-center gy-3">
+		<div class="col-sm-7 text-start">
+		  <img id="logo" src="logo.png" title="Prime Harvest" alt="Prime Harvest" style="max-width: 100px;" onerror="this.style.display='none'; document.getElementById('logo-text').style.display='block';" />
+          <h2 id="logo-text" style="display:none; color:var(--bs-themecolor);">PRIME HARVEST</h2>
+		</div>
+		<div class="col-sm-5 text-end">
+		  <h4 class="text-7 mb-0">INVOICE</h4>
+		</div>
+	  </div>
+	  <hr>
+  </header>
+  
+  <!-- Main Content -->
+  <main>
+    <!-- Top Details -->
+    <div class="row mb-4">
+      <div class="col-6"> 
+        <strong>Invoiced To:</strong>
+        <address class="text-1">
+          Smith Rhodes<br />
+          15 Main Court, High Street<br />
+          New York, NY 10001
+        </address>
+      </div>
+      <div class="col-6 text-end"> 
+        <div class="text-1">
+            <strong>Date:</strong> 24/03/2024<br>
+            <strong>Invoice No:</strong> 12345
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Product Table -->
+	<div class="table-responsive">
+	  <table class="table table-bordered">
+		<thead>
+		  <tr class="bg-light">
+			<th>#</th>
+			<th>Product</th>
+			<th class="text-center">Qty</th>
+			<th class="text-center">UOM</th>
+			<th class="text-center">Rate</th>
+			<th class="text-center">Amount</th>
+			<th class="text-center">VAT%</th>
+			<th class="text-end">VAT Total</th>
+		  </tr>
+		</thead>
+		<tbody>
+		  <tr>
+			<td>1</td>
+			<td class="text-1">Maize Grade A</td>
+			<td class="text-center">10000</td>
+			<td class="text-center">KG</td>
+			<td class="text-center">7,200 TZS</td>
+			<td class="text-center">72,000,000</td>
+			<td class="text-center">18%</td>
+			<td class="text-end">12,960,000</td>
+		  </tr>
+		</tbody>
+	  </table>
+	</div>
+
+    <!-- Summary (Sinna Table) -->
+	<div class="row mt-3">
+        <div class="col-7"></div>
+		<div class="col-5">
+			<table class="table table-sm table-bordered summary-table">
+				<tr>
+				  <td class="text-end"><strong>Subtotal:</strong></td>
+				  <td class="text-end">TZS 72,000,000</td>
+				</tr>
+				<tr>
+				  <td class="text-end"><strong>VAT (18%):</strong></td>
+				  <td class="text-end">TZS 12,960,000</td>
+				</tr>
+				<tr class="bg-light">
+				  <td class="text-end"><strong>Total:</strong></td>
+				  <td class="text-end"><strong>TZS 84,960,000</strong></td>
+				</tr>
+			</table>
+		</div>
+	</div>
+  </main>
+  
+  <!-- Footer -->
+  <footer class="text-center mt-5">
+	<hr>
+	<p class="text-1 mb-1">Generated on: 24/03/2024</p>
+	<p class="text-1"><strong>NOTE:</strong> Thank you for your business. Please contact us for any queries.</p>
+  </footer>
+</div>
+</body>
+</html>

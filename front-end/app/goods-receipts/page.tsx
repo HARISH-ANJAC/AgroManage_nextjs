@@ -1,148 +1,285 @@
 "use client";
 
-import MasterCrudPage from "@/components/MasterCrudPage";
-import { useMasterData } from "@/hooks/useMasterData";
+import { useState } from "react";
+import { Plus, Search, Eye, Pencil, FileText, Trash2, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
 import { useGoodsReceiptStore } from "@/hooks/useGoodsReceiptStore";
-import { usePurchaseOrderStore } from "@/hooks/usePurchaseOrderStore";
+import { useMasterData } from "@/hooks/useMasterData";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+const statusColors: Record<string, string> = {
+  Received: "bg-success/10 text-success border-success/30",
+  Pending: "bg-warning/10 text-warning border-warning/30",
+  Partial: "bg-orange-100 text-orange-600 border-orange-200",
+  Active: "bg-success/10 text-success border-success/30",
+};
+
+const formatDate = (dateStr: string | null) => {
+  if (!dateStr) return "—";
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(date);
+};
 
 export default function GoodsReceiptsPage() {
-  const { data: companies } = useMasterData("companies");
+  const navigate = useRouter();
+  const [search, setSearch] = useState("");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const { grns, isLoading } = useGoodsReceiptStore();
   const { data: stores } = useMasterData("stores");
   const { data: suppliers } = useMasterData("suppliers");
-  const { orders: pos } = usePurchaseOrderStore();
-  const { grns, addGRN, updateGRN, deleteGRN } = useGoodsReceiptStore();
 
-  const handleExportPDF = (grn: any) => {
-    const h = grn.header || grn;
-    const items = grn.items || [];
+  const storeMap = Object.fromEntries(stores.map((s: any) => [s.id, s.storeName]));
+  const supplierMap = Object.fromEntries(suppliers.map((s: any) => [s.id, s.supplierName]));
+
+  const handleExportPDF = async (grn: any) => {
     const doc = new jsPDF();
+    const refNo = grn.GRN_REF_NO || grn.grnRefNo || "GRN";
+    const date = formatDate(grn.GRN_DATE || grn.grnDate);
+    const poRef = grn.PO_REF_NO || grn.poRefNo || "N/A";
+    const supplierName = supplierMap[grn.SUPPLIER_ID] || grn.supplierName || "N/A";
+    const storeName = storeMap[grn.GRN_STORE_ID] || grn.storeName || "N/A";
 
-    // Header
     doc.setFontSize(22);
-    doc.setTextColor(15, 23, 42); 
+    doc.setTextColor(15, 23, 42);
     doc.text("GOODS RECEIPT NOTE", 14, 22);
-    
-    doc.setFontSize(10);
-    doc.setTextColor(100, 116, 139); 
-    doc.text(`Reference: ${h.grnRefNo || h.id}`, 14, 30);
-    doc.text(`Date: ${h.grnDate || "N/A"}`, 14, 35);
-    doc.text(`PO Ref: ${h.poRefNo || "General"}`, 14, 40);
-    doc.text(`Status: ${h.status || "Received"}`, 14, 45);
 
-    // Logistics Info
+    // Handle logo with proper aspect ratio
+    try {
+      const logoImg = new Image();
+      logoImg.src = "/assets/logo.png";
+      await new Promise((resolve) => {
+        logoImg.onload = resolve;
+        logoImg.onerror = resolve; // Continue even if logo fails
+      });
+      
+      if (logoImg.complete && logoImg.naturalWidth) {
+        const imgWidth = 40;
+        const imgHeight = (logoImg.naturalHeight * imgWidth) / logoImg.naturalWidth;
+        doc.addImage(logoImg, "PNG", 155, 10, imgWidth, imgHeight);
+      }
+    } catch (e) {
+      console.warn("Logo failed to load", e);
+    }
+
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`GRN Ref: ${refNo}`, 14, 30);
+    doc.text(`Date: ${date}`, 14, 35);
+    doc.text(`PO Ref: ${poRef}`, 14, 40);
+    doc.text(`Status: ${grn.STATUS_ENTRY || grn.status || "Received"}`, 14, 45);
+
     doc.setFontSize(12);
     doc.setTextColor(15, 23, 42);
-    doc.text("Supplier / Source", 14, 60);
-    doc.text("Receiving Store", 120, 60);
+    doc.text("Supplier", 14, 58);
+    doc.text("Receiving Store", 120, 58);
 
     doc.setFontSize(10);
     doc.setTextColor(71, 85, 105);
-    doc.text(h.supplierName || "N/A", 14, 67);
-    doc.text(h.grnStoreName || "Main Warehouse", 120, 67);
-    
-    if (h.vehicleNo) doc.text(`Vehicle: ${h.vehicleNo}`, 14, 72);
-    if (h.driverName) doc.text(`Driver: ${h.driverName}`, 14, 77);
+    doc.text(supplierName, 14, 65);
+    doc.text(storeName, 120, 65);
+    if (grn.VEHICLE_NO || grn.vehicleNo) doc.text(`Vehicle: ${grn.VEHICLE_NO || grn.vehicleNo}`, 14, 70);
+    if (grn.DRIVER_NAME || grn.driverName) doc.text(`Driver: ${grn.DRIVER_NAME || grn.driverName}`, 14, 75);
 
-    // Item Table
     autoTable(doc, {
-      startY: 90,
-      head: [['#', 'Product', 'PO Qty', 'Received Qty', 'UOM', 'Shortage']],
-      body: items.map((item: any, index: number) => [
-        index + 1,
-        item.productName || item.product,
-        item.poQty || 0,
-        item.recvQty || 0,
-        item.uom || "Unit",
-        (item.poQty || 0) - (item.recvQty || 0)
-      ]),
+      startY: 88,
+      head: [["#", "Product", "PO Qty", "Received Qty", "UOM", "Shortage", "Remarks"]],
+      body: (grn.items || []).map((item: any, idx: number) => {
+        const poQty = Number(item.poQty || 0);
+        const recQty = Number(item.TOTAL_QTY || item.receivedQty || 0);
+        return [idx + 1, item.productName || item.PRODUCT_NAME || "—", poQty, recQty, item.UOM || item.uom || "KG", poQty - recQty, item.REMARKS || ""];
+      }),
       styles: { fontSize: 9, cellPadding: 3 },
       headStyles: { fillColor: [26, 46, 40], textColor: [255, 255, 255] },
       alternateRowStyles: { fillColor: [248, 250, 252] },
     });
 
     const finalY = (doc as any).lastAutoTable.finalY + 15;
-    
-    // Verification Section
     doc.setFontSize(10);
     doc.setTextColor(100, 116, 139);
     doc.text("Verified By:", 14, finalY);
     doc.text("__________________", 14, finalY + 10);
-    
     doc.text("Store Manager Signature:", 120, finalY);
     doc.text("__________________", 120, finalY + 10);
 
-    doc.save(`${h.grnRefNo || "GRN_Note"}.pdf`);
+    doc.save(`${refNo}.pdf`);
     toast.success("GRN PDF generated successfully");
   };
 
-  return <MasterCrudPage
-    domain="goods-receipts"
-    title="Goods Receipt Notes (GRN)"
-    description="Record incoming goods — must select existing PO. Qty ≤ PO Qty."
-    idPrefix="GRN"
-    onPrint={handleExportPDF}
-    customAddUrl="/goods-receipts/create"
-    customEditUrl={(id) => `/goods-receipts/create?id=${id}`}
-    customStoreOverrides={{
-      data: grns.map((g: any) => ({
-        ...g,
-        supplierName: g.header?.supplierName || g.supplierName || suppliers.find((s: any) => s.id === g.supplierId)?.supplierName || "-",
-        grnStoreName: stores.find((s: any) => s.id === (g.header?.grnStoreId || g.grnStoreId))?.storeName || "-",
-        itemsCount: g.items?.length || 0
-      })),
-      add: addGRN,
-      update: (item: any) => updateGRN(item.id, item),
-      remove: deleteGRN
-    }}
-    fields={[
-      { key: "grnRefNo", label: "GRN Ref No", type: "text", required: true },
-      { key: "grnDate", label: "GRN Date", type: "date", required: true },
-      {
-        key: "companyId",
-        label: "Company",
-        type: "select",
-        options: companies.map((c: any) => ({ label: c.companyName, value: c.id }))
-      },
-      {
-        key: "grnStoreId",
-        label: "GRN Store",
-        type: "select",
-        options: stores.map((s: any) => ({ label: s.storeName, value: s.id }))
-      },
-      {
-        key: "supplierId",
-        label: "Supplier",
-        type: "select",
-        options: suppliers.map((s: any) => ({ label: s.supplierName, value: s.id }))
-      },
-      {
-        key: "poRefNo",
-        label: "PO Reference",
-        type: "select",
-        options: pos.map((p: any) => {
-          const refNo = p.header?.poRefNo || p.poRefNo;
-          return { label: refNo, value: refNo };
-        })
-      },
-      { key: "grnSource", label: "GRN Source", type: "select", options: ["Purchase Order", "Stock Transfer"] },
-      { key: "deliveryNoteRefNo", label: "Delivery Note Ref", type: "text" },
-      { key: "driverName", label: "Driver Name", type: "text" },
-      { key: "vehicleNo", label: "Vehicle No", type: "text" },
-      { key: "status", label: "Status", type: "select", required: true, options: ["Received", "Pending"] },
-    ]}
-    initialData={[]}
-    columns={[
-      { key: "grnRefNo", label: "GRN Ref" },
-      { key: "grnDate", label: "Date" },
-      { key: "poRefNo", label: "PO Ref" },
-      { key: "supplierName", label: "Supplier" },
-      { key: "grnStoreName", label: "Store" },
-      { key: "itemsCount", label: "Items" },
-      { key: "vehicleNo", label: "Vehicle" },
-      { key: "status", label: "Status" },
-    ]}
-  />;
+  const confirmDelete = async () => {
+    // GRNs are generally archived rather than deleted; show info
+    toast.info("GRN deletion is restricted. Please contact admin.");
+    setDeleteId(null);
+  };
+
+  const filtered = (grns as any[]).filter((g) => {
+    const refNo = (g.GRN_REF_NO || g.grnRefNo || "").toLowerCase();
+    const poRef = (g.PO_REF_NO || g.poRefNo || "").toLowerCase();
+    const supplier = (supplierMap[g.SUPPLIER_ID] || g.supplierName || "").toLowerCase();
+    const q = search.toLowerCase();
+    return refNo.includes(q) || poRef.includes(q) || supplier.includes(q);
+  });
+
+  return (
+    <div>
+      {/* Page Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Goods Receipt Notes (GRN)</h1>
+          <p className="text-sm text-muted-foreground">
+            Record incoming goods against approved Purchase Orders
+          </p>
+        </div>
+        <Button
+          onClick={() => navigate.push("/goods-receipts/create")}
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
+        >
+          <Plus className="w-4 h-4 mr-2" /> New GRN
+        </Button>
+      </div>
+
+      {/* Table Card */}
+      <div className="bg-card rounded-xl border p-6">
+        <div className="relative mb-4 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by GRN ref, PO ref, supplier..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-16 space-y-4">
+            <Loader2 className="w-10 h-10 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground animate-pulse">Loading goods receipts...</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Action</th>
+                  <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">GRN Ref No</th>
+                  <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">GRN Date</th>
+                  <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">PO Ref No</th>
+                  <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Supplier</th>
+                  <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">GRN Store</th>
+                  <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Source</th>
+                  <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Vehicle No</th>
+                  <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Driver</th>
+                  <th className="text-center p-3 font-semibold text-muted-foreground uppercase text-xs">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((g: any) => {
+                  const refNo = g.GRN_REF_NO || g.grnRefNo || "";
+                  const poRef = g.PO_REF_NO || g.poRefNo || "—";
+                  const supplierName = supplierMap[g.SUPPLIER_ID] || g.supplierName || "—";
+                  const storeName = storeMap[g.GRN_STORE_ID] || g.storeName || "—";
+                  const status = g.STATUS_ENTRY || g.status || "Received";
+
+                  return (
+                    <tr key={refNo} className="border-b hover:bg-muted/30 transition-colors">
+                      <td className="p-3">
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => navigate.push(`/goods-receipts/create?id=${encodeURIComponent(refNo)}`)}
+                            className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
+                            title="View / Edit"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => navigate.push(`/goods-receipts/create?id=${encodeURIComponent(refNo)}`)}
+                            className="p-1.5 rounded-lg hover:bg-muted text-[#059669] transition-colors"
+                            title="Edit GRN"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleExportPDF(g)}
+                            className="p-1.5 rounded-lg hover:bg-muted text-blue-600 transition-colors"
+                            title="Export PDF"
+                          >
+                            <FileText className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteId(refNo)}
+                            className="p-1.5 rounded-lg hover:bg-destructive/5 text-destructive/40 hover:text-destructive transition-colors"
+                            title="Delete GRN"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                      <td className="p-3 font-mono text-xs font-bold text-[#0F172A]">{refNo || "—"}</td>
+                      <td className="p-3 text-muted-foreground text-xs">{formatDate(g.GRN_DATE || g.grnDate)}</td>
+                      <td className="p-3 font-mono text-xs font-semibold text-[#475569]">{poRef}</td>
+                      <td className="p-3 font-semibold text-[#0F172A] text-xs max-w-[150px] truncate">{supplierName}</td>
+                      <td className="p-3 text-[10px] text-[#64748B]">{storeName}</td>
+                      <td className="p-3">
+                        <Badge variant="secondary" className="bg-[#F1F5F9] text-[#64748B] border-none font-bold text-[10px]">
+                          {g.GRN_SOURCE || g.grnSource || "PO"}
+                        </Badge>
+                      </td>
+                      <td className="p-3 text-xs text-[#64748B]">{g.VEHICLE_NO || g.vehicleNo || "—"}</td>
+                      <td className="p-3 text-xs text-[#64748B]">{g.DRIVER_NAME || g.driverName || "—"}</td>
+                      <td className="p-3 text-center">
+                        <Badge variant="outline" className={`${statusColors[status] || ""} font-bold text-[9px] px-2 h-5`}>
+                          {status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={10} className="p-10 text-center text-muted-foreground">
+                      {search ? `No GRNs matching "${search}"` : "No Goods Receipts found. Click + New GRN to create one."}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Restrict GRN Deletion?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Goods Receipt Notes (GRN) are part of the permanent inventory audit trail and cannot be permanently deleted. You may archive or reverse a GRN through the appropriate workflow.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Understood
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
 }

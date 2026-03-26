@@ -1,79 +1,122 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 
-/**
- * Global State for Purchase Orders with LocalStorage Persistence
- * This allows managing POs without a backend while maintaining data across page refreshes.
- */
-
-const STORAGE_KEY = "agromanage_purchase_orders";
-
-// Simple event emitter to sync state across different instances of the hook
-const listeners = new Set<Function>();
-const notify = () => listeners.forEach(l => l());
-
-const getStoredOrders = (): any[] => {
-  if (typeof window === "undefined") return [];
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch (e) {
-    console.error("Failed to load POs from storage", e);
-    return [];
-  }
-};
-
-const saveOrders = (orders: any[]) => {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
-  notify();
-};
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export function usePurchaseOrderStore() {
-  const [orders, setOrders] = useState<any[]>(getStoredOrders());
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const handleChange = () => setOrders(getStoredOrders());
-    listeners.add(handleChange);
-    return () => {
-      listeners.delete(handleChange);
-    };
+  const getAuthToken = () => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("accessToken");
+  };
+
+  // Fetch all orders
+  const { data: orders = [], isLoading, refetch: refetchOrders } = useQuery({
+    queryKey: ["purchase-orders"],
+    queryFn: async () => {
+      const response = await fetch(`${API_URL}/purchase-orders`, {
+        headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+      });
+      if (!response.ok) throw new Error("Failed to fetch POs");
+      return response.json();
+    }
+  });
+
+  // Fetch single order
+  const getOrderById = useCallback(async (id: string) => {
+    // Double encoding to safely pass slashes through certain router configurations
+    const encodedId = encodeURIComponent(encodeURIComponent(id));
+    const response = await fetch(`${API_URL}/purchase-orders/${encodedId}`, {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+    if (!response.ok) return null;
+    return response.json();
   }, []);
 
-  const addOrder = useCallback((order: any) => {
-    const current = getStoredOrders();
-    const newOrder = { 
-      ...order, 
-      id: order.id || `PO-${Date.now()}`,
-      createdAt: new Date().toISOString() 
-    };
-    saveOrders([newOrder, ...current]);
-    return newOrder;
-  }, []);
+  // Add order
+  const addMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const response = await fetch(`${API_URL}/purchase-orders`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${getAuthToken()}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error("Failed to create PO");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+    }
+  });
 
-  const updateOrder = useCallback((id: string, updatedData: any) => {
-    const current = getStoredOrders();
-    const updated = current.map(o => (o.id === id || o.poRefNo === id) ? { ...o, ...updatedData } : o);
-    saveOrders(updated);
-  }, []);
+  // Update order (placeholder for now as controller doesn't have a direct PUT yet, but we can reuse create or add update)
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, payload }: { id: string, payload: any }) => {
+       const encodedId = encodeURIComponent(encodeURIComponent(id));
+       const response = await fetch(`${API_URL}/purchase-orders/${encodedId}`, {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${getAuthToken()}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error("Failed to update PO");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+    }
+  });
 
-  const deleteOrder = useCallback((id: string) => {
-    const current = getStoredOrders();
-    const filtered = current.filter(o => o.id !== id && o.poRefNo !== id);
-    saveOrders(filtered);
-  }, []);
+  // Approve
+  const approveMutation = useMutation({
+    mutationFn: async ({ id, level, status, remarks, user }: any) => {
+      const response = await fetch(`${API_URL}/purchase-orders/approve/${encodeURIComponent(id)}`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${getAuthToken()}`
+        },
+        body: JSON.stringify({ level, status, remarks, user })
+      });
+      if (!response.ok) throw new Error("Approval failed");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+    }
+  });
 
-  const getOrderById = useCallback((id: string) => {
-    return getStoredOrders().find(o => o.id === id || o.poRefNo === id);
-  }, []);
+  // Archive (Delete)
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`${API_URL}/purchase-orders/archive/${encodeURIComponent(id)}`, {
+        method: "PUT",
+        headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+      });
+      if (!response.ok) throw new Error("Failed to archive PO");
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+    }
+  });
 
   return {
     orders,
-    addOrder,
-    updateOrder,
-    deleteOrder,
-    getOrderById,
-    isLoading: false // Local state is instantaneous
+    isLoading,
+    refetchOrders,
+    addOrder: addMutation.mutateAsync,
+    updateOrder: (id: string, payload: any) => updateMutation.mutateAsync({ id, payload }),
+    approveOrder: approveMutation.mutateAsync,
+    deleteOrder: deleteMutation.mutateAsync,
+    getOrderById
   };
 }

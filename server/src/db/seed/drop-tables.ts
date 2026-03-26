@@ -1,49 +1,32 @@
-import pg from 'pg';
-import 'dotenv/config';
-
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-
-const SCHEMAS = ['stomaster', 'stoentries'];
+import { db } from '../index.js';
+import * as schema from '../schema/index.js';
+import { sql } from 'drizzle-orm';
+import { getTableConfig } from 'drizzle-orm/pg-core';
 
 async function dropTables() {
-    const client = await pool.connect();
+  console.log('Dropping tables...');
+  let droppedCount = 0;
+  
+  for (const [key, item] of Object.entries(schema)) {
     try {
-        console.log("🗑️  Dropping all tables...");
-
-        // Get all tables in both schemas
-        const result = await client.query(`
-            SELECT table_schema, table_name
-            FROM information_schema.tables
-            WHERE table_schema = ANY($1::text[])
-            AND table_type = 'BASE TABLE'
-            ORDER BY table_schema, table_name;
-        `, [SCHEMAS]);
-
-        if (result.rows.length === 0) {
-            console.log("   No tables found. Schemas may not exist yet.");
-        } else {
-            const tableList = result.rows
-                .map(r => `"${r.table_schema}"."${r.table_name}"`)
-                .join(', ');
-
-            await client.query(`DROP TABLE IF EXISTS ${tableList} CASCADE;`);
-            console.log(`✅ Dropped ${result.rows.length} tables successfully.`);
+        const config = getTableConfig(item as any);
+        if (config && config.name) {
+            const schemaName = config.schema || 'public';
+            const fullName = `"${schemaName}"."${config.name}"`;
+            console.log(`Dropping ${fullName}...`);
+            await db.execute(sql.raw(`DROP TABLE IF EXISTS ${fullName} CASCADE`));
+            droppedCount++;
         }
-
-        // Drop schemas if they exist
-        for (const schema of SCHEMAS) {
-            await client.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE;`);
-            console.log(`   Dropped schema: ${schema}`);
-        }
-
-        console.log("✅ Drop completed.");
-    } finally {
-        client.release();
-        await pool.end();
+    } catch (e) {
+        // Not a table, skip
     }
+  }
+
+  console.log(`Dropped ${droppedCount} tables successfully!`);
+  process.exit(0);
 }
 
 dropTables().catch(err => {
-    console.error("❌ Drop failed:", err.message);
-    process.exit(1);
+  console.error(err);
+  process.exit(1);
 });

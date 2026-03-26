@@ -1,7 +1,14 @@
 import express from "express";
-import { getTaxInvoices, createTaxInvoice, deleteTaxInvoice } from "../Controller/taxInvoiceController.js";
+import { 
+    getTaxInvoices, 
+    getTaxInvoiceById, 
+    createTaxInvoice, 
+    updateTaxInvoice
+} from "../Controller/taxInvoiceController.js";
 
 export const taxInvoiceRoute = express.Router();
+
 taxInvoiceRoute.get("/", getTaxInvoices);
+taxInvoiceRoute.get("/:id", getTaxInvoiceById);
 taxInvoiceRoute.post("/", createTaxInvoice);
-taxInvoiceRoute.delete("/:id", deleteTaxInvoice);
+taxInvoiceRoute.put("/:id", updateTaxInvoice);

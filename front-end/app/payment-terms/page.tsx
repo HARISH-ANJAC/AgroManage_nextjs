@@ -11,7 +11,7 @@ export default function PaymentTermsPage() {
     { key: "paymentTermName", label: "Payment Term Name", type: "text", required: true },
     { key: "remarks", label: "Remarks", type: "textarea" },
     { key: "statusEntry", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
-  ]} initialData={paymentTerms} 
+  ]} initialData={paymentTerms || []} 
   columns={[
     { key: "paymentTermName", label: "Term" }, { key: "remarks", label: "Remarks" }, { key: "statusEntry", label: "Status" },
   ]} />;

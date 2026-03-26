@@ -4,6 +4,8 @@ export interface InvoiceItem {
   rate: number;
   amount: number;
   uom?: string;
+  vatPercent?: number;  // new fields to match the updated table
+  vatAmount?: number;
 }
 
 export interface InvoiceData {
@@ -34,15 +36,12 @@ export const generatePremiumInvoiceHTML = (data: InvoiceData): string => {
     date,
     dueDate,
     companyName,
-    companyAddress,
-    companyContact,
     companyLogoUrl,
     clientName,
     clientAddress,
     clientContact,
     items,
     subtotal,
-    taxRate,
     taxAmount,
     discount,
     total,
@@ -55,336 +54,193 @@ export const generatePremiumInvoiceHTML = (data: InvoiceData): string => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
   };
 
-  const primaryColor = '#1A2E28'; // Deep AgroBusiness Green
-  const accentColor = '#059669';  // Emerald Green
-  const lightBg = '#F8FAFC';      // Slate 50
-  const borderColor = '#E2E8F0';  // Slate 200
-  const textColor = '#0F172A';    // Slate 900
-  const mutedColor = '#64748B';   // Slate 500
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invoice - ${invoiceNo}</title>
 
-  // HTML structure with inline CSS to ensure perfect rendering across standard PDF generators
-  return `
-  <!DOCTYPE html>
-  <html lang="en">
-  <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Invoice ${invoiceNo}</title>
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-      <style>
-          @media print {
-            @page {
-                size: A4;
-                margin: 0;
-            }
-            body { margin: 0; padding: 0; }
-          }
-          * { box-sizing: border-box; }
-          body {
-              font-family: 'Inter', sans-serif;
-              color: ${textColor};
-              background-color: #FFFFFF;
-              margin: 0;
-              padding: 0;
-              line-height: 1.5;
-              -webkit-font-smoothing: antialiased;
-          }
-          .invoice-box {
-              max-width: 800px;
-              margin: auto;
-              padding: 50px;
-              background-color: #FFFFFF;
-              font-size: 14px;
-          }
-          .header {
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-start;
-              border-bottom: 2px solid ${primaryColor};
-              padding-bottom: 30px;
-              margin-bottom: 40px;
-          }
-          .header-left {
-              max-width: 50%;
-          }
-          .header-right {
-              text-align: right;
-              max-width: 50%;
-          }
-          .logo {
-              max-width: 180px;
-              object-fit: contain;
-              margin-bottom: 15px;
-          }
-          .company-name {
-              font-size: 24px;
-              font-weight: 800;
-              color: ${primaryColor};
-              margin: 0 0 5px 0;
-              letter-spacing: -0.5px;
-          }
-          .company-details {
-              color: ${mutedColor};
-              font-size: 13px;
-              line-height: 1.6;
-          }
-          .invoice-title {
-              font-size: 38px;
-              font-weight: 800;
-              color: ${primaryColor};
-              margin: 0 0 10px 0;
-              text-transform: uppercase;
-              letter-spacing: 2px;
-          }
-          .invoice-meta {
-              display: flex;
-              flex-direction: column;
-              gap: 5px;
-              font-size: 13px;
-          }
-          .meta-row {
-              display: flex;
-              justify-content: flex-end;
-              gap: 15px;
-          }
-          .meta-label {
-              color: ${mutedColor};
-              font-weight: 500;
-          }
-          .meta-value {
-              font-weight: 700;
-              min-width: 100px;
-          }
-          .bill-to-section {
-              display: flex;
-              justify-content: space-between;
-              background-color: ${lightBg};
-              padding: 30px;
-              border-radius: 12px;
-              margin-bottom: 40px;
-          }
-          .bill-to h3, .ship-to h3 {
-              margin: 0 0 10px 0;
-              font-size: 12px;
-              text-transform: uppercase;
-              letter-spacing: 1px;
-              color: ${accentColor};
-              font-weight: 700;
-          }
-          .client-name {
-              font-size: 18px;
-              font-weight: 700;
-              margin: 0 0 5px 0;
-          }
-          .client-details {
-              color: ${mutedColor};
-              line-height: 1.6;
-              white-space: pre-wrap;
-          }
-          table {
-              width: 100%;
-              border-collapse: separate;
-              border-spacing: 0;
-              margin-bottom: 40px;
-          }
-          th, td {
-              padding: 15px;
-              text-align: left;
-          }
-          th {
-              background-color: ${primaryColor};
-              color: #FFFFFF;
-              font-weight: 600;
-              font-size: 12px;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-          }
-          th:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
-          th:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; text-align: right;}
-          
-          tr.item-row td {
-              border-bottom: 1px solid ${borderColor};
-              color: ${textColor};
-          }
-          tr.item-row:last-child td {
-              border-bottom: none;
-          }
-          .item-desc { font-weight: 600; }
-          .item-rate, .item-qty { color: ${mutedColor}; }
-          .text-right { text-align: right; }
-          .text-center { text-align: center; }
-          
-          .summary-section {
-              display: flex;
-              justify-content: space-between;
-              margin-bottom: 50px;
-          }
-          .notes {
-              width: 50%;
-              padding-right: 30px;
-          }
-          .notes h4 {
-              margin: 0 0 8px 0;
-              font-size: 12px;
-              text-transform: uppercase;
-              letter-spacing: 1px;
-              color: ${mutedColor};
-          }
-          .notes p {
-              font-size: 13px;
-              color: ${mutedColor};
-              line-height: 1.6;
-          }
-          .totals {
-              width: 40%;
-              background-color: ${lightBg};
-              padding: 25px;
-              border-radius: 12px;
-          }
-          .total-row {
-              display: flex;
-              justify-content: space-between;
-              margin-bottom: 12px;
-              font-size: 14px;
-              color: ${mutedColor};
-          }
-          .total-row.grand-total {
-              margin-top: 15px;
-              padding-top: 15px;
-              border-top: 2px dashed ${borderColor};
-              font-size: 20px;
-              font-weight: 800;
-              color: ${primaryColor};
-              margin-bottom: 0;
-          }
-          .footer {
-              text-align: center;
-              border-top: 1px solid ${borderColor};
-              padding-top: 30px;
-              color: ${mutedColor};
-              font-size: 12px;
-          }
-          .footer p { margin: 5px 0; }
-          
-          .accent-bar {
-              height: 8px;
-              width: 100%;
-              background: linear-gradient(90deg, ${primaryColor} 0%, ${accentColor} 100%);
-              position: absolute;
-              top: 0;
-              left: 0;
-          }
-      </style>
-  </head>
-  <body>
-      <div class="accent-bar"></div>
-      <div class="invoice-box">
-          
-          <div class="header">
-              <div class="header-left">
-                  ${companyLogoUrl ? `<img src="${companyLogoUrl}" class="logo" alt="Company Logo"/>` : ''}
-                  <h1 class="company-name">${companyName || 'AgroBusiness Enterprise'}</h1>
-                  <div class="company-details">
-                      ${companyAddress ? companyAddress.replace(/\\n/g, '<br/>') : ''}<br/>
-                      ${companyContact ? companyContact : ''}
-                  </div>
-              </div>
-              
-              <div class="header-right">
-                  <h2 class="invoice-title">INVOICE</h2>
-                  <div class="invoice-meta">
-                      <div class="meta-row">
-                          <span class="meta-label">Invoice #</span>
-                          <span class="meta-value">${invoiceNo}</span>
-                      </div>
-                      <div class="meta-row">
-                          <span class="meta-label">Date</span>
-                          <span class="meta-value">${new Date(date).toLocaleDateString()}</span>
-                      </div>
-                      ${dueDate ? `
-                      <div class="meta-row">
-                          <span class="meta-label">Due Date</span>
-                          <span class="meta-value">${new Date(dueDate).toLocaleDateString()}</span>
-                      </div>
-                      ` : ''}
-                  </div>
-              </div>
-          </div>
+<!-- Web Fonts -->
+<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Poppins:100,200,300,400,500,600,700,800,900' type='text/css'>
 
-          <div class="bill-to-section">
-              <div class="bill-to">
-                  <h3>Bill To</h3>
-                  <div class="client-name">${clientName}</div>
-                  <div class="client-details">
-                      ${clientAddress ? clientAddress.replace(/\\n/g, '<br/>') : ''}<br/>
-                      ${clientContact ? clientContact : ''}
-                  </div>
-              </div>
-          </div>
+<!-- Stylesheet -->
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css"/>
+<style>
+/* CSS Variables */
+:root { --bs-themecolor: #10B981; }
 
-          <table>
-              <thead>
-                  <tr>
-                      <th>Description</th>
-                      <th class="text-center">Quantity</th>
-                      <th class="text-right">Rate</th>
-                      <th class="text-right">Amount</th>
-                  </tr>
-              </thead>
-              <tbody>
-                  ${items.map(item => `
-                  <tr class="item-row">
-                      <td class="item-desc">${item.description}</td>
-                      <td class="text-center item-qty">${item.quantity} ${item.uom || ''}</td>
-                      <td class="text-right item-rate">${formatCurrency(item.rate)}</td>
-                      <td class="text-right item-desc">${formatCurrency(item.amount)}</td>
-                  </tr>
-                  `).join('')}
-              </tbody>
-          </table>
+/* Base Styles */
+body { 
+    font-family: 'Poppins', sans-serif; 
+    color: #333; 
+    background-color: #e7e9ed; 
+    margin: 0; 
+    padding: 0;
+}
 
-          <div class="summary-section">
-              <div class="notes">
-                  ${notes ? `
-                  <h4>Notes</h4>
-                  <p>${notes.replace(/\\n/g, '<br/>')}</p>
-                  ` : ''}
-                  ${terms ? `
-                  <h4 style="margin-top: 20px;">Terms & Conditions</h4>
-                  <p>${terms.replace(/\\n/g, '<br/>')}</p>
-                  ` : ''}
-              </div>
-              
-              <div class="totals">
-                  <div class="total-row">
-                      <span>Subtotal</span>
-                      <span>${formatCurrency(subtotal)}</span>
-                  </div>
-                  ${discount ? `
-                  <div class="total-row">
-                      <span>Discount</span>
-                      <span style="color: #ef4444;">-${formatCurrency(discount)}</span>
-                  </div>
-                  ` : ''}
-                  ${taxAmount ? `
-                  <div class="total-row">
-                      <span>Tax ${taxRate ? `(${taxRate}%)` : ''}</span>
-                      <span>${formatCurrency(taxAmount)}</span>
-                  </div>
-                  ` : ''}
-                  <div class="total-row grand-total">
-                      <span>Total</span>
-                      <span>${formatCurrency(total)}</span>
-                  </div>
-              </div>
-          </div>
+/* A4 Container Setup */
+.invoice-container { 
+    background: #fff; 
+    width: 210mm; 
+    min-height: 297mm; 
+    margin: 20px auto; 
+    padding: 20mm; 
+    border-radius: 5px; 
+    box-shadow: 0 0 15px rgba(0,0,0,0.1); 
+    box-sizing: border-box;
+}
 
-          <div class="footer">
-              <p>Thank you for your business!</p>
-              <p style="color:#94A3B8; font-size:10px;">Generated securely by AgroManage Enterprise ERP</p>
-          </div>
+/* Table Styles */
+.table thead th { 
+    border-bottom: 2px solid #dee2e6; 
+    background-color: #f8f9fa !important; 
+    -webkit-print-color-adjust: exact;
+}
+.text-1 { font-size: 14px; }
+.text-end { text-align: right !important; }
+.summary-table { width: 300px; margin-left: auto; }
+.mb-4 { margin-bottom: 1.5rem !important; }
+
+/* Print Specific Settings */
+@media print {
+    body { 
+        background: none; 
+        margin: 0; 
+    }
+    .invoice-container { 
+        margin: 0; 
+        box-shadow: none; 
+        width: 100%;
+        height: auto;
+    }
+    footer { 
+        position: fixed; 
+        bottom: 20mm; 
+        left: 0; 
+        right: 0; 
+    }
+    .no-print { display: none; }
+    /* Ensure background colors print */
+    .bg-light { background-color: #f8f9fa !important; -webkit-print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+<!-- Container -->
+<div class="container-fluid invoice-container">
+  <!-- Header -->
+  <header>
+	  <div class="row align-items-center gy-3">
+		<div class="col-sm-7 text-start">
+		  ${companyLogoUrl 
+            ? `<img id="logo" src="${companyLogoUrl}" title="${companyName}" alt="${companyName}" style="max-width: 150px;" onerror="this.style.display='none'; document.getElementById('logo-text').style.display='block';" />
+               <h2 id="logo-text" style="display:none; color:var(--bs-themecolor); font-weight:800; margin:0;">${companyName}</h2>` 
+            : `<h2 id="logo-text" style="color:var(--bs-themecolor); font-weight:800; margin:0; text-transform:uppercase;">${companyName}</h2>`}
+		</div>
+		<div class="col-sm-5 text-end">
+		  <h4 class="mb-0" style="font-weight:700; font-size: 24px;">INVOICE</h4>
+		</div>
+	  </div>
+	  <hr>
+  </header>
+  
+  <!-- Main Content -->
+  <main>
+    <!-- Top Details -->
+    <div class="row mb-4">
+      <div class="col-6"> 
+        <strong>Invoiced To:</strong>
+        <address class="text-1 mt-1">
+          <strong>${clientName}</strong><br />
+          ${clientAddress ? clientAddress.replace(/\n/g, '<br />') : ''}<br />
+          ${clientContact ? clientContact : ''}
+        </address>
       </div>
-  </body>
-  </html>
-  `;
+      <div class="col-6 text-end"> 
+        <div class="text-1 mt-1">
+            <strong>Date:</strong> ${new Date(date).toLocaleDateString()}<br>
+            <strong>Invoice No:</strong> ${invoiceNo}
+            ${dueDate ? `<br><strong>Due Date:</strong> ${new Date(dueDate).toLocaleDateString()}` : ''}
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Product Table -->
+	<div class="table-responsive">
+	  <table class="table table-bordered">
+		<thead>
+		  <tr class="bg-light">
+			<th>#</th>
+			<th>Product</th>
+			<th class="text-center">Qty</th>
+			<th class="text-center">UOM</th>
+			<th class="text-center">Rate</th>
+			<th class="text-center">Amount</th>
+			<th class="text-center">VAT%</th>
+			<th class="text-end">VAT Total</th>
+		  </tr>
+		</thead>
+		<tbody>
+          ${items.map((item, index) => `
+		  <tr>
+			<td>${index + 1}</td>
+			<td class="text-1">${item.description}</td>
+			<td class="text-center">${item.quantity}</td>
+			<td class="text-center">${item.uom || '-'}</td>
+			<td class="text-center">${formatCurrency(item.rate)}</td>
+			<td class="text-center">${formatCurrency(item.amount)}</td>
+			<td class="text-center">${item.vatPercent || 0}%</td>
+			<td class="text-end">${formatCurrency(item.vatAmount || 0)}</td>
+		  </tr>
+          `).join('')}
+		</tbody>
+	  </table>
+	</div>
+
+    <!-- Summary (Small Table) -->
+	<div class="row mt-3">
+        <div class="col-7">
+            <div class="text-1 text-muted" style="font-size: 13px;">
+                ${notes ? `<strong>Notes:</strong><br/>${notes.replace(/\n/g, '<br/>')}<br/><br/>` : ''}
+                ${terms ? `<strong>Terms & Conditions:</strong><br/>${terms.replace(/\n/g, '<br/>')}` : ''}
+            </div>
+        </div>
+		<div class="col-5">
+			<table class="table table-sm table-bordered summary-table">
+				<tr>
+				  <td class="text-end text-1"><strong>Subtotal:</strong></td>
+				  <td class="text-end text-1">${formatCurrency(subtotal)}</td>
+				</tr>
+                ${discount ? `
+				<tr>
+				  <td class="text-end text-1 text-danger"><strong>Discount:</strong></td>
+				  <td class="text-end text-1 text-danger">-${formatCurrency(discount)}</td>
+				</tr>
+                ` : ''}
+                ${taxAmount ? `
+				<tr>
+				  <td class="text-end text-1"><strong>VAT:</strong></td>
+				  <td class="text-end text-1">${formatCurrency(taxAmount)}</td>
+				</tr>
+                ` : ''}
+				<tr class="bg-light">
+				  <td class="text-end"><strong>Total:</strong></td>
+				  <td class="text-end" style="color:#0F172A; font-size: 16px;"><strong>${formatCurrency(total)}</strong></td>
+				</tr>
+			</table>
+		</div>
+	</div>
+  </main>
+  
+  <!-- Footer -->
+  <footer class="text-center mt-5">
+	<hr>
+	<p class="text-1 mb-1">Generated on: ${new Date().toLocaleString()}</p>
+	<p class="text-1"><strong>NOTE:</strong> Thank you for your business. Please contact us for any queries.</p>
+  </footer>
+</div>
+</body>
+</html>`;
 };

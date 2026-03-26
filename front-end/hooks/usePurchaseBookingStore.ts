@@ -1,77 +1,121 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 
-/**
- * Global State for Purchase Bookings (Invoices) with LocalStorage Persistence
- */
-
-const STORAGE_KEY = "agromanage_purchase_bookings";
-
-const listeners = new Set<Function>();
-const notify = () => listeners.forEach(l => l());
-
-const getStoredBookings = (): any[] => {
-  if (typeof window === "undefined") return [];
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch (e) {
-    console.error("Failed to load Purchase Bookings from storage", e);
-    return [];
-  }
-};
-
-const saveBookings = (bookings: any[]) => {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
-  notify();
-};
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export function usePurchaseBookingStore() {
-  const [bookings, setBookings] = useState<any[]>(getStoredBookings());
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const handleChange = () => setBookings(getStoredBookings());
-    listeners.add(handleChange);
-    return () => {
-      listeners.delete(handleChange);
-    };
+  const getAuthToken = () => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("accessToken");
+  };
+
+  const { data: bookings = [], isLoading, refetch: refetchBookings } = useQuery({
+    queryKey: ["purchase-invoices"],
+    queryFn: async () => {
+      const response = await fetch(`${API_URL}/purchase-invoices`, {
+        headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+      });
+      if (!response.ok) throw new Error("Failed to fetch Purchase Invoices");
+      return response.json();
+    }
+  });
+
+  const getBookingById = useCallback(async (id: string) => {
+    const response = await fetch(`${API_URL}/purchase-invoices?id=${encodeURIComponent(id)}`, {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+    if (!response.ok) return null;
+    return response.json();
   }, []);
 
-  const addBooking = useCallback((booking: any) => {
-    const current = getStoredBookings();
-    const newBooking = { 
-      ...booking, 
-      id: booking.id || `PB-${Date.now()}`,
-      createdAt: new Date().toISOString() 
-    };
-    saveBookings([newBooking, ...current]);
-    return newBooking;
-  }, []);
+  const addMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const response = await fetch(`${API_URL}/purchase-invoices`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${getAuthToken()}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchase-invoices"] });
+    }
+  });
 
-  const updateBooking = useCallback((id: string, updatedData: any) => {
-    const current = getStoredBookings();
-    const updated = current.map(b => (b.id === id || b.invoiceNo === id) ? { ...b, ...updatedData } : b);
-    saveBookings(updated);
-  }, []);
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, payload }: { id: string, payload: any }) => {
+      const response = await fetch(`${API_URL}/purchase-invoices?id=${encodeURIComponent(id)}`, {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${getAuthToken()}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchase-invoices"] });
+    }
+  });
 
-  const deleteBooking = useCallback((id: string) => {
-    const current = getStoredBookings();
-    const filtered = current.filter(b => b.id !== id && b.invoiceNo !== id);
-    saveBookings(filtered);
-  }, []);
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`${API_URL}/purchase-invoices?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+      });
+      if (!response.ok) throw new Error(await response.text());
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchase-invoices"] });
+    }
+  });
 
-  const getBookingById = useCallback((id: string) => {
-    return getStoredBookings().find(b => b.id === id || b.invoiceNo === id);
-  }, []);
+  const deleteBooking = async (id: string) => deleteMutation.mutateAsync(id);
+
+
+
+  const uploadFile = async (id: string, fileData: any) => {
+    const response = await fetch(`${API_URL}/purchase-invoices/upload?id=${encodeURIComponent(id)}`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${getAuthToken()}`
+      },
+      body: JSON.stringify(fileData)
+    });
+    if (!response.ok) throw new Error("Upload failed");
+    return response.json();
+  };
+
+  const getFiles = async (id: string) => {
+    const response = await fetch(`${API_URL}/purchase-invoices/files?id=${encodeURIComponent(id)}`, {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+    if (!response.ok) return [];
+    return response.json();
+  };
 
   return {
     bookings,
-    addBooking,
-    updateBooking,
+    isLoading,
+    refetchBookings,
+    addBooking: addMutation.mutateAsync,
+    updateBooking: (id: string, payload: any) => updateMutation.mutateAsync({ id, payload }),
     deleteBooking,
     getBookingById,
-    isLoading: false
+    uploadFile,
+    getFiles
   };
 }
