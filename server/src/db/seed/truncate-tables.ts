@@ -14,7 +14,7 @@ async function truncateTables() {
             const schemaName = config.schema || 'public';
             const fullName = `"${schemaName}"."${config.name}"`;
             console.log(`Truncating ${fullName}...`);
-            await db.execute(sql.raw(`TRUNCATE TABLE ${fullName} CASCADE`));
+            await db.execute(sql.raw(`TRUNCATE TABLE ${fullName} RESTART IDENTITY CASCADE`));
             truncatedCount++;
         }
     } catch (e) {

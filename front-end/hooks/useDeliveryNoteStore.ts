@@ -1,77 +1,103 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 
-/**
- * Global State for Delivery Notes with LocalStorage Persistence
- */
-
-const STORAGE_KEY = "agromanage_delivery_notes";
-
-const listeners = new Set<Function>();
-const notify = () => listeners.forEach(l => l());
-
-const getStoredNotes = (): any[] => {
-  if (typeof window === "undefined") return [];
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch (e) {
-    console.error("Failed to load Delivery Notes from storage", e);
-    return [];
-  }
-};
-
-const saveNotes = (notes: any[]) => {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
-  notify();
-};
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export function useDeliveryNoteStore() {
-  const [notes, setNotes] = useState<any[]>(getStoredNotes());
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const handleChange = () => setNotes(getStoredNotes());
-    listeners.add(handleChange);
-    return () => {
-      listeners.delete(handleChange);
-    };
+  const getAuthToken = () => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("accessToken");
+  };
+
+  // Fetch all delivery notes
+  const { data: notes = [], isLoading, refetch: refetchNotes } = useQuery({
+    queryKey: ["delivery-notes"],
+    queryFn: async () => {
+      const response = await fetch(`${API_URL}/delivery-notes`, {
+        headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+      });
+      if (!response.ok) throw new Error("Failed to fetch Delivery Notes");
+      return response.json();
+    }
+  });
+
+  // Fetch single delivery note
+  const getNoteById = useCallback(async (id: string) => {
+    if (!id) return null;
+    const encodedId = encodeURIComponent(id);
+    const response = await fetch(`${API_URL}/delivery-notes/${encodedId}`, {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+    if (!response.ok) return null;
+    return response.json();
   }, []);
 
-  const addNote = useCallback((note: any) => {
-    const current = getStoredNotes();
-    const newNote = { 
-      ...note, 
-      id: note.id || `DN-${Date.now()}`,
-      createdAt: new Date().toISOString() 
-    };
-    saveNotes([newNote, ...current]);
-    return newNote;
-  }, []);
+  // Add delivery note
+  const addMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const response = await fetch(`${API_URL}/delivery-notes`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${getAuthToken()}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error("Failed to create Delivery Note");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["delivery-notes"] });
+    }
+  });
 
-  const updateNote = useCallback((id: string, updatedData: any) => {
-    const current = getStoredNotes();
-    const updated = current.map(n => (n.id === id || n.deliveryNoteRefNo === id) ? { ...n, ...updatedData } : n);
-    saveNotes(updated);
-  }, []);
+  // Update delivery note
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, payload }: { id: string, payload: any }) => {
+       const encodedId = encodeURIComponent(id);
+       const response = await fetch(`${API_URL}/delivery-notes/${encodedId}`, {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${getAuthToken()}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error("Failed to update Delivery Note");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["delivery-notes"] });
+    }
+  });
 
-  const deleteNote = useCallback((id: string) => {
-    const current = getStoredNotes();
-    const filtered = current.filter(n => n.id !== id && n.deliveryNoteRefNo !== id);
-    saveNotes(filtered);
-  }, []);
-
-  const getNoteById = useCallback((id: string) => {
-    return getStoredNotes().find(n => n.id === id || n.deliveryNoteRefNo === id);
-  }, []);
+  // Delete delivery note
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const encodedId = encodeURIComponent(id);
+      const response = await fetch(`${API_URL}/delivery-notes/${encodedId}`, {
+        method: "DELETE",
+        headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+      });
+      if (!response.ok) throw new Error("Failed to delete Delivery Note");
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["delivery-notes"] });
+    }
+  });
 
   return {
     notes,
-    addNote,
-    updateNote,
-    deleteNote,
-    getNoteById,
-    isLoading: false
+    isLoading,
+    refetchNotes,
+    addNote: addMutation.mutateAsync,
+    updateNote: (id: string, payload: any) => updateMutation.mutateAsync({ id, payload }),
+    deleteNote: deleteMutation.mutateAsync,
+    getNoteById
   };
 }

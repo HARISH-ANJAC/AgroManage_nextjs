@@ -9,27 +9,55 @@ import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
 
 export default function DeliveryNotesPage() {
-  const { notes, addNote, updateNote, deleteNote } = useDeliveryNoteStore();
-  const { orders: salesOrders } = useSalesOrderStore();
-  const { data: companies } = useCompanies();
-  const { data: stores } = useStores();
-  const { data: customers } = useCustomers();
+  const { notes, addNote, updateNote, deleteNote, getNoteById, isLoading } = useDeliveryNoteStore();
 
-  const handleExportPDF = (note: any) => {
-    const h = note.header || note;
-    const items = note.items || [];
+  const handleExportPDF = async (note: any) => {
+    toast.loading("Generating Delivery Note PDF...", { id: "dn-pdf" });
+    const fullNote = await getNoteById(note.deliveryNoteRefNo || note.id);
+    
+    if (!fullNote) {
+      toast.error("Failed to load delivery note details", { id: "dn-pdf" });
+      return;
+    }
+
+    const h = fullNote.header;
+    const items = fullNote.items || [];
     const doc = new jsPDF();
-    const currency = h.currency || "TZS";
+    const currency = "TZS";
 
-    // Header
+    // Header & Logo with Canvas for reliability
     doc.setFontSize(22);
     doc.setTextColor(15, 23, 42); 
     doc.text("DELIVERY NOTE", 14, 22);
+
+    try {
+      const logoImg = new Image();
+      logoImg.src = "/assets/logo.png";
+      await new Promise((resolve) => {
+        logoImg.onload = resolve;
+        logoImg.onerror = resolve;
+      });
+
+      if (logoImg.naturalWidth) {
+        const canvas = document.createElement("canvas");
+        canvas.width = logoImg.naturalWidth;
+        canvas.height = logoImg.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(logoImg, 0, 0);
+        const logoData = canvas.toDataURL("image/png");
+        
+        const imgWidth = 40;
+        const imgHeight = (logoImg.naturalHeight * imgWidth) / logoImg.naturalWidth;
+        doc.addImage(logoData, "PNG", 155, 10, imgWidth, imgHeight);
+      }
+    } catch (e) {
+      console.warn("Logo failed to load", e);
+    }
     
     doc.setFontSize(10);
     doc.setTextColor(100, 116, 139); 
     doc.text(`Reference: ${h.deliveryNoteRefNo || h.id}`, 14, 30);
-    doc.text(`Date: ${h.deliveryDate || "N/A"}`, 14, 35);
+    doc.text(`Date: ${h.deliveryDate ? new Date(h.deliveryDate).toLocaleDateString() : "N/A"}`, 14, 35);
     doc.text(`SO Ref: ${h.deliverySourceRefNo || "General"}`, 14, 40);
     doc.text(`Status: ${h.status || "Pending"}`, 14, 45);
 
@@ -41,8 +69,8 @@ export default function DeliveryNotesPage() {
 
     doc.setFontSize(10);
     doc.setTextColor(71, 85, 105);
-    doc.text(h.customer || "N/A", 14, 67);
-    doc.text(`From: ${h.fromStore || "Main Store"}`, 120, 67);
+    doc.text(h.customerName || "N/A", 14, 67);
+    doc.text(`From: ${h.fromStoreName || "Main Store"}`, 120, 67);
     
     if (h.truckNo) doc.text(`Truck: ${h.truckNo} / ${h.trailerNo || ""}`, 120, 72);
     if (h.driverName) doc.text(`Driver: ${h.driverName}`, 120, 77);
@@ -54,8 +82,8 @@ export default function DeliveryNotesPage() {
       head: [['#', 'Product', 'Quantity', 'UOM', 'Rate', 'Amount']],
       body: items.map((item: any, index: number) => [
         index + 1,
-        item.productName || item.product,
-        item.deliveryQty || item.qty || 0,
+        item.productName || "—",
+        item.deliveryQty || 0,
         item.uom || "Unit",
         `${currency} ${(item.rate || 0).toLocaleString()}`,
         `${currency} ${(item.amount || 0).toLocaleString()}`
@@ -65,10 +93,11 @@ export default function DeliveryNotesPage() {
       alternateRowStyles: { fillColor: [248, 250, 252] },
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY + 15;
+    const finalY = ((doc as any).lastAutoTable?.finalY || 100) + 15;
     
     // Summary
-    doc.setFontSize(10);
+    doc.setFontSize(12);
+    doc.setTextColor(15, 23, 42);
     doc.text(`Total Amount: ${currency} ${(h.finalSalesAmount || 0).toLocaleString()}`, 190, finalY, { align: 'right' });
 
     // Verification Section
@@ -81,77 +110,38 @@ export default function DeliveryNotesPage() {
     doc.text("________________________", 120, finalY + 25);
 
     doc.save(`${h.deliveryNoteRefNo || "Delivery_Note"}.pdf`);
-    toast.success("Delivery Note PDF generated successfully");
+    toast.success("Delivery Note PDF generated successfully", { id: "dn-pdf" });
   };
 
   return <MasterCrudPage
     domain="delivery-notes"
     title="Delivery Notes"
-    description="Create from Sales Order. Delivery Qty ≤ SO Qty."
+    description="Manage and track dispatch of goods against Sales Orders."
     idPrefix="DN"
     onPrint={handleExportPDF}
     customStoreOverrides={{
-      data: notes,
+      data: notes.map((n: any) => ({
+        ...n,
+        id: n.deliveryNoteRefNo || n.id
+      })),
       add: addNote,
-      update: (item: any) => updateNote(item.id, item),
-      remove: deleteNote
+      update: (item: any) => updateNote(item.deliveryNoteRefNo || item.id, item),
+      remove: deleteNote,
+      isLoading: isLoading
     }}
-    fields={[
-      { key: "deliveryNoteRefNo", label: "Delivery Note Ref No", type: "text", required: true },
-      { key: "deliveryDate", label: "Delivery Date", type: "date", required: true },
-      {
-        key: "company",
-        label: "Company",
-        type: "select",
-        options: companies.map((c: any) => ({ label: c.companyName, value: c.companyName }))
-      },
-      {
-        key: "fromStore",
-        label: "From Store",
-        type: "select",
-        options: stores.map((s: any) => ({ label: s.storeName, value: s.storeName }))
-      },
-      { key: "deliverySourceType", label: "Delivery Source Type", type: "select", options: ["Sales Order", "Stock Transfer"] },
-      {
-        key: "deliverySourceRefNo",
-        label: "Source Ref No (SO)",
-        type: "select",
-        options: salesOrders.map((so: any) => ({
-          label: so.header?.salesOrderRefNo || so.salesOrderRefNo || so.id,
-          value: so.header?.salesOrderRefNo || so.salesOrderRefNo || so.id
-        }))
-      },
-      { key: "toStore", label: "To Store / Customer", type: "text" },
-      {
-        key: "customer",
-        label: "Customer",
-        type: "select",
-        options: customers.map((c: any) => ({ label: c.customerName, value: c.customerName }))
-      },
-      { key: "truckNo", label: "Truck No", type: "text" },
-      { key: "trailerNo", label: "Trailer No", type: "text" },
-      { key: "driverName", label: "Driver Name", type: "text" },
-      { key: "driverContactNumber", label: "Driver Contact", type: "text" },
-      { key: "sealNo", label: "Seal No", type: "text" },
-      { key: "currency", label: "Currency", type: "select", options: ["TZS", "USD", "EUR"] },
-      { key: "totalProductAmount", label: "Total Product Amount", type: "number" },
-      { key: "vatAmount", label: "VAT Amount", type: "number" },
-      { key: "finalSalesAmount", label: "Final Amount", type: "number" },
-      { key: "remarks", label: "Remarks", type: "textarea" },
-      { key: "status", label: "Status", type: "select", required: true, options: ["Pending", "Dispatched", "Delivered"] },
-    ]}
-    initialData={[]}
     columns={[
-      { key: "header.deliveryNoteRefNo", label: "DN Ref" },
-      { key: "header.deliveryDate", label: "Date" },
-      { key: "header.deliverySourceRefNo", label: "SO Ref" },
-      { key: "header.customer", label: "Customer" },
-      { key: "header.fromStore", label: "From Store" },
-      { key: "header.truckNo", label: "Truck" },
-      { key: "header.driverName", label: "Driver" },
-      { key: "header.finalSalesAmount", label: "Total" },
-      { key: "header.status", label: "Status" },
+      { key: "deliveryNoteRefNo", label: "DN Ref" },
+      { key: "deliveryDate", label: "Date" },
+      { key: "deliverySourceRefNo", label: "SO Ref" },
+      { key: "customerName", label: "Customer" },
+      { key: "fromStoreName", label: "Dispatch From" },
+      { key: "truckNo", label: "Truck" },
+      { key: "driverName", label: "Driver" },
+      { key: "finalSalesAmount", label: "Total Value" },
+      { key: "status", label: "Status" },
     ]}
+    fields={[]}
+    initialData={[]}
     customAddUrl="/delivery-notes/create"
     customEditUrl={(id) => `/delivery-notes/create?id=${id}`}
   />;

@@ -170,7 +170,7 @@ async function main() {
     console.log("Seeding Currencies...");
     const currencies = [
       {
-        CURRENCY_NAME: "Tanzanian Shilling",
+        CURRENCY_NAME: "TZS",
         ADDRESS: "TZS",
         Exchange_Rate: "1.0",
         REMARKS: "Local currency",
@@ -180,7 +180,7 @@ async function main() {
         CREATED_MAC_ADDRESS: "00:00:00:00:00:00",
       },
       {
-        CURRENCY_NAME: "US Dollar",
+        CURRENCY_NAME: "$",
         ADDRESS: "USD",
         Exchange_Rate: "2500.0",
         REMARKS: "International currency",

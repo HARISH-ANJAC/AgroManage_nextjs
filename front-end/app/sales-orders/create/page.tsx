@@ -2,19 +2,20 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  PlusCircle,
+  Plus,
   Save,
   Send,
   Trash2,
-  UploadCloud,
   CheckCircle2,
-  Wallet,
-  ShieldCheck,
-  Truck,
-  Info,
-  ClipboardList,
-  Paperclip,
-  ArrowLeft
+  ArrowLeft,
+  Calendar,
+  User,
+  MapPin,
+  BadgeDollarSign,
+  Briefcase,
+  FileText,
+  Upload,
+  Info
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +30,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Suspense, useEffect, useState, useMemo, JSX } from 'react';
 import { toast } from "sonner";
-import { useMasterData } from "@/hooks/useMasterData";
 import {
   useCompanies,
   useCustomers,
@@ -38,15 +38,34 @@ import {
   useCurrencies,
   usePaymentTerms,
   useProducts,
-  useUoms
+  useUoms,
+  useBillingLocations
 } from "@/hooks/useStoreData";
 import { useSalesOrderStore } from "@/hooks/useSalesOrderStore";
+
+interface LineItem {
+  id: string | number;
+  productId: string | number;
+  productName: string;
+  mainCategoryId: number | null;
+  subCategoryId: number | null;
+  qtyPerPack: number;
+  totalQty: number;
+  uom: string;
+  rate: number;
+  discPercent: number;
+  vatPercent: number;
+  poRefNo: string;
+  poDtlSno: number | null;
+  amount: number;
+}
 
 function CreateSalesOrderContent(): JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get("id");
-  const { orders: allOrders, addOrder: add, updateOrder: update } = useSalesOrderStore();
+  const { addOrder, updateOrder, getOrderById } = useSalesOrderStore();
+  const today = new Date().toISOString().split("T")[0];
 
   // Master Data Hooks
   const { data: companies = [] } = useCompanies();
@@ -57,381 +76,431 @@ function CreateSalesOrderContent(): JSX.Element {
   const { data: paymentTerms = [] } = usePaymentTerms();
   const { data: productsData = [] } = useProducts();
   const { data: uoms = [] } = useUoms();
+  const { data: billingLocations = [] } = useBillingLocations();
 
-  const [form, setForm] = useState({
-    orderDate: new Date().toISOString().split("T")[0],
-    company: "AGRO",
-    customerId: "",
-    customer: "",
-    store: "",
-    salesPerson: "",
-    currency: "",
-    paymentTerm: "",
-    deliveryDate: "",
-    status: "Pending",
-    remarks: ""
+  const [header, setHeader] = useState({
+    salesOrderDate: today,
+    companyId: 0,
+    customerId: 0,
+    storeId: 0,
+    billingLocationId: 0,
+    salesPersonId: 0,
+    currencyId: 0,
+    paymentTermId: 0,
+    exchangeRate: 1,
+    creditLimitAmt: 0,
+    creditLimitDays: 0,
+    outstandingAmt: 0,
+    status: "Draft",
+    remarks: "",
+    salesOrderRefNo: ""
   });
 
-  const [items, setItems] = useState([
-    { id: 1, category: "", productName: "", productId: "", qtyPack: 0, totalQty: 0, uom: "KG", rate: 0, disc: 0, vat: 15 },
+  const [items, setItems] = useState<LineItem[]>([
+    { id: Date.now(), productId: "", productName: "", mainCategoryId: null, subCategoryId: null, qtyPerPack: 1, totalQty: 0, uom: "KG", rate: 0, discPercent: 0, vatPercent: 15, poRefNo: "", poDtlSno: null, amount: 0 },
   ]);
 
-  // Load existing data if editing or set defaults
+  const [files, setFiles] = useState<any[]>([]);
+  const [conversations, setConversations] = useState<any[]>([]);
+
+  // Load existing data if editing
   useEffect(() => {
-    if (editId && allOrders.length > 0) {
-      const existing = allOrders.find((o: any) => o.id === editId);
-      if (existing) {
-        setForm({
-          orderDate: existing.salesOrderDate || existing.orderDate || new Date().toISOString().split("T")[0],
-          company: existing.company || companies[0]?.companyName || "AGRO",
-          customerId: String(existing.customerId || ""),
-          customer: existing.customer || "",
-          store: String(existing.store || ""),
-          salesPerson: String(existing.salesPerson || ""),
-          currency: String(existing.currency || ""),
-          paymentTerm: String(existing.paymentTerm || ""),
-          deliveryDate: existing.deliveryDate || "",
-          status: existing.status || "Pending",
-          remarks: existing.remarks || ""
-        });
-        if (existing.items) setItems(existing.items);
+    const loadOrder = async () => {
+      if (editId) {
+        const res = await getOrderById(editId);
+        if (res && res.header) {
+          const h = res.header;
+          setHeader({
+            salesOrderDate: h.salesOrderDate ? new Date(h.salesOrderDate).toISOString().split("T")[0] : today,
+            companyId: h.companyId || 0,
+            customerId: h.customerId || 0,
+            storeId: h.storeId || 0,
+            billingLocationId: h.billingLocationId || 0,
+            salesPersonId: h.salesPersonId || 0,
+            currencyId: h.currencyId || 0,
+            paymentTermId: h.paymentTermId || 0,
+            exchangeRate: Number(h.exchangeRate) || 1,
+            creditLimitAmt: Number(h.creditLimitAmt) || 0,
+            creditLimitDays: Number(h.creditLimitDays) || 0,
+            outstandingAmt: Number(h.outstandingAmt) || 0,
+            status: h.status || "Draft",
+            remarks: h.remarks || "",
+            salesOrderRefNo: h.salesOrderRefNo || ""
+          });
+
+          if (res.items) {
+            setItems(res.items.map((it: any) => ({
+              id: it.id,
+              productId: it.productId,
+              productName: it.productName || "",
+              mainCategoryId: it.mainCategoryId,
+              subCategoryId: it.subCategoryId,
+              qtyPerPack: Number(it.qtyPerPacking) || 1,
+              totalQty: Number(it.totalQty) || 0,
+              uom: it.uom || "KG",
+              rate: Number(it.rate) || 0,
+              discPercent: 0,
+              vatPercent: Number(it.vatPercent) || 0,
+              poRefNo: it.poRefNo || "",
+              poDtlSno: it.poDtlSno,
+              amount: Number(it.amount) || 0
+            })));
+          }
+        }
+      } else {
+        // Set Defaults for new order
+        if (companies.length && !header.companyId) {
+          setHeader(prev => ({
+            ...prev,
+            companyId: prev.companyId || (companies[0]?.id || 0),
+            storeId: prev.storeId || (stores[0]?.id || 0),
+            currencyId: prev.currencyId || (currencies[0]?.id || 0),
+            paymentTermId: prev.paymentTermId || (paymentTerms[0]?.id || 0),
+            salesPersonId: prev.salesPersonId || (salesPersons[0]?.id || 0),
+            billingLocationId: prev.billingLocationId || (billingLocations[0]?.id || 0)
+          }));
+        }
       }
-    } else if (companies.length > 0 && !form.company) {
-      setForm(prev => ({
-        ...prev,
-        company: companies[0].companyName,
-        store: stores[0]?.storeName || "",
-        currency: currencies[0]?.currencyName || "",
-        paymentTerm: paymentTerms[0]?.paymentTermName || ""
-      }));
+    };
+    loadOrder();
+  }, [editId, companies, stores, currencies, salesPersons, billingLocations]);
+
+  // Fetch Customer Details when customer changes
+  useEffect(() => {
+    if (header.customerId) {
+      const cust = customers.find((c: any) => Number(c.id) === Number(header.customerId));
+      if (cust) {
+        setHeader(prev => ({
+          ...prev,
+          creditLimitAmt: Number(cust.creditLimit) || 0,
+          creditLimitDays: Number(cust.creditDays) || 0,
+          outstandingAmt: Number(cust.outstandingBalance) || 0
+        }));
+      }
     }
-  }, [editId, allOrders, companies, stores, currencies, paymentTerms]);
+  }, [header.customerId, customers]);
 
-  const calculateAmount = (item: any) => item.totalQty * item.rate;
-  const calculateFinal = (item: any) => {
-    const amt = calculateAmount(item);
-    const discAmt = amt * (item.disc / 100);
-    const vatAmt = (amt - discAmt) * (item.vat / 100);
-    return amt - discAmt + vatAmt;
-  };
-
-  const removeItem = (id: number) => setItems(items.filter(i => i.id !== id));
+  const removeItem = (id: string | number) => setItems(items.filter(i => i.id !== id));
 
   const addItem = () => {
-    const newId = Date.now();
-    setItems([...items, { id: newId, category: "", productName: "", productId: "", qtyPack: 0, totalQty: 0, uom: "KG", rate: 0, disc: 0, vat: 15 }]);
+    setItems([...items, { id: Date.now(), productId: "", productName: "", mainCategoryId: null, subCategoryId: null, qtyPerPack: 1, totalQty: 0, uom: "KG", rate: 0, discPercent: 0, vatPercent: 15, poRefNo: "", poDtlSno: null, amount: 0 }]);
   };
 
-  const updateItem = (id: number, field: string, value: any) => {
-    setItems(items.map(item => {
+  const updateItem = (id: string | number, field: string, value: any) => {
+    setItems(prev => prev.map(item => {
       if (item.id !== id) return item;
       const updated = { ...item, [field]: value };
+
       if (field === "productName") {
         const p = productsData.find((pr: any) => pr.productName === value);
         if (p) {
-          updated.category = p.mainCategoryName || "";
-          updated.uom = p.uom || "KG";
-          updated.qtyPack = Number(p.qtyPerPacking) || 0;
           updated.productId = p.id;
+          updated.uom = p.uom || "KG";
+          updated.qtyPerPack = Number(p.qtyPerPacking) || 1;
+          updated.mainCategoryId = p.mainCategoryId;
+          updated.subCategoryId = p.subCategoryId;
         }
       }
+
+      updated.amount = updated.totalQty * updated.rate;
       return updated;
     }));
   };
 
-  const subtotal = useMemo(() => items.reduce((acc, item) => acc + calculateAmount(item), 0), [items]);
-  const totalDiscount = useMemo(() => items.reduce((acc, item) => acc + (calculateAmount(item) * (item.disc / 100)), 0), [items]);
-  const totalVat = useMemo(() => items.reduce((acc, item) => {
-    const amt = calculateAmount(item);
-    const discAmt = amt * (item.disc / 100);
-    return acc + ((amt - discAmt) * (item.vat / 100));
-  }, 0), [items]);
-  const grandTotal = subtotal - totalDiscount + totalVat;
+  const selectedCurrency = useMemo(() => {
+    const curr = currencies.find((c: any) => Number(c.id) === Number(header.currencyId));
+    return curr?.currencyCode || curr?.currencyName || "TZS";
+  }, [header.currencyId, currencies]);
 
-  const handleSubmit = async (status: string = "Delivered") => {
-    const currentMonth = String(new Date().getMonth() + 1).padStart(2, "0");
-    const soRefNo = editId
-      ? (allOrders.find((o: any) => o.id === editId)?.salesOrderRefNo || `SO/MA/${currentMonth}/${String(allOrders.length + 1).padStart(3, "0")}`)
-      : `SO/MA/${currentMonth}/${String(allOrders.length + 1).padStart(3, "0")}`;
+  const subtotal = useMemo(() => items.reduce((acc, item) => acc + item.amount, 0), [items]);
+  const totalVat = useMemo(() => items.reduce((acc, item) => acc + (item.amount * (item.vatPercent / 100)), 0), [items]);
+  const grandTotal = subtotal + totalVat;
+
+  const handleSubmit = async (status: string = "Pending") => {
+    if (!header.customerId || !header.companyId || !header.storeId) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+
+    const userInfo = JSON.parse(localStorage.getItem('user') || '{"loginName": "admin"}');
 
     const payload = {
       header: {
-        salesOrderRefNo: soRefNo,
-        salesOrderDate: form.orderDate,
-        customerId: form.customerId,
-        storeId: form.store,
-        currencyId: form.currency,
-        paymentTermName: form.paymentTerm,
+        ...header,
+        status,
         productAmount: subtotal,
         totalVatAmount: totalVat,
-        finalAmount: grandTotal,
-        status: status,
-        remarks: form.remarks,
-        deliveryDate: form.deliveryDate
+        finalAmount: grandTotal
       },
-      items: items.map(item => ({
-        productId: item.productId,
-        productName: item.productName,
-        totalQty: item.totalQty,
-        rate: item.rate,
-        vatPercent: item.vat,
-        amount: calculateFinal(item),
-        uom: item.uom
-      }))
+      items: items.filter(it => it.productId).map(it => ({
+        productId: it.productId,
+        mainCategoryId: it.mainCategoryId,
+        subCategoryId: it.subCategoryId,
+        totalQty: it.totalQty,
+        rate: it.rate,
+        amount: it.amount,
+        vatPercent: it.vatPercent,
+        vatAmount: it.amount * (it.vatPercent / 100),
+        finalAmount: it.amount + (it.amount * (it.vatPercent / 100)),
+        uom: it.uom,
+        qtyPerPack: it.qtyPerPack,
+        poRefNo: it.poRefNo,
+        poDtlSno: it.poDtlSno
+      })),
+      audit: { user: userInfo.loginName }
     };
 
     try {
       if (editId) {
-        update(editId, { id: soRefNo, ...payload, salesOrderRefNo: soRefNo, customer: form.customer, finalAmount: grandTotal });
+        await updateOrder(editId, payload);
         toast.success(`Sales Order Updated Successfully!`);
       } else {
-        add({
-          id: soRefNo,
-          salesOrderRefNo: soRefNo,
-          salesOrderDate: form.orderDate,
-          customer: form.customer,
-          finalSalesAmount: grandTotal, // for legacy list visibility
-          status: status,
-          ...payload
-        });
+        await addOrder(payload);
         toast.success(`Sales Order Created Successfully!`);
       }
       router.push('/sales-orders');
     } catch (e) {
+      console.error(e);
       toast.error("Failed to save Sales Order");
     }
   };
 
   return (
-    <main className="flex-1 bg-slate-50 p-6 sm:p-8 overflow-auto pb-12">
-      <div className="max-w-6xl mx-auto space-y-8 text-[#0F172A]">
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-          <div className="flex items-center gap-4">
-            <button onClick={() => router.push("/sales-orders")} className="p-2 rounded-lg hover:bg-muted bg-white border">
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div>
-              <h2 className="text-3xl font-bold tracking-tight">{editId ? "Edit" : "New"} Sales Order</h2>
-              <div className="flex items-center gap-1.5 mt-1 text-[#059669] font-medium text-[13px]">
-                <Info className="w-4 h-4" />
-                <span>Link products to PO stock. SO ref auto-generated.</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col items-end gap-3 w-full sm:w-auto">
-            <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={() => handleSubmit("Draft")} className="gap-2 rounded-xl h-10 px-4 font-bold border-slate-200 bg-white shadow-sm">
-                <Save className="w-4 h-4" /> Save Draft
-              </Button>
-              <Button onClick={() => handleSubmit("Confirmed")} className="gap-2 rounded-xl h-10 px-6 font-bold shadow-lg shadow-black/10 bg-[#1A2E28] hover:bg-[#1A2E28]/90 text-white">
-                <CheckCircle2 className="w-4 h-4" /> Confirm Order
-              </Button>
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Auto Ref</p>
-              <p className="text-xl font-mono font-bold text-[#0F172A]">
-                {editId ? (allOrders.find(o => o.id === editId)?.salesOrderRefNo || "SO/MA/03/001") : `SO/MA/${String(new Date().getMonth() + 1).padStart(2, "0")}/${String(allOrders.length + 1).padStart(3, "0")}`}
-              </p>
-            </div>
+    <div className="max-w-[1600px] mx-auto pb-20 px-4 pt-6">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" onClick={() => router.back()} className="rounded-full h-10 w-10 p-0"><ArrowLeft className="w-5 h-5" /></Button>
+          <div>
+            <h1 className="text-2xl font-bold">{editId ? `Sales Order: ${header.salesOrderRefNo}` : "Create Sales Order"}</h1>
+            <Badge variant="outline" className="mt-1">{header.status}</Badge>
           </div>
         </div>
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={() => handleSubmit("Draft")}><Save className="w-4 h-4 mr-2" /> Save Draft</Button>
+          <Button onClick={() => handleSubmit("Confirmed")} className="bg-[#1A2E28]"><Send className="w-4 h-4 mr-2" /> Confirm & Send</Button>
+        </div>
+      </div>
 
-
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
-            <section className="bg-white rounded-[24px] border border-slate-200 shadow-sm overflow-hidden">
-              <div className="px-8 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[10px] font-bold text-[#64748B]">1</span>
-                <h3 className="font-bold text-[#0F172A] text-sm">Header Details</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="lg:col-span-3 space-y-8">
+          {/* Header Card */}
+          <div className="bg-white rounded-3xl border p-8 shadow-sm">
+            <div className="flex items-center gap-3 mb-8 pb-4 border-b border-slate-100">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                <Briefcase className="w-5 h-5" />
               </div>
-              <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] uppercase font-black text-[#94A3B8] tracking-widest">Date</Label>
-                  <Input type="date" value={form.orderDate} onChange={(e) => setForm({ ...form, orderDate: e.target.value })} className="rounded-xl border-slate-200 h-11 bg-[#F8FAFC]/50" />
+              <h3 className="font-bold text-lg">General Information</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="space-y-2">
+                <Label>Order Date</Label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
+                  <Input type="date" value={header.salesOrderDate} onChange={e => setHeader({ ...header, salesOrderDate: e.target.value })} className="rounded-xl h-11 pl-9" />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] uppercase font-black text-[#94A3B8] tracking-widest">Customer (TIN) *</Label>
-                  <Select value={form.customer} onValueChange={(v) => {
-                    const cust = customers.find((c: any) => c.tinNumber === v || c.customerName === v);
-                    setForm({ ...form, customer: v, customerId: cust?.id || "" });
-                  }}>
-                    <SelectTrigger className="rounded-xl border-slate-200 h-11 bg-[#F8FAFC]/50 font-bold"><SelectValue placeholder="Select customer" /></SelectTrigger>
-                    <SelectContent>
-                      {customers.map((c: any) => <SelectItem key={c.id} value={c.tinNumber || c.customerName}>{c.customerName}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] uppercase font-black text-[#94A3B8] tracking-widest">Store Selection</Label>
-                  <Select value={form.store} onValueChange={(v) => setForm({ ...form, store: v })}>
-                    <SelectTrigger className="rounded-xl border-slate-200 h-11 bg-[#F8FAFC]/50"><SelectValue placeholder="Select Store" /></SelectTrigger>
-                    <SelectContent>
-                      {stores.map((s: any) => <SelectItem key={s.id} value={s.storeName}>{s.storeName}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] uppercase font-black text-[#94A3B8] tracking-widest">Currency</Label>
-                  <Select value={form.currency} onValueChange={(v) => setForm({ ...form, currency: v })}>
-                    <SelectTrigger className="rounded-xl border-slate-200 h-11 bg-[#F8FAFC]/50"><SelectValue placeholder="Select Currency" /></SelectTrigger>
-                    <SelectContent>
-                      {currencies.map((c: any) => <SelectItem key={c.id} value={c.currencyName}>{c.currencyName}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] uppercase font-black text-[#94A3B8] tracking-widest">Payment Term</Label>
-                  <Select value={form.paymentTerm} onValueChange={(v) => setForm({ ...form, paymentTerm: v })}>
-                    <SelectTrigger className="rounded-xl border-slate-200 h-11 bg-[#F8FAFC]/50"><SelectValue placeholder="Select Term" /></SelectTrigger>
-                    <SelectContent>
-                      {paymentTerms.map((pt: any) => <SelectItem key={pt.id} value={pt.paymentTermName}>{pt.paymentTermName}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] uppercase font-black text-[#94A3B8] tracking-widest">Delivery Date</Label>
-                  <Input type="date" value={form.deliveryDate} onChange={(e) => setForm({ ...form, deliveryDate: e.target.value })} className="rounded-xl border-slate-200 h-11 bg-[#F8FAFC]/50" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] uppercase font-black text-[#94A3B8] tracking-widest">Status</Label>
-                  <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                    <SelectTrigger className="rounded-xl border-slate-200 h-11 bg-[#F8FAFC]/50"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Pending">Pending</SelectItem>
-                      <SelectItem value="Confirmed">Confirmed</SelectItem>
-                    </SelectContent>
+              </div>
+              <div className="space-y-2">
+                <Label>Company</Label>
+                <Select value={String(header.companyId)} onValueChange={v => setHeader({ ...header, companyId: Number(v) })}>
+                  <SelectTrigger className="rounded-xl h-11 font-bold"><SelectValue placeholder="Select Company" /></SelectTrigger>
+                  <SelectContent>{companies.map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.COMPANY_NAME || c.companyName}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Customer</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground z-10" />
+                  <Select value={String(header.customerId)} onValueChange={v => setHeader({ ...header, customerId: Number(v) })}>
+                    <SelectTrigger className="rounded-xl h-11 pl-9 font-bold text-slate-700 shadow-sm transition-all focus:ring-emerald-500"><SelectValue placeholder="Select Customer" /></SelectTrigger>
+                    <SelectContent>{customers.map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.CUSTOMER_NAME || c.customerName}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
               </div>
-            </section>
-
-            <section className="bg-white rounded-[24px] border border-slate-200 shadow-sm overflow-hidden">
-              <div className="px-8 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[10px] font-bold text-[#64748B]">2</span>
-                  <h3 className="font-bold text-[#0F172A] text-sm">Product Allocation</h3>
+              <div className="space-y-2">
+                <Label>Store</Label>
+                <Select value={String(header.storeId)} onValueChange={v => setHeader({ ...header, storeId: Number(v) })}>
+                  <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select Store" /></SelectTrigger>
+                  <SelectContent>{stores.map((s: any) => <SelectItem key={s.id} value={String(s.id)}>{s.STORE_NAME || s.storeName}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Billing Location</Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-3 w-4 h-4 text-muted-foreground z-10" />
+                  <Select value={String(header.billingLocationId)} onValueChange={v => setHeader({ ...header, billingLocationId: Number(v) })}>
+                    <SelectTrigger className="rounded-xl h-11 pl-9"><SelectValue placeholder="Select Location" /></SelectTrigger>
+                    <SelectContent>{billingLocations.map((l: any) => <SelectItem key={l.id} value={String(l.id)}>{l.billingLocationName || l.locationName}</SelectItem>)}</SelectContent>
+                  </Select>
                 </div>
-                <Button onClick={addItem} size="sm" className="gap-1.5 rounded-xl text-xs font-bold bg-[#1A2E28] text-white hover:bg-[#1A2E28]/90">
-                  <PlusCircle className="w-3.5 h-3.5" /> Add Row
-                </Button>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead className="bg-[#F8FAFC]/50 text-[10px] uppercase font-bold text-[#94A3B8] tracking-widest border-b">
-                    <tr>
-                      <th className="px-6 py-4 text-center w-12">#</th>
-                      <th className="px-6 py-4">Product</th>
-                      <th className="px-4 py-4 text-center">PO Ref</th>
-                      <th className="px-4 py-4 text-center">Qty</th>
-                      <th className="px-4 py-4 text-center w-24">UOM</th>
-                      <th className="px-4 py-4 text-center">Sales Rate</th>
-                      <th className="px-4 py-4 text-center w-24">VAT %</th>
-                      <th className="px-6 py-4 text-right">Amount</th>
-                      <th className="px-6 py-4 text-center w-12"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-sm font-medium">
-                    {items.map((item, idx) => (
-                      <tr key={item.id} className="hover:bg-[#F8FAFC]/30 transition-colors">
-                        <td className="px-6 py-5 text-center text-[11px] font-bold text-[#94A3B8]">{idx + 1}</td>
-                        <td className="px-6 py-5">
-                          <Select value={item.productName} onValueChange={(v) => updateItem(item.id, "productName", v)}>
-                            <SelectTrigger className="w-full md:w-[200px] h-10 bg-white border-slate-200 rounded-lg font-medium text-[#0F172A] shadow-sm">
-                              <SelectValue placeholder="Select Product" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {productsData.map((p: any) => <SelectItem key={p.id} value={p.productName}>{p.productName}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </td>
-                        <td className="px-4 py-5 font-bold text-xs text-[#64748B]">
-                          <Select defaultValue="PO/MA/03/001">
-                            <SelectTrigger className="w-28 h-10 bg-white border-slate-200 rounded-lg text-[11px] font-bold shadow-sm mx-auto">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="PO/MA/03/001">PO/MA/03/001</SelectItem>
-                              <SelectItem value="PO/MA/03/002">PO/MA/03/002</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </td>
-                        <td className="px-4 py-5 text-center">
-                          <Input
-                            type="number"
-                            value={item.totalQty}
-                            onChange={(e) => updateItem(item.id, 'totalQty', parseFloat(e.target.value) || 0)}
-                            className="w-20 h-10 text-center bg-white border-slate-200 rounded-lg font-bold shadow-sm mx-auto"
-                          />
-                        </td>
-                        <td className="px-4 py-5 text-center">
-                          <Select value={item.uom} onValueChange={(v) => updateItem(item.id, "uom", v)}>
-                            <SelectTrigger className="w-20 h-10 bg-white border-slate-200 rounded-lg text-[11px] font-bold shadow-sm mx-auto">
-                              <SelectValue placeholder="UOM" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {uoms.map((u: any) => <SelectItem key={u.id} value={u.unitName}>{u.unitName}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </td>
-                        <td className="px-4 py-5 text-center">
-                          <Input
-                            type="number"
-                            value={item.rate}
-                            step="0.01"
-                            onChange={(e) => updateItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
-                            className="w-24 h-10 text-center bg-white border-slate-200 rounded-lg font-bold shadow-sm mx-auto"
-                          />
-                        </td>
-                        <td className="px-4 py-5 text-center">
-                          <Input 
-                            type="number" 
-                            value={item.vat} 
-                            onChange={(e) => updateItem(item.id, 'vat', parseFloat(e.target.value) || 0)} 
-                            className="w-16 h-10 text-center bg-white border-slate-200 rounded-lg font-bold shadow-sm mx-auto" 
-                          />
-                        </td>
-                        <td className="px-6 py-5 text-right font-black text-[#0F172A] tabular-nums">
-                          {calculateFinal(item).toLocaleString(undefined, { minimumFractionDigits: 0 })}
-                        </td>
-                        <td className="px-6 py-5 text-center">
-                          <button
-                            onClick={() => removeItem(item.id)}
-                            className="text-slate-300 hover:text-red-500 transition-all p-2 hover:bg-red-50 rounded-lg group"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="space-y-2">
+                <Label>Sales Person</Label>
+                <Select value={String(header.salesPersonId)} onValueChange={v => setHeader({ ...header, salesPersonId: Number(v) })}>
+                  <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select Sales Person" /></SelectTrigger>
+                  <SelectContent>{salesPersons.map((p: any) => <SelectItem key={p.id} value={String(p.id)}>{p.salesPersonName}</SelectItem>)}</SelectContent>
+                </Select>
               </div>
-            </section>
+              <div className="space-y-2">
+                <Label>Currency</Label>
+                <Select value={String(header.currencyId)} onValueChange={v => setHeader({ ...header, currencyId: Number(v) })}>
+                  <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select Currency" /></SelectTrigger>
+                  <SelectContent>{currencies.map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.CURRENCY_NAME || c.currencyName}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Exchange Rate</Label>
+                <Input type="number" value={header.exchangeRate} onChange={e => setHeader({ ...header, exchangeRate: Number(e.target.value) })} className="rounded-xl h-11 font-bold" />
+              </div>
+              <div className="space-y-2">
+                <Label>Payment Term</Label>
+                <Select value={String(header.paymentTermId)} onValueChange={v => setHeader({ ...header, paymentTermId: Number(v) })}>
+                  <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select Term" /></SelectTrigger>
+                  <SelectContent>{paymentTerms.map((pt: any) => <SelectItem key={pt.id} value={String(pt.id)}>{pt.paymentTermName}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2 md:col-span-3">
+                <Label>Remarks</Label>
+                <Input value={header.remarks} onChange={e => setHeader({ ...header, remarks: e.target.value })} className="rounded-xl h-11" placeholder="Any special instructions or notes..." />
+              </div>
+            </div>
+
+            {/* Credit Info Strip */}
+            <div className="mt-8 p-6 bg-slate-900 rounded-2xl flex flex-wrap gap-8 justify-between text-white shadow-inner">
+              <div className="space-y-1">
+                <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Credit Limit</p>
+                <p className="text-lg font-bold">{selectedCurrency} {header.creditLimitAmt.toLocaleString()}</p>
+              </div>
+              <div className="space-y-1 text-center">
+                <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Credit Days</p>
+                <p className="text-lg font-bold">{header.creditLimitDays} Days</p>
+              </div>
+              <div className="space-y-1 text-right">
+                <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Outstanding</p>
+                <p className={`text-lg font-bold ${header.outstandingAmt > header.creditLimitAmt ? 'text-red-400' : 'text-emerald-400'}`}>
+                  {selectedCurrency} {header.outstandingAmt.toLocaleString()}
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-8">
-            <div className="bg-primary rounded-2xl p-8 text-white shadow-xl shadow-primary/20 h-fit lg:sticky lg:top-24 overflow-hidden relative">
-              <h3 className="text-lg font-bold mb-8 flex items-center gap-3 relative"><Wallet className="w-6 h-6 text-white" /> Order Finalization</h3>
-              <div className="space-y-5 relative">
-                <div className="flex justify-between text-sm"><span className="text-white/60 font-bold uppercase text-[10px] tracking-widest">Subtotal</span><span className="font-mono font-bold">TZS {subtotal.toLocaleString()}</span></div>
-                <div className="flex justify-between text-sm"><span className="text-white/60 font-bold uppercase text-[10px] tracking-widest">Discount</span><span className="font-mono font-bold text-white">-TZS {totalDiscount.toLocaleString()}</span></div>
-                <div className="flex justify-between text-sm"><span className="text-white/60 font-bold uppercase text-[10px] tracking-widest">Tax (VAT 15%)</span><span className="font-mono font-bold">TZS {totalVat.toLocaleString()}</span></div>
-                <div className="pt-8 mt-8 border-t border-white/10">
-                  <p className="text-[10px] uppercase font-black tracking-[0.2em] text-white/40 mb-2">Grand Total (TZS)</p>
-                  <p className="text-5xl font-black text-white tracking-tighter">TZS {grandTotal.toLocaleString()}</p>
-                </div>
+          {/* Items Card */}
+          <div className="bg-white rounded-3xl border shadow-sm overflow-hidden">
+            <div className="p-6 border-b flex justify-between items-center">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Product Allocation</h3>
+              <Button variant="outline" size="sm" onClick={addItem}><Plus className="w-4 h-4 mr-1" /> Add Product</Button>
+            </div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-muted/50 border-b">
+                  <th className="p-4 text-left font-bold text-xs uppercase text-muted-foreground">Product</th>
+                  <th className="p-4 text-center font-bold text-xs uppercase text-muted-foreground whitespace-nowrap">PO Link</th>
+                  <th className="p-4 text-center font-bold text-xs uppercase text-muted-foreground whitespace-nowrap">Qty</th>
+                  <th className="p-4 text-center font-bold text-xs uppercase text-muted-foreground">UOM</th>
+                  <th className="p-4 text-center font-bold text-xs uppercase text-muted-foreground">Rate</th>
+                  <th className="p-4 text-center font-bold text-xs uppercase text-muted-foreground whitespace-nowrap">VAT %</th>
+                  <th className="p-4 text-right font-bold text-xs uppercase text-muted-foreground whitespace-nowrap">Final Amt</th>
+                  <th className="p-4 w-10"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {items.map(item => (
+                  <tr key={item.id} className="hover:bg-slate-50/80 transition-colors group">
+                    <td className="p-4 min-w-[200px]">
+                      <Select value={item.productName} onValueChange={v => updateItem(item.id, "productName", v)}>
+                        <SelectTrigger className="w-full border-none shadow-none focus:ring-0 font-bold text-slate-700"><SelectValue placeholder="Select Product" /></SelectTrigger>
+                        <SelectContent>{productsData.map((p: any) => <SelectItem key={p.id} value={p.productName}>{p.productName}</SelectItem>)}</SelectContent>
+                      </Select>
+                      {item.mainCategoryId && <p className="text-[10px] text-slate-400 px-3 uppercase font-bold tracking-tighter">ID: {item.productId} | Cat: {item.mainCategoryId}</p>}
+                    </td>
+                    <td className="p-4">
+                      <Input
+                        placeholder="Link PO..."
+                        value={item.poRefNo}
+                        onChange={e => updateItem(item.id, 'poRefNo', e.target.value)}
+                        className="w-24 mx-auto text-center border-dashed font-bold text-xs h-9"
+                      />
+                    </td>
+                    <td className="p-4">
+                      <Input
+                        type="number"
+                        value={item.totalQty}
+                        onChange={e => updateItem(item.id, "totalQty", Number(e.target.value))}
+                        className="w-20 mx-auto text-center font-black border-none"
+                      />
+                    </td>
+                    <td className="p-4">
+                      <Select value={item.uom} onValueChange={v => updateItem(item.id, "uom", v)}>
+                        <SelectTrigger className="w-20 mx-auto border-none shadow-none focus:ring-0 text-center font-bold text-slate-500 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>{uoms.map((u: any) => <SelectItem key={u.id} value={u.UNIT_NAME || u.unitName}>{u.UNIT_NAME || u.unitName}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </td>
+                    <td className="p-4">
+                      <Input
+                        type="number"
+                        value={item.rate}
+                        onChange={e => updateItem(item.id, "rate", Number(e.target.value))}
+                        className="w-24 mx-auto text-center font-black border-none"
+                      />
+                    </td>
+                    <td className="p-4">
+                      <Input
+                        type="number"
+                        value={item.vatPercent}
+                        onChange={e => updateItem(item.id, "vatPercent", Number(e.target.value))}
+                        className="w-16 mx-auto text-center font-bold text-slate-500 border-none"
+                      />
+                    </td>
+                    <td className="p-4 text-right font-black text-slate-900 tabular-nums">
+                      {selectedCurrency} {item.amount.toLocaleString()}
+                    </td>
+                    <td className="p-4 text-center">
+                      <button onClick={() => removeItem(item.id)} className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 p-2"><Trash2 className="w-4 h-4" /></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+        {/* Financial Sidebar */}
+        <div className="space-y-8">
+          <div className="bg-[#1A2E28] rounded-[32px] p-8 text-white shadow-xl lg:sticky lg:top-8 overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+
+            <div className="flex items-center gap-3 mb-8 relative">
+              <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center">
+                <BadgeDollarSign className="w-6 h-6 text-white" />
               </div>
-              <div className="mt-10 space-y-4 relative">
-                <Button onClick={() => handleSubmit(form.status)} className="w-full py-8 bg-white text-[#1A2E28] hover:bg-white/90 rounded-xl font-black text-lg shadow-lg h-auto">
-                  {editId ? "Update Order" : "Approve Order"}
-                </Button>
+              <h3 className="text-xl font-bold">Order Financials</h3>
+            </div>
+
+            <div className="space-y-4 relative opacity-80 text-sm">
+              <div className="flex justify-between">
+                <span className="font-bold uppercase text-[10px] tracking-widest text-white/50">Subtotal</span>
+                <span className="font-mono text-lg">{selectedCurrency} {subtotal.toLocaleString()}</span>
               </div>
+              <div className="flex justify-between">
+                <span className="font-bold uppercase text-[10px] tracking-widest text-white/50">VAT ({items[0]?.vatPercent}%)</span>
+                <span className="font-mono text-lg">{selectedCurrency} {totalVat.toLocaleString()}</span>
+              </div>
+            </div>
+
+            <div className="mt-10 pt-8 border-t border-white/10 relative">
+              <p className="text-[10px] uppercase font-black tracking-[0.2em] text-white/30 mb-2">Grand Total</p>
+              <p className="text-5xl font-black tracking-tighter tabular-nums mb-1">{grandTotal.toLocaleString()}</p>
+              <p className="text-[10px] text-white/40 font-medium italic">Amount in {selectedCurrency}</p>
+
+              <Button onClick={() => handleSubmit("Confirmed")} className="w-full mt-10 h-14 bg-emerald-500 hover:bg-emerald-600 rounded-2xl font-black text-lg shadow-xl transition-all active:scale-95">
+                {editId ? "Update Order" : "Confirm & Send"}
+              </Button>
             </div>
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 

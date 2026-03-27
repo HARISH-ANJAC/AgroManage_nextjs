@@ -2,13 +2,15 @@ import express from "express";
 import { 
     getCustomerReceipts, 
     getCustomerReceiptById, 
-    createCustomerReceipt, 
-    updateCustomerReceipt
+    addCustomerReceipt, 
+    deleteCustomerReceipt 
 } from "../Controller/customerReceiptController.js";
 
-export const customerReceiptRoute = express.Router();
+const customerReceiptRoute = express.Router();
 
 customerReceiptRoute.get("/", getCustomerReceipts);
 customerReceiptRoute.get("/:id", getCustomerReceiptById);
-customerReceiptRoute.post("/", createCustomerReceipt);
-customerReceiptRoute.put("/:id", updateCustomerReceipt);
+customerReceiptRoute.post("/", addCustomerReceipt);
+customerReceiptRoute.delete("/:id", deleteCustomerReceipt);
+
+export { customerReceiptRoute };

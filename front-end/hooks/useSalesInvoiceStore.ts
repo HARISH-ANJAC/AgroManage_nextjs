@@ -1,77 +1,102 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 
-/**
- * Global State for Sales Invoices with LocalStorage Persistence
- */
-
-const STORAGE_KEY = "agromanage_sales_invoices";
-
-const listeners = new Set<Function>();
-const notify = () => listeners.forEach(l => l());
-
-const getStoredInvoices = (): any[] => {
-  if (typeof window === "undefined") return [];
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch (e) {
-    console.error("Failed to load Sales Invoices from storage", e);
-    return [];
-  }
-};
-
-const saveInvoices = (invoices: any[]) => {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(invoices));
-  notify();
-};
-
+const API_URL = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/sales-invoices`;
 export function useSalesInvoiceStore() {
-  const [invoices, setInvoices] = useState<any[]>(getStoredInvoices());
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const handleChange = () => setInvoices(getStoredInvoices());
-    listeners.add(handleChange);
-    return () => {
-      listeners.delete(handleChange);
-    };
+  const getAuthToken = () => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("accessToken");
+  };
+
+  // Fetch all sales invoices
+  const { data: invoices = [], isLoading, refetch: refetchInvoices } = useQuery({
+    queryKey: ["sales-invoices"],
+    queryFn: async () => {
+      const response = await fetch(`${API_URL}`, {
+        headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+      });
+      if (!response.ok) throw new Error("Failed to fetch Sales Invoices");
+      return response.json();
+    }
+  });
+
+  // Fetch single sales invoice
+  const getInvoiceById = useCallback(async (id: string) => {
+    if (!id) return null;
+    const encodedId = encodeURIComponent(id);
+    const response = await fetch(`${API_URL}/${encodedId}`, {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+    if (!response.ok) return null;
+    return response.json();
   }, []);
 
-  const addInvoice = useCallback((invoice: any) => {
-    const current = getStoredInvoices();
-    const newInvoice = { 
-      ...invoice, 
-      id: invoice.id || `SI-${Date.now()}`,
-      createdAt: new Date().toISOString() 
-    };
-    saveInvoices([newInvoice, ...current]);
-    return newInvoice;
-  }, []);
+  // Add sales invoice
+  const addMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const response = await fetch(`${API_URL}`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${getAuthToken()}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error("Failed to create Sales Invoice");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sales-invoices"] });
+    }
+  });
 
-  const updateInvoice = useCallback((id: string, updatedData: any) => {
-    const current = getStoredInvoices();
-    const updated = current.map(inv => (inv.id === id || inv.salesInvoiceRefNo === id) ? { ...inv, ...updatedData } : inv);
-    saveInvoices(updated);
-  }, []);
+  // Update sales invoice
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, payload }: { id: string, payload: any }) => {
+       const encodedId = encodeURIComponent(id);
+       const response = await fetch(`${API_URL}/${encodedId}`, {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${getAuthToken()}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error("Failed to update Sales Invoice");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sales-invoices"] });
+    }
+  });
 
-  const deleteInvoice = useCallback((id: string) => {
-    const current = getStoredInvoices();
-    const filtered = current.filter(inv => inv.id !== id && inv.salesInvoiceRefNo !== id);
-    saveInvoices(filtered);
-  }, []);
-
-  const getInvoiceById = useCallback((id: string) => {
-    return getStoredInvoices().find(inv => inv.id === id || inv.salesInvoiceRefNo === id);
-  }, []);
+  // Delete sales invoice
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const encodedId = encodeURIComponent(id);
+      const response = await fetch(`${API_URL}/${encodedId}`, {
+        method: "DELETE",
+        headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+      });
+      if (!response.ok) throw new Error("Failed to delete Sales Invoice");
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sales-invoices"] });
+    }
+  });
 
   return {
     invoices,
-    addInvoice,
-    updateInvoice,
-    deleteInvoice,
-    getInvoiceById,
-    isLoading: false
+    isLoading,
+    refetchInvoices,
+    addInvoice: addMutation.mutateAsync,
+    updateInvoice: (id: string, payload: any) => updateMutation.mutateAsync({ id, payload }),
+    deleteInvoice: deleteMutation.mutateAsync,
+    getInvoiceById
   };
 }

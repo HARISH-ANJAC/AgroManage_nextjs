@@ -30,6 +30,7 @@ import {
 import { useSalesOrderStore } from "@/hooks/useSalesOrderStore";
 import { useDeliveryNoteStore } from "@/hooks/useDeliveryNoteStore";
 import { useStores } from "@/hooks/useStoreData";
+import { getCurrentUser } from "@/lib/auth";
 
 function CreateDNContent() {
   const router = useRouter();
@@ -37,18 +38,24 @@ function CreateDNContent() {
   const editId = searchParams.get("id");
   const today = new Date().toISOString().split("T")[0];
 
-  const { orders: salesOrders } = useSalesOrderStore();
-  const { notes, addNote, updateNote } = useDeliveryNoteStore();
+  const { orders: salesOrders, getOrderById } = useSalesOrderStore();
+  const { notes, addNote, updateNote, getNoteById } = useDeliveryNoteStore();
   const { data: stores = [] } = useStores();
 
   const [header, setHeader] = useState({
     deliveryDate: today,
     deliveryNoteRefNo: "",
-    soRefNo: "",
-    customer: "",
-    fromStore: "",
+    deliverySourceType: "Sales Order",
+    deliverySourceRefNo: "",
+    companyId: 0,
+    fromStoreId: 0,
+    customerId: 0,
+    customerName: "",
     truckNo: "",
+    trailerNo: "",
     driverName: "",
+    driverContactNumber: "",
+    sealNo: "",
     status: "In Transit",
     remarks: ""
   });
@@ -57,60 +64,91 @@ function CreateDNContent() {
 
   // Load existing data if editing
   useEffect(() => {
-    if (editId && notes.length > 0) {
-      const existing = notes.find((n: any) => n.id === editId || n.deliveryNoteRefNo === editId);
-      if (existing) {
-        const h = existing.header || existing;
-        setHeader({
-          deliveryDate: h.deliveryDate || today,
-          deliveryNoteRefNo: h.deliveryNoteRefNo || "",
-          soRefNo: h.deliverySourceRefNo || h.soRefNo || "",
-          customer: h.customer || "",
-          fromStore: h.fromStore || "",
-          truckNo: h.truckNo || "",
-          driverName: h.driverName || "",
-          status: h.status || "In Transit",
-          remarks: h.remarks || ""
-        });
-        if (existing.items) setItems(existing.items);
-      }
-    }
-  }, [editId, notes]);
+    const loadNote = async () => {
+      if (editId) {
+        toast.loading("Loading Delivery Note details...", { id: "load-dn" });
+        const res = await getNoteById(editId as string);
+        if (res && res.header) {
+          const h = res.header;
+          setHeader({
+            deliveryDate: h.deliveryDate ? new Date(h.deliveryDate).toISOString().split("T")[0] : today,
+            deliveryNoteRefNo: h.deliveryNoteRefNo || "",
+            deliverySourceType: h.deliverySourceType || "Sales Order",
+            deliverySourceRefNo: h.deliverySourceRefNo || "",
+            companyId: h.companyId || 0,
+            fromStoreId: h.fromStoreId || 0,
+            customerId: h.customerId || 0,
+            customerName: h.customerName || "",
+            truckNo: h.truckNo || "",
+            trailerNo: h.trailerNo || "",
+            driverName: h.driverName || "",
+            driverContactNumber: h.driverContactNumber || "",
+            sealNo: h.sealNo || "",
+            status: h.status || "In Transit",
+            remarks: h.remarks || ""
+          });
 
-  // Handle SO Selection
+          if (res.items) {
+            setItems(res.items.map((it: any) => ({
+              id: it.id,
+              productId: it.productId,
+              productName: it.productName || "Unknown Product",
+              requestQty: Number(it.requestQty) || 0,
+              deliveryQty: Number(it.deliveryQty) || 0,
+              uom: it.uom || "KG",
+              rate: Number(it.rate) || 0,
+              amount: Number(it.amount) || 0,
+              salesOrderDtlSno: it.salesOrderDtlSno
+            })));
+          }
+          toast.success("Details loaded", { id: "load-dn" });
+        } else {
+          toast.error("Delivery Note not found", { id: "load-dn" });
+        }
+      }
+    };
+    loadNote();
+  }, [editId]);
+
+  // Handle SO Selection (Auto-populate)
   useEffect(() => {
-    if (!editId && header.soRefNo) {
-      const selectedSO = salesOrders.find((so: any) =>
-        (so.header?.salesOrderRefNo || so.salesOrderRefNo || so.id) === header.soRefNo
-      );
+    const loadSO = async () => {
+      if (!editId && header.deliverySourceRefNo) {
+        const fullSO = await getOrderById(header.deliverySourceRefNo);
 
-      if (selectedSO) {
-        setHeader(prev => ({
-          ...prev,
-          customer: selectedSO.customer || selectedSO.header?.customerName || "N/A",
-          fromStore: selectedSO.store || selectedSO.header?.storeName || prev.fromStore || (stores[0]?.storeName || "")
-        }));
+        if (fullSO && fullSO.header) {
+          const h = fullSO.header;
+          setHeader(prev => ({
+            ...prev,
+            companyId: h.companyId,
+            customerId: h.customerId,
+            customerName: h.customerName || "N/A",
+            fromStoreId: h.storeId || prev.fromStoreId
+          }));
 
-        const soItems = selectedSO.items || [];
-        setItems(soItems.map((item: any, idx: number) => ({
-          id: idx + 1,
-          productId: item.productId,
-          productName: item.productName || item.remarks || "Unknown Product",
-          soQty: item.totalQty || 0,
-          deliveryQty: item.totalQty || 0,
-          uom: item.uom || "KG",
-          packing: item.qtyPack || 0,
-          rate: item.ratePerQty || item.rate || 0,
-          amount: (item.totalQty || 0) * (item.ratePerQty || item.rate || 0)
-        })));
+          const soItems = fullSO.items || [];
+          setItems(soItems.map((item: any) => ({
+            id: item.id || Math.random(),
+            productId: item.productId,
+            productName: item.productName || "Unknown Product",
+            requestQty: item.totalQty || 0,
+            deliveryQty: item.totalQty || 0,
+            uom: item.uom || "KG",
+            rate: item.rate || 0,
+            amount: (item.totalQty || 0) * (item.rate || 0),
+            salesOrderDtlSno: item.id
+          })));
+        }
       }
-    }
-  }, [header.soRefNo, salesOrders, editId, stores]);
+    };
+    loadSO();
+  }, [header.deliverySourceRefNo, editId]);
 
-  const updateDeliveryQty = (id: number, qty: number) => {
+  const updateDeliveryQty = (id: any, qty: number) => {
     setItems(items.map(item => {
       if (item.id === id) {
-        const validatedQty = Math.max(0, Math.min(qty, item.soQty));
+        // Quantities shouldn't exceed request quantity
+        const validatedQty = Math.max(0, Math.min(qty, item.requestQty));
         return {
           ...item,
           deliveryQty: validatedQty,
@@ -121,8 +159,8 @@ function CreateDNContent() {
     }));
   };
 
-  const handleCreateDN = (status: string = "Submitted") => {
-    if (!header.soRefNo) {
+  const handleCreateDN = async (status: string = "Submitted") => {
+    if (!header.deliverySourceRefNo) {
       toast.error("Please select a Sales Order Reference");
       return;
     }
@@ -131,29 +169,31 @@ function CreateDNContent() {
     const vatAmount = totalProductAmount * 0.15;
     const finalSalesAmount = totalProductAmount + vatAmount;
 
-    const dnRefNo = editId ? (header.deliveryNoteRefNo || `DN-${Date.now()}`) : `DN-${Date.now()}`;
+    // Auto-generate Ref if not provided
+    const dnRefNo = header.deliveryNoteRefNo || `DN-${Date.now()}`;
+    
     const payload = {
       header: {
         ...header,
         deliveryNoteRefNo: dnRefNo,
-        deliverySourceRefNo: header.soRefNo,
         totalProductAmount,
         vatAmount,
         finalSalesAmount,
-        status: typeof status === "string" ? status : "Submitted"
+        status: status === "Draft" ? "Draft" : (header.status || "Submitted")
       },
       items,
       audit: {
+        user: getCurrentUser()?.username || "System",
         lastModified: new Date().toISOString()
       }
     };
 
     try {
       if (editId) {
-        updateNote(editId, payload);
+        await updateNote(editId, payload);
         toast.success("Delivery Note Updated Successfully!");
       } else {
-        addNote(payload);
+        await addNote(payload);
         toast.success(`Delivery Note ${status === "Draft" ? "Saved as Draft" : "Created"} Successfully!`);
       }
       router.push("/delivery-notes");
@@ -224,14 +264,19 @@ function CreateDNContent() {
 
             <div className="space-y-2">
               <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">SO Reference*</Label>
-              <Select value={header.soRefNo} onValueChange={(v) => setHeader({ ...header, soRefNo: v })}>
+              <Select value={header.deliverySourceRefNo} onValueChange={(v) => setHeader({ ...header, deliverySourceRefNo: v })}>
                 <SelectTrigger className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11 font-bold">
                   <SelectValue placeholder="Select SO" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
-                  {salesOrders.map((so: any) => {
-                    const ref = so.header?.salesOrderRefNo || so.salesOrderRefNo || so.id;
-                    const customerName = so.customer || so.header?.customerName || "N/A";
+                  {salesOrders.filter((so: any) => {
+                    const ref = so.salesOrderRefNo || so.id;
+                    const alreadyUsed = notes.some((n: any) => n.deliverySourceRefNo === ref);
+                    // Show if not used yet OR if it's the one already assigned to this note we are editing
+                    return !alreadyUsed || header.deliverySourceRefNo === ref;
+                  }).map((so: any) => {
+                    const ref = so.salesOrderRefNo || so.id;
+                    const customerName = so.customerName || "N/A";
                     return (
                       <SelectItem key={so.id} value={ref} className="font-medium">
                         {ref} <span className="text-[#94A3B8] font-normal">— {customerName}</span>
@@ -244,7 +289,7 @@ function CreateDNContent() {
 
             <div className="space-y-2">
               <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Customer</Label>
-              <Input value={header.customer} disabled className="bg-[#F1F5F9] border-[#E2E8F0] rounded-xl h-11 font-bold italic" placeholder="Auto-populated..." />
+              <Input value={header.customerName} disabled className="bg-[#F1F5F9] border-[#E2E8F0] rounded-xl h-11 font-bold italic" placeholder="Auto-populated..." />
             </div>
 
             <div className="space-y-2">
@@ -254,6 +299,7 @@ function CreateDNContent() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
+                  <SelectItem value="Pending">Pending</SelectItem>
                   <SelectItem value="In Transit">In Transit</SelectItem>
                   <SelectItem value="Loaded">Loaded</SelectItem>
                   <SelectItem value="Delivered">Delivered</SelectItem>
@@ -273,12 +319,12 @@ function CreateDNContent() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="space-y-2">
               <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">From Store</Label>
-              <Select value={header.fromStore} onValueChange={(v) => setHeader({ ...header, fromStore: v })}>
+              <Select value={header.fromStoreId.toString()} onValueChange={(v) => setHeader({ ...header, fromStoreId: Number(v) })}>
                 <SelectTrigger className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11 font-bold text-[#0F172A]">
                   <SelectValue placeholder="Select Warehouse" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
-                  {stores.map((s: any) => <SelectItem key={s.id} value={s.storeName}>{s.storeName}</SelectItem>)}
+                  {stores.map((s: any) => <SelectItem key={s.id} value={s.id.toString()}>{s.storeName}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -289,13 +335,28 @@ function CreateDNContent() {
             </div>
 
             <div className="space-y-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Trailer No#</Label>
+              <Input value={header.trailerNo} onChange={(e) => setHeader({ ...header, trailerNo: e.target.value.toUpperCase() })} placeholder="EX: TR 789" className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11 font-bold" />
+            </div>
+
+            <div className="space-y-2">
               <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Driver Name</Label>
               <Input value={header.driverName} onChange={(e) => setHeader({ ...header, driverName: e.target.value })} placeholder="Full Name" className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11 font-medium" />
             </div>
 
             <div className="space-y-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Driver Contact</Label>
+              <Input value={header.driverContactNumber} onChange={(e) => setHeader({ ...header, driverContactNumber: e.target.value })} placeholder="+255..." className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11 font-medium" />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Seal No#</Label>
+              <Input value={header.sealNo} onChange={(e) => setHeader({ ...header, sealNo: e.target.value })} placeholder="Seal Identifier" className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11 font-medium" />
+            </div>
+
+            <div className="space-y-2 lg:col-span-2">
               <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Logistics Remarks</Label>
-              <Input value={header.remarks} onChange={(e) => setHeader({ ...header, remarks: e.target.value })} placeholder="Seal #, Trailer #..." className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11" />
+              <Input value={header.remarks} onChange={(e) => setHeader({ ...header, remarks: e.target.value })} placeholder="Special handling notes..." className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11" />
             </div>
           </div>
         </div>
@@ -311,10 +372,9 @@ function CreateDNContent() {
               <thead>
                 <tr className="border-b bg-[#F8FAFC]/50 transition-colors">
                   <th className="text-left p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Product Description</th>
-                  <th className="text-center p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">SO Qty</th>
+                  <th className="text-center p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Requested Qty</th>
                   <th className="text-center p-4 text-[10px] font-bold uppercase tracking-widest text-[#059669]">Allocated Qty *</th>
                   <th className="text-center p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">UOM</th>
-                  <th className="text-center p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Packing</th>
                   <th className="text-right p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Line Total</th>
                 </tr>
               </thead>
@@ -323,7 +383,7 @@ function CreateDNContent() {
                   items.map((item) => (
                     <tr key={item.id} className="hover:bg-[#F8FAFC]/30 transition-colors">
                       <td className="p-4 py-6 font-bold text-[#0F172A]">{item.productName}</td>
-                      <td className="p-4 text-center text-[#64748B] font-medium">{item.soQty.toLocaleString()}</td>
+                      <td className="p-4 text-center text-[#64748B] font-medium">{item.requestQty.toLocaleString()}</td>
                       <td className="p-4 text-center">
                         <Input
                           type="number"
@@ -333,7 +393,6 @@ function CreateDNContent() {
                         />
                       </td>
                       <td className="p-4 text-center text-[#94A3B8] font-black uppercase text-xs">{item.uom}</td>
-                      <td className="p-4 text-center text-[#64748B] font-medium">{item.packing || 0}</td>
                       <td className="p-4 text-right font-black text-[#0F172A] tabular-nums tracking-tighter">
                         TZS {item.amount.toLocaleString()}
                       </td>
@@ -341,7 +400,7 @@ function CreateDNContent() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="p-16 text-center">
+                    <td colSpan={5} className="p-16 text-center">
                       <div className="flex flex-col items-center gap-4">
                         <ClipboardList className="w-12 h-12 text-[#E2E8F0]" />
                         <p className="text-[#94A3B8] font-bold text-sm">Select a Valid Sales Order Reference to load allocation grid.</p>
@@ -353,10 +412,9 @@ function CreateDNContent() {
             </table>
           </div>
         </div>
-
-
       </div>
     </div>
+
   );
 }
 

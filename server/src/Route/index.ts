@@ -44,7 +44,7 @@ Router.use("/purchase-invoices", purchaseInvoiceRoute);
 
 Router.use("/sales-orders", salesOrderRoute);
 Router.use("/delivery-notes", deliveryNoteRoute);
-Router.use("/tax-invoices", taxInvoiceRoute);
+Router.use("/sales-invoices", taxInvoiceRoute);
 Router.use("/customer-receipts", customerReceiptRoute);
 
 Router.use("/expenses", expenseRoute);

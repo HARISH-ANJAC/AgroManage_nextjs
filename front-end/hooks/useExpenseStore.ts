@@ -1,72 +1,107 @@
-"use client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 
-import { useState, useEffect, useCallback } from "react";
-
-/**
- * Global State for Expenses with LocalStorage Persistence
- */
-
-const STORAGE_KEY = "agromanage_expenses";
-
-const listeners = new Set<Function>();
-const notify = () => listeners.forEach(l => l());
-
-const getStoredExpenses = (): any[] => {
-  if (typeof window === "undefined") return [];
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch (e) {
-    console.error("Failed to load expenses from storage", e);
-    return [];
-  }
-};
-
-const saveExpenses = (expenses: any[]) => {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
-  notify();
-};
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export function useExpenseStore() {
-  const [expenses, setExpenses] = useState<any[]>(getStoredExpenses());
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const handleChange = () => setExpenses(getStoredExpenses());
-    listeners.add(handleChange);
-    return () => {
-      listeners.delete(handleChange);
-    };
+  const getAuthToken = () => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("accessToken");
+  };
+
+  // Fetch all expenses
+  const { data: expenses = [], isLoading, refetch: refetchExpenses } = useQuery({
+    queryKey: ["expenses"],
+    queryFn: async () => {
+      const response = await fetch(`${API_URL}/expenses`, {
+        headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+      });
+      if (!response.ok) throw new Error("Failed to fetch expenses");
+      return response.json();
+    }
+  });
+
+  // Fetch single expense
+  const getExpenseById = useCallback(async (id: string) => {
+    if (!id) return null;
+    const encodedId = encodeURIComponent(id);
+    const response = await fetch(`${API_URL}/expenses/${encodedId}`, {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+    if (!response.ok) return null;
+    return response.json();
   }, []);
 
-  const addExpense = useCallback((expense: any) => {
-    const current = getStoredExpenses();
-    const newExpense = { 
-      ...expense, 
-      id: expense.id || `EXP-${Date.now()}`,
-      createdAt: new Date().toISOString() 
-    };
-    saveExpenses([newExpense, ...current]);
-    return newExpense;
-  }, []);
+  // Add expense
+  const addMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const response = await fetch(`${API_URL}/expenses`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${getAuthToken()}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.msg || "Failed to create expense");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+    }
+  });
 
-  const updateExpense = useCallback((id: string, updatedData: any) => {
-    const current = getStoredExpenses();
-    const updated = current.map(e => (e.id === id || e.header?.expenseRefNo === id) ? { ...e, ...updatedData } : e);
-    saveExpenses(updated);
-  }, []);
+  // Update expense
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, payload }: { id: string, payload: any }) => {
+       const encodedId = encodeURIComponent(id);
+       const response = await fetch(`${API_URL}/expenses/${encodedId}`, {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${getAuthToken()}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.msg || "Failed to update expense");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+    }
+  });
 
-  const deleteExpense = useCallback((id: string) => {
-    const current = getStoredExpenses();
-    const filtered = current.filter(e => e.id !== id && e.header?.expenseRefNo !== id);
-    saveExpenses(filtered);
-  }, []);
+  // Delete expense
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const encodedId = encodeURIComponent(id);
+      const response = await fetch(`${API_URL}/expenses/${encodedId}`, {
+        method: "DELETE",
+        headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+      });
+      if (!response.ok) throw new Error("Failed to delete expense");
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+    }
+  });
 
   return {
     expenses,
-    addExpense,
-    updateExpense,
-    deleteExpense,
-    isLoading: false
+    isLoading,
+    refetchExpenses,
+    getExpenseById,
+    addExpense: addMutation.mutateAsync,
+    updateExpense: (id: string, payload: any) => updateMutation.mutateAsync({ id, payload }),
+    deleteExpense: deleteMutation.mutateAsync
   };
 }

@@ -1,368 +1,330 @@
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState, useMemo, Suspense } from "react";
-import { toast } from "sonner";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Save,
-  Send,
   Plus,
   Trash2,
-  Info,
-  Receipt,
+  ShoppingBag,
   CreditCard,
-  Banknote,
-  ShieldCheck,
-  X,
-  History,
-  CheckCircle2,
-  AlertCircle
+  Building,
+  User,
+  Calendar,
+  Hash,
+  Wallet
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import { useCustomerReceiptStore } from "@/hooks/useCustomerReceiptStore";
-import { useSalesInvoiceStore } from "@/hooks/useSalesInvoiceStore";
-import { useMasterData } from "@/hooks/useMasterData";
-
-interface InvoiceLine {
-  id: string;
-  taxInvoiceRefNo: string;
-  actualAmount: number;
-  paidAmount: number;
-  outstanding: number;
-  adjustingAmount: number;
-  remarks: string;
-}
+import { useCustomers, useCompanies, useCurrencies } from "@/hooks/useStoreData";
+import { getCurrentUser } from "@/lib/auth";
 
 function CreateReceiptContent() {
-  const navigate = useRouter();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get("id");
-  const { receipts: allReceipts, addReceipt, updateReceipt } = useCustomerReceiptStore();
-  const { invoices: taxInvoices = [] } = useSalesInvoiceStore();
   const today = new Date().toISOString().split("T")[0];
 
-  // Master Data
-  const { data: companies = [] } = useMasterData("companies");
-  const { data: customers = [] } = useMasterData("customers");
-  const { data: paymentModes = [] } = useMasterData("payment-modes");
-  const { data: banks = [] } = useMasterData("banks");
-  const { data: bankAccounts = [] } = useMasterData("company-bank-accounts");
-  const { data: currencies = [] } = useMasterData("currencies");
+  const { addReceipt, getReceiptById, getUnpaidInvoicesByCustomerId, isLoading } = useCustomerReceiptStore();
+  const { data: customers = [] } = useCustomers();
+  const { data: companies = [] } = useCompanies();
+  const { data: currencies = [] } = useCurrencies();
 
   const [header, setHeader] = useState({
     receiptDate: today,
-    paymentType: "Partial Payment",
-    company: "",
-    customer: "",
-    paymentMode: "",
-    crBankCash: "",
-    crAccount: "",
-    drBankCash: "",
+    companyId: 1,
+    customerId: 0,
+    paymentModeId: 1, // Default regular
+    receiptAmount: 0,
     transactionRefNo: "",
     transactionDate: today,
-    currency: "TZS",
+    currencyId: 1,
     exchangeRate: 1,
-    status: "Pending",
-    remarks: "",
+    paymentType: "Regular",
+    status: "Open",
+    remarks: ""
   });
 
-  const [items, setItems] = useState<InvoiceLine[]>([]);
+  const [items, setItems] = useState<any[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
 
-  // Load Initial Data
+  // Load existing data if editing
   useEffect(() => {
-    if (editId && allReceipts.length > 0) {
-      const existing = allReceipts.find((r: any) => r.id === editId || r.receiptRefNo === editId);
-      if (existing) {
-        setHeader({
-          receiptDate: existing.receiptDate || today,
-          paymentType: existing.paymentType || "Partial Payment",
-          company: String(existing.company || ""),
-          customer: String(existing.customer || ""),
-          paymentMode: String(existing.paymentMode || ""),
-          crBankCash: String(existing.crBankCash || ""),
-          crAccount: String(existing.crAccount || ""),
-          drBankCash: String(existing.drBankCash || ""),
-          transactionRefNo: existing.transactionRefNo || "",
-          transactionDate: existing.transactionDate || today,
-          currency: String(existing.currency || "TZS"),
-          exchangeRate: Number(existing.exchangeRate) || 1,
-          status: existing.status || "Pending",
-          remarks: existing.remarks || "",
-        });
-        if (existing.items) setItems(existing.items);
+    const loadReceipt = async () => {
+      if (editId) {
+        toast.loading("Loading Receipt details...", { id: "load-cr" });
+        const res = await getReceiptById(editId as string);
+        if (res && res.header) {
+          const h = res.header;
+          setHeader({
+            receiptDate: h.receiptDate ? new Date(h.receiptDate).toISOString().split("T")[0] : today,
+            companyId: h.companyId || 1,
+            customerId: h.customerId || 0,
+            paymentModeId: h.paymentModeId || 1,
+            receiptAmount: Number(h.receiptAmount) || 0,
+            transactionRefNo: h.transactionRefNo || "",
+            transactionDate: h.transactionDate ? new Date(h.transactionDate).toISOString().split("T")[0] : today,
+            currencyId: h.currencyId || 1,
+            exchangeRate: Number(h.exchangeRate) || 1,
+            paymentType: h.paymentType || "Regular",
+            status: h.status || "Open",
+            remarks: h.remarks || ""
+          });
+
+          if (res.items) {
+            setItems(res.items.map((it: any) => ({
+              id: it.id,
+              taxInvoiceRefNo: it.taxInvoiceRefNo,
+              actualInvoiceAmount: Number(it.actualInvoiceAmount) || 0,
+              alreadyPaidAmount: Number(it.alreadyPaidAmount) || 0,
+              outstandingInvoiceAmount: Number(it.outstandingInvoiceAmount) || 0,
+              receiptInvoiceAdjustAmount: Number(it.receiptInvoiceAdjustAmount) || 0,
+              remarks: it.remarks || ""
+            })));
+          }
+          toast.success("Details loaded", { id: "load-cr" });
+        }
       }
-    } else if (companies.length > 0) {
-      setHeader(prev => ({
-        ...prev,
-        company: companies[0]?.companyName || "",
-        currency: currencies[0]?.currencyName || "TZS",
-        paymentMode: paymentModes[0]?.paymentModeName || ""
-      }));
-    }
-  }, [editId, allReceipts, companies, currencies, paymentModes]);
-
-  const totalReceiptAmount = useMemo(() => items.reduce((sum, i) => sum + i.adjustingAmount, 0), [items]);
-
-  const addBlankRow = () => {
-    setItems([...items, {
-      id: Math.random().toString(36).substr(2, 9),
-      taxInvoiceRefNo: "",
-      actualAmount: 0,
-      paidAmount: 0,
-      outstanding: 0,
-      adjustingAmount: 0,
-      remarks: ""
-    }]);
-  };
-
-  const handleInvoiceSelect = (id: string, ref: string) => {
-    const inv = taxInvoices.find((i: any) => i.taxInvoiceRefNo === ref || i.header?.invoiceRefNo === ref);
-    if (!inv) return;
-
-    setItems(items.map(item => {
-      if (item.id === id) {
-        const amount = Number(inv.finalSalesAmount || inv.header?.grandTotal || 0);
-        return {
-          ...item,
-          taxInvoiceRefNo: ref,
-          actualAmount: amount,
-          paidAmount: 0,
-          outstanding: amount,
-          adjustingAmount: 0
-        };
-      }
-      return item;
-    }));
-  };
-
-  const updateAdjustAmount = (id: string, amt: number) => {
-    setItems(items.map(item => {
-      if (item.id === id) {
-        return { ...item, adjustingAmount: Math.max(0, Math.min(amt, item.outstanding)) };
-      }
-      return item;
-    }));
-  };
-
-  const handleSaveReceipt = async (status: string = "Pending") => {
-    if (!header.customer) { toast.error("Please select a customer"); return; }
-    if (items.some(i => !i.taxInvoiceRefNo)) { toast.error("Please select invoices for all lines"); return; }
-
-    const receiptRefNo = editId ? editId : `RCP/${new Date().getMonth() + 1}/${Math.floor(Math.random() * 1000)}`;
-
-    // Simplification for brevity in this UI update
-    const payload = {
-      header: {
-        ...header,
-        receiptRefNo,
-        receiptAmount: totalReceiptAmount,
-        status: typeof status === "string" ? status : header.status
-      },
-      items,
-      audit: { createdAt: new Date().toISOString() }
     };
+    loadReceipt();
+  }, [editId, getReceiptById]);
+
+  // Load Customer Invoices when customer changes
+  useEffect(() => {
+    const loadInvoices = async () => {
+      if (header.customerId && !editId) {
+        const data = await getUnpaidInvoicesByCustomerId(header.customerId);
+        setInvoices(data);
+
+        // Auto-allocate if possible
+        setItems(data.map((inv: any) => ({
+          id: inv.taxInvoiceRefNo,
+          taxInvoiceRefNo: inv.taxInvoiceRefNo,
+          actualInvoiceAmount: Number(inv.finalSalesAmount) || 0,
+          alreadyPaidAmount: 0,
+          outstandingInvoiceAmount: Number(inv.finalSalesAmount) || 0,
+          receiptInvoiceAdjustAmount: 0,
+          remarks: ""
+        })));
+      }
+    };
+    loadInvoices();
+  }, [header.customerId, editId, getUnpaidInvoicesByCustomerId]);
+
+  const handleSave = async () => {
+    if (!header.customerId) {
+      toast.error("Please select a Customer");
+      return;
+    }
+    if (header.receiptAmount <= 0) {
+      toast.error("Receipt Amount must be greater than 0");
+      return;
+    }
 
     try {
+      const payload = {
+        header: header,
+        items: items.filter(it => it.receiptInvoiceAdjustAmount > 0),
+        audit: { user: getCurrentUser()?.username || "System" }
+      };
+
       if (editId) {
-        await updateReceipt(editId, payload);
-        toast.success("Receipt updated successfully");
+        toast.error("Edit not supported for finalized receipts yet.");
       } else {
         await addReceipt(payload);
-        toast.success(`Receipt ${status === "Draft" ? "saved" : "recorded"} successfully`);
+        toast.success("Receipt created successfully!");
       }
-      navigate.push("/customer-receipts");
-    } catch (error) {
-      toast.error("Failed to save receipt");
+      router.push("/customer-receipts");
+    } catch (e: any) {
+      toast.error(e.message || "Error saving receipt");
     }
   };
 
+  const allocateAmount = (id: string, value: number) => {
+    setItems(items.map(it => it.id === id ? { ...it, receiptInvoiceAdjustAmount: value } : it));
+  };
+
+  const totalAllocated = items.reduce((acc, it) => acc + (Number(it.receiptInvoiceAdjustAmount) || 0), 0);
+
   return (
-    <div className="max-w-full mx-auto pb-20 px-4 sm:px-6">
-      {/* Premium Navigation Header */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-8 gap-4 mt-4">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate.push("/customer-receipts")}
-            className="p-2.5 rounded-full border border-[#E2E8F0] hover:bg-muted transition-colors bg-white shadow-sm"
-          >
-            <ArrowLeft className="w-5 h-5 text-foreground" />
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-[#0F172A] tracking-tight">
-              {editId ? `Edit Receipt: ${editId}` : "Record Customer Receipt"}
-            </h1>
-            <div className="flex items-center gap-1.5 mt-1 text-[#059669] font-medium text-[13px]">
-              <Info className="w-4 h-4" />
-              <span>Map payments against tax invoices to close outstanding receivables.</span>
+    <div className="min-h-screen bg-[#F8FAFC]">
+      {/* Top Header */}
+      <div className="bg-white border-b border-[#E2E8F0]  z-30">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full">
+              <ArrowLeft className="w-5 h-5 text-[#64748B]" />
+            </Button>
+            <div>
+              <h1 className="text-xl font-bold text-[#0F172A]">{editId ? "View Receipt" : "Create Customer Receipt"}</h1>
+              <p className="text-[11px] font-medium text-[#94A3B8] uppercase tracking-wider">Settlement & Inbound Payment</p>
             </div>
           </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={() => navigate.push("/customer-receipts")} className="rounded-xl border-[#E2E8F0] h-11 px-6 font-bold hover:bg-[#F8FAFC]">
-            Cancel
-          </Button>
-          <Button onClick={() => handleSaveReceipt("Pending")} className="bg-[#1A2E28] hover:bg-[#1A2E28]/90 text-white font-bold rounded-xl px-8 h-11 transition-all active:scale-95 shadow-md shadow-black/10">
-            <Send className="w-4 h-4 mr-2" /> {editId ? "Update Receipt" : "Record Receipt"}
-          </Button>
-        </div>
-      </div>
-
-      <div className="space-y-6">
-        {/* Settlement Core Details Card */}
-        <div className="bg-white rounded-[24px] border border-[#E2E8F0] p-8 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Receipt Date*</Label>
-              <Input type="date" value={header.receiptDate} onChange={(e) => setHeader({ ...header, receiptDate: e.target.value })} className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-12 font-medium" />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Customer Source*</Label>
-              <Select value={header.customer} onValueChange={(v) => setHeader({ ...header, customer: v })}>
-                <SelectTrigger className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-12 font-bold focus:ring-emerald-500/20">
-                  <SelectValue placeholder="Select XYZ Industries..." />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  {customers.map((c: any) => <SelectItem key={c.id} value={c.customerName}>{c.customerName}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Payment Mode</Label>
-              <Select value={header.paymentMode} onValueChange={(v) => setHeader({ ...header, paymentMode: v })}>
-                <SelectTrigger className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-12 font-bold">
-                  <SelectValue placeholder="Cash / Bank Transfer" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  {paymentModes.map((pm: any) => <SelectItem key={pm.id} value={pm.paymentModeName}>{pm.paymentModeName}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Deposit Bank</Label>
-              <Select value={header.crBankCash} onValueChange={(v) => setHeader({ ...header, crBankCash: v })}>
-                <SelectTrigger className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-12 font-bold">
-                  <SelectValue placeholder="Select Depository Bank" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  {banks.map((b: any) => <SelectItem key={b.id} value={b.bankName}>{b.bankName}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Transaction Reference</Label>
-              <Input value={header.transactionRefNo} onChange={(e) => setHeader({ ...header, transactionRefNo: e.target.value })} placeholder="TXN-2026-001" className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-12 font-mono font-bold" />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Workflow Status</Label>
-              <Select value={header.status} onValueChange={(v) => setHeader({ ...header, status: v })}>
-                <SelectTrigger className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-12 font-bold text-[#059669]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="Confirmed" className="text-emerald-600 font-bold">Confirmed</SelectItem>
-                  <SelectItem value="Cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Financial Summary Line */}
-          <div className="mt-12 pt-8 border-t border-[#F1F5F9] flex flex-col sm:flex-row items-end sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-6">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#94A3B8] mb-1">Total Liquidation</p>
-                <p className="text-3xl font-black text-[#0F172A] tracking-tighter">
-                  {header.currency} {totalReceiptAmount.toLocaleString()}
-                </p>
-              </div>
-            </div>
-            <Button onClick={addBlankRow} variant="outline" className="rounded-2xl h-12 px-6 border-emerald-100 bg-[#F0FDF4]/50 text-[#059669] font-black hover:bg-emerald-100 transition-all">
-              <Plus className="w-4 h-4 mr-2" /> Add Invoice Allocation
+          <div className="flex items-center gap-3">
+            <Button variant="outline" onClick={() => router.back()} className="rounded-xl border-[#E2E8F0] font-semibold text-[#64748B] hover:bg-[#F8FAFC]">Cancel</Button>
+            <Button onClick={handleSave} className="bg-[#1A2E28] hover:bg-[#254139] text-white rounded-xl px-6 flex items-center gap-2 shadow-lg">
+              <Save className="w-4 h-4" />
+              <span>{editId ? "Update Receipt" : "Save Receipt"}</span>
             </Button>
           </div>
         </div>
+      </div>
 
-        {/* Allocation Grid Card */}
-        <div className="bg-white rounded-[24px] border border-[#E2E8F0] p-8 shadow-sm">
-          <h2 className="text-base font-bold text-[#0F172A] mb-8 flex items-center gap-2">
-            <span className="w-6 h-6 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[10px] font-bold text-[#64748B]">2</span>
-            Invoice Allocation Details
-          </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-[#F8FAFC]/50 transition-colors">
-                  <th className="text-left p-4 w-12 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">#</th>
-                  <th className="text-left p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Tax Invoice</th>
-                  <th className="text-right p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Invoice Amt</th>
-                  <th className="text-right p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Already Paid</th>
-                  <th className="text-right p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Outstanding</th>
-                  <th className="text-center p-4 text-[10px] font-bold uppercase tracking-widest text-[#059669]">Adjust Amount *</th>
-                  <th className="p-4 w-12"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#F1F5F9]">
-                {items.length > 0 ? (
-                  items.map((item, index) => (
-                    <tr key={item.id} className="hover:bg-[#F8FAFC]/30 transition-colors group">
-                      <td className="p-4 text-[#94A3B8] font-bold">{index + 1}</td>
-                      <td className="p-4 min-w-[200px]">
-                        <Select value={item.taxInvoiceRefNo} onValueChange={(v) => handleInvoiceSelect(item.id, v)}>
-                          <SelectTrigger className="bg-white border-[#E2E8F0] rounded-xl h-10 font-bold text-[#059669]">
-                            <SelectValue placeholder="Select Invoice..." />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-xl">
-                            {taxInvoices.map((inv: any) => {
-                              const ref = inv.taxInvoiceRefNo || inv.header?.invoiceRefNo || inv.id;
-                              return <SelectItem key={ref} value={ref}>{ref}</SelectItem>;
-                            })}
-                          </SelectContent>
-                        </Select>
-                      </td>
-                      <td className="p-4 text-right font-medium text-[#64748B]">{item.actualAmount.toLocaleString()}</td>
-                      <td className="p-4 text-right font-medium text-[#64748B]">{item.paidAmount.toLocaleString()}</td>
-                      <td className="p-4 text-right font-bold text-[#0F172A]">{item.outstanding.toLocaleString()}</td>
-                      <td className="p-4 text-center">
-                        <Input
-                          type="number"
-                          value={item.adjustingAmount}
-                          onChange={(e) => updateAdjustAmount(item.id, parseFloat(e.target.value) || 0)}
-                          className="w-32 mx-auto bg-white border-[#E2E8F0] rounded-xl h-10 text-center font-black text-[#059669]"
-                        />
-                      </td>
-                      <td className="p-4">
-                        <button onClick={() => setItems(items.filter(i => i.id !== item.id))} className="p-2 rounded-lg hover:bg-destructive/10 text-[#94A3B8] hover:text-destructive transition-all">
-                          <X className="w-5 h-5" />
-                        </button>
-                      </td>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-12 gap-8">
+          <div className="col-span-12 lg:col-span-8 space-y-8">
+            <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2.5 bg-emerald-50 rounded-xl">
+                  <CreditCard className="w-5 h-5 text-emerald-600" />
+                </div>
+                <h3 className="text-base font-bold text-[#0F172A]">Payment Header</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-x-10 gap-y-6">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]"> Receipt Date</Label>
+                  <Input type="date" value={header.receiptDate} onChange={(e) => setHeader({ ...header, receiptDate: e.target.value })} className="rounded-xl h-11" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Customer*</Label>
+                  <Select value={String(header.customerId)} onValueChange={(v) => setHeader({ ...header, customerId: Number(v) })}>
+                    <SelectTrigger className="rounded-xl h-11 font-bold">
+                      <SelectValue placeholder="Select Customer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {customers.map((c: any) => (
+                        <SelectItem key={c.id} value={String(c.id)}>{c.customerName}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Receipt Amount (Grand)*</Label>
+                  <Input
+                    type="number"
+                    value={header.receiptAmount}
+                    onChange={(e) => setHeader({ ...header, receiptAmount: Number(e.target.value) })}
+                    className="rounded-xl h-11 font-black text-lg bg-emerald-50 border-emerald-100"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Transaction Ref (Cheque/EFT)</Label>
+                  <Input
+                    placeholder="Enter Reference Number"
+                    value={header.transactionRefNo}
+                    onChange={(e) => setHeader({ ...header, transactionRefNo: e.target.value })}
+                    className="rounded-xl h-11"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Allocation Table */}
+            <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-[#F1F5F9] bg-[#F8FAFC]/50 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-50 rounded-lg">
+                    <ShoppingBag className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h3 className="text-base font-bold text-[#0F172A]">Outstanding Invoices</h3>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
+                      <th className="px-6 py-4 text-[10px] font-bold uppercase text-[#64748B] text-left">Invoice Ref</th>
+                      <th className="px-4 py-4 text-[10px] font-bold uppercase text-[#64748B] text-center">Inv. Amount</th>
+                      <th className="px-4 py-4 text-[10px] font-bold uppercase text-[#64748B] text-center">Outstanding</th>
+                      <th className="px-6 py-4 text-[10px] font-bold uppercase text-[#64748B] text-right w-48">Allocation Amount</th>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={7} className="p-16 text-center">
-                      <div className="flex flex-col items-center gap-4 text-[#94A3B8]">
-                        <Receipt className="w-12 h-12 opacity-20" />
-                        <p className="font-bold text-sm">No allocations defined. Click "Add Invoice Allocation" to begin.</p>
-                      </div>
-                    </td>
-                  </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#F1F5F9]">
+                    {items.map((item) => (
+                      <tr key={item.id} className="hover:bg-[#F8FAFC]/50 transition-colors">
+                        <td className="px-6 py-4 font-bold text-[#1E293B]">{item.taxInvoiceRefNo}</td>
+                        <td className="px-4 py-4 text-center text-[#64748B]">{(item.actualInvoiceAmount).toLocaleString()}</td>
+                        <td className="px-4 py-4 text-center font-bold text-red-500">{(item.outstandingInvoiceAmount).toLocaleString()}</td>
+                        <td className="px-6 py-4">
+                          <Input
+                            type="number"
+                            value={item.receiptInvoiceAdjustAmount}
+                            onChange={(e) => allocateAmount(item.id, Number(e.target.value))}
+                            className="text-right font-black rounded-lg h-9 border-blue-100 bg-blue-50/30"
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {items.length === 0 && (
+                  <div className="p-12 text-center text-[#94A3B8]">
+                    <ShoppingBag className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                    <p className="font-medium italic">No outstanding invoices for this customer.</p>
+                  </div>
                 )}
-              </tbody>
-            </table>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-span-12 lg:col-span-4 space-y-8">
+            <div className="bg-[#1A2E28] text-white rounded-2xl shadow-xl p-8">
+              <h3 className="text-sm font-bold opacity-70 uppercase tracking-widest mb-6">Allocation Summary</h3>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center text-[#A7B4B1]">
+                  <span className="text-xs font-bold uppercase tracking-tight">Receipt Total</span>
+                  <span className="font-mono font-medium">{(header.receiptAmount).toLocaleString()} TZS</span>
+                </div>
+                <div className="flex justify-between items-center text-[#A7B4B1]">
+                  <span className="text-xs font-bold uppercase tracking-tight">Allocated to Inv</span>
+                  <span className="font-mono font-medium">{(totalAllocated).toLocaleString()} TZS</span>
+                </div>
+                <div className="h-px bg-white/10 my-4" />
+                <div className="space-y-1">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">Unallocated Balance</span>
+                  <div className="text-3xl font-black font-sans leading-none">{(header.receiptAmount - totalAllocated).toLocaleString()}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-6 space-y-6">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Company Account</Label>
+                <Select value={String(header.companyId)} onValueChange={(v) => setHeader({ ...header, companyId: Number(v) })}>
+                  <SelectTrigger className="rounded-xl font-bold bg-[#F8FAFC]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {companies.map((c: any) => (
+                      <SelectItem key={c.id} value={String(c.id)}>{c.companyName}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Internal Remarks</Label>
+                <Textarea
+                  value={header.remarks}
+                  onChange={(e) => setHeader({ ...header, remarks: e.target.value })}
+                  className="min-h-[120px] rounded-xl bg-[#F8FAFC]"
+                  placeholder="Note for audit purposes..."
+                />
+              </div>
+            </div>
           </div>
         </div>
-
-
       </div>
     </div>
   );
@@ -370,7 +332,7 @@ function CreateReceiptContent() {
 
 export default function CreateCustomerReceiptPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center p-24 min-h-screen text-slate-400 font-bold animate-pulse uppercase tracking-widest">Initialising Premium Settlement Suite...</div>}>
+    <Suspense fallback={<div className="flex items-center justify-center p-20 min-h-screen">Loading Receipt system...</div>}>
       <CreateReceiptContent />
     </Suspense>
   );

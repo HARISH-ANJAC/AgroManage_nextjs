@@ -141,7 +141,7 @@ const navigation = [
       { name: 'Stores', href: '/stores', icon: Store },
       { name: 'Locations', href: '/locations', icon: MapPin },
       { name: 'Billing Locations', href: '/billing-locations', icon: MapPinned },
-      { name: 'Financial Years', href: '/financial-years', icon: Calendar },
+
     ]
   },
   {
@@ -150,7 +150,6 @@ const navigation = [
       { name: 'Products', href: '/products', icon: Package },
       { name: 'Main Categories', href: '/categories', icon: Tag },
       { name: 'Sub Categories', href: '/sub-categories', icon: Layers },
-      { name: 'Min Stock Settings', href: '/store-product-min-stock', icon: Database },
       { name: 'Opening Stock', href: '/product-opening-stock', icon: Database },
       { name: 'Category Mapping', href: '/product-company-category-mapping', icon: Link2 },
     ]
@@ -161,7 +160,6 @@ const navigation = [
       { name: 'Suppliers', href: '/suppliers', icon: Truck },
       { name: 'Customers', href: '/customers', icon: Users },
       { name: 'Employees', href: '/employees', icon: Briefcase },
-      { name: 'Sales Persons', href: '/sales-persons', icon: UserCircle },
     ]
   },
   {

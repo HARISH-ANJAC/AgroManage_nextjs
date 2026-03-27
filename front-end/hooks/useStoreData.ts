@@ -3,8 +3,8 @@
 import { useMasterData } from "./useMasterData";
 
 const INITIAL_PRODUCTS = [
-  { id: "PRD001", productName: "White Maize – Grade A", commonName: "Mahindi Meupe", mainCategory: "Grains", subCategory: "Maize", uom: "Bag", status: "Active" },
-  { id: "PRD002", productName: "Pishori Rice – Grade 1", commonName: "Mchele wa Pishori", mainCategory: "Grains", subCategory: "Rice", uom: "Bag", status: "Active" },
+  { id: 1, productName: "White Maize – Grade A", commonName: "Mahindi Meupe", mainCategory: "Grains", subCategory: "Maize", uom: "Bag", status: "Active" },
+  { id: 2, productName: "Pishori Rice – Grade 1", commonName: "Mchele wa Pishori", mainCategory: "Grains", subCategory: "Rice", uom: "Bag", status: "Active" },
 ];
 
 export function useProducts() {
@@ -12,8 +12,8 @@ export function useProducts() {
 }
 
 const INITIAL_SUPPLIERS = [
-  { id: "SPL001", supplierName: "Kilimo Bora Suppliers", contactPerson: "John Doe", phone: "+255 712 345678", email: "info@kilimobora.co.tz", status: "Active" },
-  { id: "SPL002", supplierName: "Tanzania Agro Trading", contactPerson: "Jane Smith", phone: "+255 754 876543", email: "trading@tanzaniagro.tz", status: "Active" },
+  { id: 1, supplierName: "Kilimo Bora Suppliers", contactPerson: "John Doe", phone: "+255 712 345678", email: "info@kilimobora.co.tz", status: "Active" },
+  { id: 2, supplierName: "Tanzania Agro Trading", contactPerson: "Jane Smith", phone: "+255 754 876543", email: "trading@tanzaniagro.tz", status: "Active" },
 ];
 
 export function useSuppliers() {
@@ -55,53 +55,57 @@ export function useTaxInvoices() {
 
 export function useCompanies() {
   return useMasterData("companies", [
-    { id: "CMP-001", COMPANY_NAME: "AgroManage Tanzania Ltd", status: "Active" }
+    { id: 1, COMPANY_NAME: "AgroManage Tanzania Ltd", status: "Active" }
   ], "CMP");
 }
 
 export function useCustomers() {
   return useMasterData("customers", [
-    { id: "CST-001", CUSTOMER_NAME: "Metro Foods Inc", status: "Active" },
-    { id: "CST-002", CUSTOMER_NAME: "Global Grain Ltd", status: "Active" }
+    { id: 1, CUSTOMER_NAME: "Metro Foods Inc", status: "Active" },
+    { id: 2, CUSTOMER_NAME: "Global Grain Ltd", status: "Active" }
   ], "CST");
 }
 
 export function useStores() {
   return useMasterData("stores", [
-    { id: "STR-001", STORE_NAME: "Main Warehouse", status: "Active" },
-    { id: "STR-002", STORE_NAME: "Zanzibar Hub", status: "Active" }
+    { id: 1, STORE_NAME: "Main Warehouse", status: "Active" },
+    { id: 2, STORE_NAME: "Zanzibar Hub", status: "Active" }
   ], "STR");
 }
 
 export function useSalesPersons() {
   return useMasterData("sales-persons", [
-    { id: "SP-001", salesPersonName: "James Kileo" },
-    { id: "SP-002", salesPersonName: "Hassan Juma" }
+    { id: 1, salesPersonName: "James Kileo" },
+    { id: 2, salesPersonName: "Hassan Juma" }
   ], "SP");
 }
 
 export function useCurrencies() {
   return useMasterData("currencies", [
-    { id: "CUR-001", CURRENCY_NAME: "TZS" },
-    { id: "CUR-002", CURRENCY_NAME: "USD" }
+    { id: 1, CURRENCY_NAME: "TZS" },
+    { id: 2, CURRENCY_NAME: "USD" }
   ], "CUR");
 }
 
 export function usePaymentTerms() {
   return useMasterData("payment-terms", [
-    { id: "PT-001", paymentTermName: "Net 30" },
-    { id: "PT-002", paymentTermName: "CIA" }
+    { id: 1, paymentTermName: "Net 30" },
+    { id: 2, paymentTermName: "CIA" }
   ], "PT");
 }
 
 export function useUoms() {
   return useMasterData("uoms", [
-    { id: "UOM-001", UNIT_NAME: "Bag" },
-    { id: "UOM-002", UNIT_NAME: "KG" },
-    { id: "UOM-003", UNIT_NAME: "MT" },
-    { id: "UOM-004", UNIT_NAME: "Litre" },
-    { id: "UOM-005", UNIT_NAME: "Carton" },
-    { id: "UOM-006", UNIT_NAME: "Pack" }
+    { id: 1, UNIT_NAME: "Bag" },
+    { id: 2, UNIT_NAME: "KG" },
+    { id: 3, UNIT_NAME: "MT" },
+    { id: 4, UNIT_NAME: "Litre" },
+    { id: 5, UNIT_NAME: "Carton" },
+    { id: 6, UNIT_NAME: "Pack" }
   ], "UOM");
+}
+
+export function useBillingLocations() {
+  return useMasterData("billing-locations", [], "BLOC");
 }
 

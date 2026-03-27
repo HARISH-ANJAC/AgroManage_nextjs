@@ -1,35 +1,33 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { toast } from "sonner";
 import {
   ArrowLeft,
   Save,
-  Send,
-  Info,
+  Plus,
+  Trash2,
   FileText,
-  User,
+  Boxes,
+  Settings2,
   Calendar,
-  Package,
-  Receipt,
-  BadgeCheck,
-  Globe,
-  Settings,
-  ReceiptText
+  Truck,
+  Building,
+  User,
+  Hash,
+  ShoppingBag
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useDeliveryNoteStore } from "@/hooks/useDeliveryNoteStore";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import { useSalesInvoiceStore } from "@/hooks/useSalesInvoiceStore";
+import { useDeliveryNoteStore } from "@/hooks/useDeliveryNoteStore";
+import { useStores } from "@/hooks/useStoreData";
+import { getCurrentUser } from "@/lib/auth";
 
 function CreateInvoiceContent() {
   const router = useRouter();
@@ -37,326 +35,404 @@ function CreateInvoiceContent() {
   const editId = searchParams.get("id");
   const today = new Date().toISOString().split("T")[0];
 
-  const { notes: deliveryNotes } = useDeliveryNoteStore();
-  const { invoices, addInvoice, updateInvoice } = useSalesInvoiceStore();
+  const { notes: deliveryNotes, getNoteById: getDNById } = useDeliveryNoteStore();
+  const { invoices, addInvoice, updateInvoice, getInvoiceById, isLoading } = useSalesInvoiceStore();
+  const { data: stores = [] } = useStores();
 
   const [header, setHeader] = useState({
     invoiceDate: today,
-    dnRefNo: "",
-    customer: "",
-    currency: "TZS",
-    status: "Draft",
+    taxInvoiceRefNo: "",
+    deliveryNoteRefNo: "",
+    companyId: 0,
+    fromStoreId: 0,
+    customerId: 0,
+    customerName: "",
+    currencyId: 1,
+    exchangeRate: 1,
+    invoiceType: "Standard",
+    status: "Open",
     remarks: ""
   });
 
   const [items, setItems] = useState<any[]>([]);
 
-  // Filter delivered notes only for new invoices
-  const availableDNs = useMemo(() => {
-    return deliveryNotes.filter((dn: any) =>
-      (dn.header?.status === "Delivered" || dn.status === "Delivered" || dn.status === "Submitted")
-    );
-  }, [deliveryNotes]);
-
   // Load existing data if editing
   useEffect(() => {
-    if (editId && invoices.length > 0) {
-      const existing = invoices.find((inv: any) => inv.id === editId || (inv.header && (inv.header.invoiceRefNo === editId)));
-      if (existing) {
-        const h = existing.header || existing;
-        setHeader({
-          invoiceDate: h.invoiceDate || today,
-          dnRefNo: h.dnRefNo || h.deliveryNoteRefNo || "",
-          customer: h.customer || "",
-          currency: h.currency || "TZS",
-          status: h.status || "Draft",
-          remarks: h.remarks || ""
-        });
-        if (existing.items) setItems(existing.items);
-      }
-    }
-  }, [editId, invoices]);
+    const loadInvoice = async () => {
+      if (editId) {
+        toast.loading("Loading Invoice details...", { id: "load-inv" });
+        const res = await getInvoiceById(editId as string);
+        if (res && res.header) {
+          const h = res.header;
+          setHeader({
+            invoiceDate: h.invoiceDate ? new Date(h.invoiceDate).toISOString().split("T")[0] : today,
+            taxInvoiceRefNo: h.taxInvoiceRefNo || "",
+            deliveryNoteRefNo: h.deliveryNoteRefNo || "",
+            companyId: h.companyId || 0,
+            fromStoreId: h.fromStoreId || 0,
+            customerId: h.customerId || 0,
+            customerName: h.customerName || "",
+            currencyId: h.currencyId || 1,
+            exchangeRate: h.exchangeRate || 1,
+            invoiceType: h.invoiceType || "Standard",
+            status: h.status || "Open",
+            remarks: h.remarks || ""
+          });
 
-  // Handle DN Selection
+          if (res.items) {
+            setItems(res.items.map((it: any) => ({
+              id: it.id,
+              productId: it.productId,
+              productName: it.productName || "Unknown Product",
+              deliveryQty: Number(it.deliveryQty) || 0,
+              invoiceQty: Number(it.invoiceQty) || 0,
+              uom: it.uom || "Unit",
+              rate: Number(it.rate) || 0,
+              amount: Number(it.amount) || 0,
+              vatPercent: Number(it.vatPercent) || 0,
+              vatAmount: Number(it.vatAmount) || 0,
+              finalAmount: Number(it.finalAmount) || 0,
+              deliveryNoteDtlSno: it.deliveryNoteDtlSno
+            })));
+          }
+          toast.success("Details loaded", { id: "load-inv" });
+        } else {
+          toast.error("Invoice not found", { id: "load-inv" });
+        }
+      }
+    };
+    loadInvoice();
+  }, [editId, getInvoiceById]);
+
+  // Handle DN Selection (Auto-populate)
   useEffect(() => {
-    if (!editId && header.dnRefNo) {
-      const selectedDN = deliveryNotes.find((dn: any) =>
-        (dn.header?.deliveryNoteRefNo || dn.deliveryNoteRefNo || dn.id) === header.dnRefNo
-      );
+    const loadDN = async () => {
+      // Only auto-populate if we are in "Create" mode (no editId)
+      if (!editId && header.deliveryNoteRefNo) {
+        const fullDN = await getDNById(header.deliveryNoteRefNo);
 
-      if (selectedDN) {
-        const h = selectedDN.header || selectedDN;
-        setHeader(prev => ({
-          ...prev,
-          customer: h.customer || "N/A",
-          currency: h.currency || "TZS"
-        }));
+        if (fullDN && fullDN.header) {
+          const h = fullDN.header;
+          setHeader(prev => ({
+            ...prev,
+            companyId: h.companyId,
+            customerId: h.customerId,
+            customerName: h.customerName || "N/A",
+            fromStoreId: h.fromStoreId || prev.fromStoreId,
+            deliveryNoteRefNo: h.deliveryNoteRefNo // Keep original ref
+          }));
 
-        const dnItems = selectedDN.items || [];
-        setItems(dnItems.map((item: any, idx: number) => ({
-          id: idx + 1,
-          productId: item.productId,
-          productName: item.productName || "Unknown Product",
-          dnQty: item.deliveryQty || item.totalQty || 0,
-          invoiceQty: item.deliveryQty || item.totalQty || 0,
-          uom: item.uom || "KG",
-          rate: item.rate || 0,
-          vatPercent: 18,
-          amount: (item.deliveryQty || item.totalQty || 0) * (item.rate || 0)
-        })));
+          const dnItems = fullDN.items || [];
+          setItems(dnItems.map((item: any) => ({
+            id: item.id || Math.random(),
+            productId: item.productId,
+            productName: item.productName || "Unknown Product",
+            deliveryQty: item.deliveryQty || 0,
+            invoiceQty: item.deliveryQty || 0, // Default invoice qty to delivery qty
+            uom: item.uom || "Unit",
+            rate: item.rate || 0,
+            amount: (item.deliveryQty || 0) * (item.rate || 0),
+            vatPercent: item.vatPercent || 15, // Default VAT 15% if not provided
+            vatAmount: ((item.deliveryQty || 0) * (item.rate || 0)) * (15 / 100),
+            finalAmount: ((item.deliveryQty || 0) * (item.rate || 0)) * 1.15,
+            deliveryNoteDtlSno: item.id
+          })));
+        }
       }
-    }
-  }, [header.dnRefNo, deliveryNotes, editId]);
+    };
+    loadDN();
+  }, [header.deliveryNoteRefNo, editId, getDNById]);
 
-  const updateInvoiceQty = (id: number, qty: number) => {
-    setItems(items.map(item => {
-      if (item.id === id) {
-        const validatedQty = Math.max(0, Math.min(qty, item.dnQty));
-        return {
-          ...item,
-          invoiceQty: validatedQty,
-          amount: validatedQty * item.rate
-        };
+  // Recalculate item totals when quantity or rate changes
+  const updateItem = (id: string, field: string, value: any) => {
+    setItems(items.map(it => {
+      if (it.id === id) {
+        const updated = { ...it, [field]: value };
+        if (field === "invoiceQty" || field === "rate" || field === "vatPercent") {
+          updated.amount = Number(updated.invoiceQty) * Number(updated.rate);
+          updated.vatAmount = updated.amount * (Number(updated.vatPercent) / 100);
+          updated.finalAmount = updated.amount + updated.vatAmount;
+        }
+        return updated;
       }
-      return item;
+      return it;
     }));
   };
 
-  const totals = useMemo(() => {
-    const totalAmount = items.reduce((sum, i) => sum + i.amount, 0);
-    const totalVat = items.reduce((sum, i) => sum + (i.amount * (i.vatPercent / 100)), 0);
-    const grandTotal = totalAmount + totalVat;
-    return { totalAmount, totalVat, grandTotal };
-  }, [items]);
+  const totals = items.reduce((acc, it) => ({
+    subtotal: acc.subtotal + (it.amount || 0),
+    vat: acc.vat + (it.vatAmount || 0),
+    grandTotal: acc.grandTotal + (it.finalAmount || 0)
+  }), { subtotal: 0, vat: 0, grandTotal: 0 });
 
-  const handleCreateInvoice = (status: string = "Issued") => {
-    if (!header.dnRefNo) {
+  const handleSave = async () => {
+    if (!header.deliveryNoteRefNo && header.invoiceType === "Standard") {
       toast.error("Please select a Delivery Note Reference");
       return;
     }
 
-    const payload = {
-      header: {
-        ...header,
-        ...totals,
-        invoiceRefNo: `INV-${Date.now()}`,
-        status: typeof status === "string" ? status : header.status
-      },
-      items,
-      audit: {
-        createdAt: new Date().toISOString()
-      }
-    };
-
     try {
+      const payload = {
+        header: {
+          ...header,
+          totalProductAmount: totals.subtotal,
+          vatAmount: totals.vat,
+          finalSalesAmount: totals.grandTotal,
+          invoiceDate: header.invoiceDate
+        },
+        items: items,
+        audit: { user: getCurrentUser()?.username || "System" }
+      };
+
       if (editId) {
-        updateInvoice(editId, payload);
-        toast.success("Invoice Updated Successfully!");
+        await updateInvoice(editId as string, payload);
+        toast.success("Invoice updated successfully!");
       } else {
-        addInvoice(payload);
-        toast.success(`Invoice ${status === "Draft" ? "Saved as Draft" : "Generated"} Successfully!`);
+        await addInvoice(payload);
+        toast.success("Invoice created successfully!");
       }
       router.push("/sales-invoices");
-    } catch (e) {
-      toast.error("Failed to save Invoice");
+    } catch (e: any) {
+      toast.error(e.message || "Error saving invoice");
     }
   };
 
   return (
-    <div className="max-w-full mx-auto pb-20 px-4 sm:px-6">
-      {/* Header Section */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-8 gap-4 mt-4">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => router.push("/sales-invoices")}
-            className="p-2.5 rounded-full border border-[#E2E8F0] hover:bg-muted transition-colors bg-white shadow-sm"
-          >
-            <ArrowLeft className="w-5 h-5 text-foreground" />
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-[#0F172A] tracking-tight">
-              {editId ? `Edit Invoice: ${editId}` : "Create New Tax Invoice"}
-            </h1>
-            <div className="flex items-center gap-1.5 mt-1 text-[#059669] font-medium text-[13px]">
-              <Info className="w-4 h-4" />
-              <span>
-                {editId
-                  ? "Update invoice quantities and verify financial totals."
-                  : "Step 3: Generate financial obligation based on verified Delivery Note (DN)."}
-              </span>
+    <div className="min-h-screen bg-[#F8FAFC]">
+      {/* Top Header */}
+      <div className="bg-white border-b border-[#E2E8F0]  z-30">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full hover:bg-[#F1F5F9]">
+              <ArrowLeft className="w-5 h-5 text-[#64748B]" />
+            </Button>
+            <div>
+              <h1 className="text-xl font-bold text-[#0F172A]">{editId ? "Edit Sales Invoice" : "Create Tax Invoice"}</h1>
+              <p className="text-[11px] font-medium text-[#94A3B8] uppercase tracking-wider">Financial & Billing Processing</p>
             </div>
           </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            onClick={() => handleCreateInvoice("Draft")}
-            className="rounded-xl border-[#E2E8F0] h-11 px-6 font-bold hover:bg-[#F8FAFC]"
-          >
-            <Save className="w-4 h-4 mr-2" /> Save Draft
-          </Button>
-          <Button
-            onClick={() => handleCreateInvoice("Issued")}
-            className="bg-[#1A2E28] hover:bg-[#1A2E28]/90 text-white font-bold rounded-xl px-8 h-11 transition-all active:scale-95 shadow-md shadow-black/10"
-          >
-            <Send className="w-4 h-4 mr-2" /> {editId ? "Update Invoice" : "Generate Invoice"}
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" onClick={() => router.back()} className="rounded-xl border-[#E2E8F0] font-semibold text-[#64748B] hover:bg-[#F8FAFC]">Cancel</Button>
+            <Button onClick={handleSave} className="bg-[#1A2E28] hover:bg-[#254139] text-white rounded-xl px-6 flex items-center gap-2 shadow-lg shadow-[#1A2E28]/10">
+              <Save className="w-4 h-4" />
+              <span>{editId ? "Update Invoice" : "Generate Invoice"}</span>
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="space-y-6">
-        {/* Core Details Card */}
-        <div className="bg-white rounded-[24px] border border-[#E2E8F0] p-8 shadow-sm">
-          <h2 className="text-base font-bold text-[#0F172A] mb-8 flex items-center gap-2">
-            <span className="w-6 h-6 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[10px] font-bold text-[#64748B]">1</span>
-            Header Information
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Invoice Date*</Label>
-              <Input
-                type="date"
-                value={header.invoiceDate}
-                onChange={(e) => setHeader({ ...header, invoiceDate: e.target.value })}
-                className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11 font-medium"
-              />
-            </div>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-12 gap-8">
+          {/* Main Info */}
+          <div className="col-span-12 lg:col-span-8 space-y-8">
+            <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2.5 bg-blue-50 rounded-xl">
+                  <FileText className="w-5 h-5 text-blue-600" />
+                </div>
+                <h3 className="text-base font-bold text-[#0F172A]">Tax Details</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-x-10 gap-y-6">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8] flex items-center gap-2">
+                    <Calendar className="w-3 h-3" /> Invoice Date*
+                  </Label>
+                  <Input type="date" value={header.invoiceDate} onChange={(e) => setHeader({ ...header, invoiceDate: e.target.value })} className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11 font-medium select-none" />
+                </div>
 
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">DN Reference Source*</Label>
-              <Select value={header.dnRefNo} onValueChange={(v) => setHeader({ ...header, dnRefNo: v })}>
-                <SelectTrigger className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11 font-bold">
-                  <SelectValue placeholder="Select DN Reference" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  {availableDNs.map((dn: any) => {
-                    const ref = dn.header?.deliveryNoteRefNo || dn.deliveryNoteRefNo || dn.id;
-                    const customer = dn.header?.customer || dn.customer || "N/A";
-                    return (
-                      <SelectItem key={dn.id} value={ref} className="font-medium">
-                        {ref} <span className="text-[#94A3B8] font-normal">— {customer}</span>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8] flex items-center gap-2">
+                    <Truck className="w-3 h-3" /> Delivery Note Ref*
+                  </Label>
+                  <Select
+                    value={header.deliveryNoteRefNo}
+                    onValueChange={(v) => setHeader({ ...header, deliveryNoteRefNo: v })}
+                    disabled={!!editId}
+                  >
+                    <SelectTrigger className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11 font-bold">
+                      <SelectValue placeholder="Link DN Ref" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      {deliveryNotes
+                        .filter((dn: any) => dn.status === "Delivered" || dn.status === "In Transit")
+                        .map((dn: any) => (
+                          <SelectItem key={dn.deliveryNoteRefNo} value={dn.deliveryNoteRefNo} className="font-medium">
+                            {dn.deliveryNoteRefNo} <span className="text-[#94A3B8] font-normal">— {dn.customerName}</span>
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Customer (Context)</Label>
-              <Input value={header.customer} disabled className="bg-[#F1F5F9] border-[#E2E8F0] rounded-xl h-11 font-bold italic" placeholder="Auto-populated..." />
-            </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8] flex items-center gap-2">
+                    <User className="w-3 h-3" /> Customer
+                  </Label>
+                  <Input value={header.customerName} disabled className="bg-[#F1F5F9] border-[#E2E8F0] rounded-xl h-11 font-bold italic" />
+                </div>
 
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Status</Label>
-              <Select value={header.status} onValueChange={(v) => setHeader({ ...header, status: v })}>
-                <SelectTrigger className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11 font-bold">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  <SelectItem value="Draft">Draft</SelectItem>
-                  <SelectItem value="Issued">Issued</SelectItem>
-                  <SelectItem value="Paid">Paid</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Currency</Label>
-              <div className="h-11 bg-[#F1F5F9] border border-[#E2E8F0] rounded-xl flex items-center px-4 font-black text-[#64748B]">
-                <Globe className="w-4 h-4 mr-2" /> {header.currency}
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8] flex items-center gap-2">
+                    Invoice Type
+                  </Label>
+                  <Select value={header.invoiceType} onValueChange={(v) => setHeader({ ...header, invoiceType: v })}>
+                    <SelectTrigger className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11 font-bold">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      <SelectItem value="Standard">Standard (Tax)</SelectItem>
+                      <SelectItem value="Cash">Cash Invoice</SelectItem>
+                      <SelectItem value="Exempt">Tax Exempt</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Remarks / Internal Notes</Label>
-              <Input
-                placeholder="Enter any additional context..."
-                value={header.remarks}
-                onChange={(e) => setHeader({ ...header, remarks: e.target.value })}
-                className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11"
-              />
-            </div>
-          </div>
-        </div>
 
-        {/* Line Items Card */}
-        <div className="bg-white rounded-[24px] border border-[#E2E8F0] p-8 shadow-sm">
-          <h2 className="text-base font-bold text-[#0F172A] mb-8 flex items-center gap-2">
-            <span className="w-6 h-6 rounded-full bg-[#F1F5F9] flex items-center justify-center text-[10px] font-bold text-[#64748B]">2</span>
-            Invoice Line Items
-          </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-[#F8FAFC]/50 transition-colors">
-                  <th className="text-left p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Product</th>
-                  <th className="text-center p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">DN Qty</th>
-                  <th className="text-center p-4 text-[10px] font-bold uppercase tracking-widest text-[#059669]">Inv Qty *</th>
-                  <th className="text-center p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">UOM</th>
-                  <th className="text-right p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Rate</th>
-                  <th className="text-center p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">VAT %</th>
-                  <th className="text-right p-4 text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Amount</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#F1F5F9]">
-                {items.length > 0 ? (
-                  items.map((item) => (
-                    <tr key={item.id} className="hover:bg-[#F8FAFC]/30 transition-colors group">
-                      <td className="p-4 py-6 font-bold text-[#0F172A]">{item.productName}</td>
-                      <td className="p-4 text-center text-[#64748B] font-medium">{item.dnQty.toLocaleString()}</td>
-                      <td className="p-4 text-center">
-                        <Input
-                          type="number"
-                          value={item.invoiceQty}
-                          onChange={(e) => updateInvoiceQty(item.id, parseFloat(e.target.value) || 0)}
-                          className="w-24 mx-auto bg-white border-[#E2E8F0] rounded-xl h-10 text-center font-black text-[#059669]"
-                        />
-                      </td>
-                      <td className="p-4 text-center text-[#94A3B8] font-black uppercase text-xs">{item.uom}</td>
-                      <td className="p-4 text-right font-medium text-[#0F172A]">{item.rate.toLocaleString()}</td>
-                      <td className="p-4 text-center text-[#64748B] font-bold text-xs">{item.vatPercent}%</td>
-                      <td className="p-4 text-right font-black text-[#0F172A] tabular-nums tracking-tighter">
-                        {item.amount.toLocaleString()}
-                      </td>
+            {/* Line Items Table */}
+            <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-[#F1F5F9] bg-[#F8FAFC]/50 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo-50 rounded-lg">
+                    <Boxes className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <h3 className="text-base font-bold text-[#0F172A]">Billing Articles</h3>
+                </div>
+                <Badge variant="outline" className="bg-white text-indigo-700 border-indigo-100 font-bold px-3 py-1">{items.length} Items</Badge>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
+                      <th className="px-6 py-4 text-[10px] font-bold uppercase text-[#64748B] text-left">Product / Service</th>
+                      <th className="px-4 py-4 text-[10px] font-bold uppercase text-[#64748B] text-center w-28">Quantity</th>
+                      <th className="px-4 py-4 text-[10px] font-bold uppercase text-[#64748B] text-center w-36">Rate (TZS)</th>
+                      <th className="px-4 py-4 text-[10px] font-bold uppercase text-[#64748B] text-center w-24">VAT %</th>
+                      <th className="px-6 py-4 text-[10px] font-bold uppercase text-[#64748B] text-right">Final Amt</th>
+                      <th className="px-4 py-4 text-center w-14"></th>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={7} className="p-16 text-center">
-                      <div className="flex flex-col items-center gap-4">
-                        <ReceiptText className="w-12 h-12 text-[#E2E8F0]" />
-                        <p className="text-[#94A3B8] font-bold text-sm">Select a Valid Delivery Note Reference to populate items.</p>
-                      </div>
-                    </td>
-                  </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#F1F5F9]">
+                    {items.map((item, idx) => (
+                      <tr key={item.id || `item-${idx}`} className="hover:bg-[#F8FAFC]/80 transition-colors group">
+                        <td className="px-6 py-4">
+                          <div>
+                            <p className="font-bold text-[#1E293B] text-sm">{item.productName}</p>
+                            <p className="text-[10px] text-[#94A3B8] mt-0.5">UOM: {item.uom} | Delivered: {item.deliveryQty}</p>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <Input
+                            type="number"
+                            value={item.invoiceQty}
+                            onChange={(e) => updateItem(item.id, "invoiceQty", e.target.value)}
+                            max={item.deliveryQty} // Logical limit
+                            className="text-center font-bold bg-[#F8FAFC] border-[#E2E8F0] rounded-lg h-9"
+                          />
+                        </td>
+                        <td className="px-4 py-4">
+                          <Input
+                            type="number"
+                            value={item.rate}
+                            onChange={(e) => updateItem(item.id, "rate", e.target.value)}
+                            className="text-center font-bold bg-[#F8FAFC] border-[#E2E8F0] rounded-lg h-9"
+                          />
+                        </td>
+                        <td className="px-4 py-4">
+                          <Input
+                            type="number"
+                            value={item.vatPercent}
+                            onChange={(e) => updateItem(item.id, "vatPercent", e.target.value)}
+                            className="text-center font-medium bg-[#F1F5F9] border-[#E2E8F0] rounded-lg h-9"
+                          />
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="font-black text-[#0F172A] text-sm">{(item.finalAmount || 0).toLocaleString()}</div>
+                          <div className="text-[9px] text-[#64748B] font-medium">VAT: {(item.vatAmount || 0).toLocaleString()}</div>
+                        </td>
+                        <td className="px-4 py-4 text-center">
+                          <Button
+                            variant="ghost" size="icon"
+                            onClick={() => setItems(items.filter(i => i.id !== item.id))}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {items.length === 0 && (
+                  <div className="p-12 text-center text-[#94A3B8]">
+                    <ShoppingBag className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                    <p className="font-medium">No articles picked for invoicing.</p>
+                    <p className="text-xs mt-1 italic">Select a Delivery Note to populate lines.</p>
+                  </div>
                 )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Financial Summary Overlay */}
-          {items.length > 0 && (
-            <div className="mt-8 flex justify-end">
-              <div className="w-full max-w-sm space-y-4 bg-[#F8FAFC]/50 p-6 rounded-3xl border border-[#F1F5F9]">
-                <div className="flex justify-between items-center text-xs font-bold text-[#64748B] uppercase tracking-widest px-1">
-                  <span>Subtotal</span>
-                  <span className="text-[#0F172A] font-black tracking-tight">{header.currency} {totals.totalAmount.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between items-center text-xs font-bold text-[#64748B] uppercase tracking-widest px-1">
-                  <span>VAT (18%)</span>
-                  <span className="text-[#059669] font-black tracking-tight">{header.currency} {totals.totalVat.toLocaleString()}</span>
-                </div>
-                <div className="pt-4 border-t border-[#E2E8F0] flex justify-between items-center">
-                  <span className="text-[10px] font-black text-[#0F172A] uppercase tracking-[0.2em]">Total Obligation</span>
-                  <span className="text-2xl font-black text-[#0F172A] tracking-tighter tabular-nums">{header.currency} {totals.grandTotal.toLocaleString()}</span>
-                </div>
               </div>
             </div>
-          )}
+          </div>
+
+          {/* Summaries & Sidebar */}
+          <div className="col-span-12 lg:col-span-4 space-y-8">
+            <div className="bg-[#1A2E28] text-white rounded-2xl shadow-xl p-8 relative overflow-hidden">
+              <div className="relative z-10">
+                <h3 className="text-sm font-bold opacity-70 uppercase tracking-widest mb-6">Financial Summary</h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center text-[#A7B4B1]">
+                    <span className="text-xs font-bold uppercase tracking-tight">Net Product Amt</span>
+                    <span className="font-mono font-medium">{(totals.subtotal).toLocaleString()} TZS</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[#A7B4B1]">
+                    <span className="text-xs font-bold uppercase tracking-tight">VAT Consolidated</span>
+                    <span className="font-mono font-medium">{(totals.vat).toLocaleString()} TZS</span>
+                  </div>
+                  <div className="h-px bg-white/10 my-4" />
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">Grand Total</span>
+                    <div className="text-4xl font-black font-sans leading-none">{(totals.grandTotal).toLocaleString()}</div>
+                    <p className="text-[10px] font-medium text-[#A7B4B1] mt-2">Tanzanian Shillings Payable</p>
+                  </div>
+                </div>
+              </div>
+              {/* Pattern overlay */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-400/10 blur-[80px] rounded-full -mr-16 -mt-16" />
+            </div>
+
+            <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-6 space-y-6">
+              <div className="flex items-center gap-2 mb-2">
+                <Settings2 className="w-4 h-4 text-[#64748B]" />
+                <h3 className="text-sm font-bold text-[#0F172A]">Additional Params</h3>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold text-[#94A3B8] uppercase">Dispatch Hub</Label>
+                <Select value={String(header.fromStoreId)} onValueChange={(v) => setHeader({ ...header, fromStoreId: Number(v) })}>
+                  <SelectTrigger className="h-10 rounded-xl font-bold bg-[#F8FAFC]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stores.map((s: any, sIdx: number) => (
+                      <SelectItem key={s.id || `store-${sIdx}`} value={String(s.id)}>{s.storeName}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold text-[#94A3B8] uppercase">Internal Remarks</Label>
+                <Textarea
+                  value={header.remarks}
+                  onChange={(e) => setHeader({ ...header, remarks: e.target.value })}
+                  placeholder="E.g. Special discounts applied..."
+                  className="min-h-[100px] bg-[#F8FAFC] border-[#E2E8F0] rounded-xl focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+          </div>
         </div>
-
-
       </div>
     </div>
   );
@@ -364,7 +440,7 @@ function CreateInvoiceContent() {
 
 export default function CreateSalesInvoicePage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center p-24 min-h-screen text-slate-400 font-bold animate-pulse uppercase tracking-widest">Initialising Premium Financial Suite...</div>}>
+    <Suspense fallback={<div className="flex items-center justify-center p-20 min-h-screen">Loading...</div>}>
       <CreateInvoiceContent />
     </Suspense>
   );

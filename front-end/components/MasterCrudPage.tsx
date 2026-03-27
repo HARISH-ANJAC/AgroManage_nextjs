@@ -353,8 +353,8 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
                 </tr>
               </thead>
               <tbody>
-                {paginated.map((item: Record<string, any>) => (
-                  <tr key={item.id} className={`border-b hover:bg-muted/30 transition-colors ${selectedIds.has(item.id) ? 'bg-primary/5 border-primary/20' : ''}`}>
+                {paginated.map((item: Record<string, any>, idx: number) => (
+                  <tr key={item.id || `row-${idx}`} className={`border-b hover:bg-muted/30 transition-colors ${selectedIds.has(item.id) ? 'bg-primary/5 border-primary/20' : ''}`}>
                     <td className="p-3 w-10">
                       <input
                         type="checkbox"

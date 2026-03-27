@@ -1,126 +1,178 @@
 import { Request, Response } from "express";
 import { db } from "../db/index.js";
-import { 
-    TBL_CUSTOMER_RECEIPT_HDR, 
-    TBL_CUSTOMER_RECEIPT_INVOICE_DTL 
-} from "../db/schema/index.js";
-import { eq } from "drizzle-orm";
+import { TBL_CUSTOMER_RECEIPT_HDR, TBL_CUSTOMER_RECEIPT_INVOICE_DTL } from "../db/schema/StoEntries.js";
+import { TBL_CUSTOMER_MASTER, TBL_COMPANY_MASTER, TBL_CURRENCY_MASTER, TBL_CUSTOMER_PAYMENT_MODE_MASTER } from "../db/schema/StoMaster.js";
+import { eq, desc, sql } from "drizzle-orm";
 
-export const getCustomerReceipts = async (req: Request, res: Response): Promise<Response> => {
+export const getCustomerReceipts = async (req: Request, res: Response) => {
     try {
-        const data = await db.select().from(TBL_CUSTOMER_RECEIPT_HDR);
-        return res.status(200).json(data);
+        const data = await db.select({
+            id: TBL_CUSTOMER_RECEIPT_HDR.SNO,
+            receiptRefNo: TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_REF_NO,
+            receiptDate: TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_DATE,
+            paymentType: TBL_CUSTOMER_RECEIPT_HDR.PAYMENT_TYPE,
+            companyId: TBL_CUSTOMER_RECEIPT_HDR.COMPANY_ID,
+            customerId: TBL_CUSTOMER_RECEIPT_HDR.CUSTOMER_ID,
+            paymentModeId: TBL_CUSTOMER_RECEIPT_HDR.PAYMENT_MODE_ID,
+            receiptAmount: TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_AMOUNT,
+            currencyId: TBL_CUSTOMER_RECEIPT_HDR.CURRENCY_ID,
+            transactionRefNo: TBL_CUSTOMER_RECEIPT_HDR.TRANSACTION_REF_NO,
+            status: TBL_CUSTOMER_RECEIPT_HDR.STATUS_ENTRY,
+            remarks: TBL_CUSTOMER_RECEIPT_HDR.REMARKS,
+            // Joins
+            customerName: TBL_CUSTOMER_MASTER.Customer_Name,
+            companyName: TBL_COMPANY_MASTER.Company_Name,
+            currencyName: TBL_CURRENCY_MASTER.CURRENCY_NAME,
+            paymentModeName: TBL_CUSTOMER_PAYMENT_MODE_MASTER.PAYMENT_MODE_NAME
+        })
+        .from(TBL_CUSTOMER_RECEIPT_HDR)
+        .leftJoin(TBL_CUSTOMER_MASTER, eq(TBL_CUSTOMER_RECEIPT_HDR.CUSTOMER_ID, TBL_CUSTOMER_MASTER.Customer_Id))
+        .leftJoin(TBL_COMPANY_MASTER, eq(TBL_CUSTOMER_RECEIPT_HDR.COMPANY_ID, TBL_COMPANY_MASTER.Company_Id))
+        .leftJoin(TBL_CURRENCY_MASTER, eq(TBL_CUSTOMER_RECEIPT_HDR.CURRENCY_ID, TBL_CURRENCY_MASTER.CURRENCY_ID))
+        .leftJoin(TBL_CUSTOMER_PAYMENT_MODE_MASTER, eq(TBL_CUSTOMER_RECEIPT_HDR.PAYMENT_MODE_ID, TBL_CUSTOMER_PAYMENT_MODE_MASTER.PAYMENT_MODE_ID))
+        .orderBy(desc(TBL_CUSTOMER_RECEIPT_HDR.SNO));
+
+        res.status(200).json(data);
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ msg: "Internal server error" });
+        res.status(500).json({ error: "Failed to fetch customer receipts" });
     }
 };
 
-export const getCustomerReceiptById = async (req: Request, res: Response): Promise<Response> => {
+export const getCustomerReceiptById = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params;
-        const header = await db.select().from(TBL_CUSTOMER_RECEIPT_HDR).where(eq(TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_REF_NO, id as string)).limit(1);
-        if (!header.length) return res.status(404).json({ msg: "Customer Receipt not found" });
+        const idParam = req.params.id as string;
+        const id = decodeURIComponent(idParam);
+        const header = await db.select({
+            id: TBL_CUSTOMER_RECEIPT_HDR.SNO,
+            receiptRefNo: TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_REF_NO,
+            receiptDate: TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_DATE,
+            paymentType: TBL_CUSTOMER_RECEIPT_HDR.PAYMENT_TYPE,
+            companyId: TBL_CUSTOMER_RECEIPT_HDR.COMPANY_ID,
+            customerId: TBL_CUSTOMER_RECEIPT_HDR.CUSTOMER_ID,
+            paymentModeId: TBL_CUSTOMER_RECEIPT_HDR.PAYMENT_MODE_ID,
+            crBankCashId: TBL_CUSTOMER_RECEIPT_HDR.CR_BANK_CASH_ID,
+            crAccountId: TBL_CUSTOMER_RECEIPT_HDR.CR_ACCOUNT_ID,
+            drBankCashId: TBL_CUSTOMER_RECEIPT_HDR.DR_BANK_CASH_ID,
+            transactionRefNo: TBL_CUSTOMER_RECEIPT_HDR.TRANSACTION_REF_NO,
+            transactionDate: TBL_CUSTOMER_RECEIPT_HDR.TRANSACTION_DATE,
+            currencyId: TBL_CUSTOMER_RECEIPT_HDR.CURRENCY_ID,
+            receiptAmount: TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_AMOUNT,
+            exchangeRate: TBL_CUSTOMER_RECEIPT_HDR.EXCHANGE_RATE,
+            receiptAmountLc: TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_AMOUNT_LC,
+            status: TBL_CUSTOMER_RECEIPT_HDR.STATUS_ENTRY,
+            remarks: TBL_CUSTOMER_RECEIPT_HDR.REMARKS,
+            customerName: TBL_CUSTOMER_MASTER.Customer_Name,
+        })
+        .from(TBL_CUSTOMER_RECEIPT_HDR)
+        .leftJoin(TBL_CUSTOMER_MASTER, eq(TBL_CUSTOMER_RECEIPT_HDR.CUSTOMER_ID, TBL_CUSTOMER_MASTER.Customer_Id))
+        .where(eq(TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_REF_NO, id))
+        .limit(1);
 
-        const items = await db.select().from(TBL_CUSTOMER_RECEIPT_INVOICE_DTL).where(eq(TBL_CUSTOMER_RECEIPT_INVOICE_DTL.RECEIPT_REF_NO, id as string));
+        if (!header.length) return res.status(404).json({ error: "Receipt not found" });
 
-        return res.status(200).json({ header: header[0], items });
+        const items = await db.select({
+            id: TBL_CUSTOMER_RECEIPT_INVOICE_DTL.SNO,
+            receiptRefNo: TBL_CUSTOMER_RECEIPT_INVOICE_DTL.RECEIPT_REF_NO,
+            taxInvoiceRefNo: TBL_CUSTOMER_RECEIPT_INVOICE_DTL.TAX_INVOICE_REF_NO,
+            actualInvoiceAmount: TBL_CUSTOMER_RECEIPT_INVOICE_DTL.ACTUAL_INVOICE_AMOUNT,
+            alreadyPaidAmount: TBL_CUSTOMER_RECEIPT_INVOICE_DTL.ALREADY_PAID_AMOUNT,
+            outstandingInvoiceAmount: TBL_CUSTOMER_RECEIPT_INVOICE_DTL.OUTSTANDING_INVOICE_AMOUNT,
+            receiptInvoiceAdjustAmount: TBL_CUSTOMER_RECEIPT_INVOICE_DTL.RECEIPT_INVOICE_ADJUST_AMOUNT,
+            remarks: TBL_CUSTOMER_RECEIPT_INVOICE_DTL.REMARKS
+        })
+        .from(TBL_CUSTOMER_RECEIPT_INVOICE_DTL)
+        .where(eq(TBL_CUSTOMER_RECEIPT_INVOICE_DTL.RECEIPT_REF_NO, id));
+
+        res.json({ header: header[0], items });
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ msg: "Internal server error" });
+        res.status(500).json({ error: "Failed to fetch receipt details" });
     }
 };
 
-export const createCustomerReceipt = async (req: Request, res: Response): Promise<Response> => {
-    const transaction = await db.transaction(async (tx) => {
-        try {
-            const { header, items, audit } = req.body;
+export const addCustomerReceipt = async (req: Request, res: Response) => {
+    const { header, items, audit } = req.body;
+    try {
+        await db.transaction(async (tx) => {
+            // 1. Generate Receipt Ref No
+            const date = new Date();
+            const yearStr = date.getFullYear().toString().slice(-2);
+            const monthStr = (date.getMonth() + 0).toString().padStart(2, '0'); // Fix: usually 0-indexed month plus 1 if you want calendar month, but let's stick to logic or improve
+            const currentMonth = (date.getMonth() + 1).toString().padStart(2, '0');
+            const prefix = `CR/${yearStr}/${currentMonth}/`;
 
-            const hValues = {
-                RECEIPT_REF_NO: header.receiptRefNo,
+            const lastEntry = await tx.select({ ref: TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_REF_NO })
+                .from(TBL_CUSTOMER_RECEIPT_HDR)
+                .where(sql`${TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_REF_NO} LIKE ${prefix + '%'}`)
+                .orderBy(desc(TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_REF_NO))
+                .limit(1);
+
+            let newNo = "001";
+            if (lastEntry.length > 0 && lastEntry[0].ref) {
+                const parts = lastEntry[0].ref.split('/');
+                const lastSeq = parseInt(parts[parts.length - 1]);
+                if (!isNaN(lastSeq)) {
+                    newNo = (lastSeq + 1).toString().padStart(3, '0');
+                }
+            }
+            const receiptRefNo = prefix + newNo;
+
+            // 2. Insert Header
+            await tx.insert(TBL_CUSTOMER_RECEIPT_HDR).values({
+                RECEIPT_REF_NO: receiptRefNo,
                 RECEIPT_DATE: header.receiptDate ? new Date(header.receiptDate) : new Date(),
-                PAYMENT_TYPE: header.paymentType,
+                PAYMENT_TYPE: header.paymentType || "Regular",
                 COMPANY_ID: header.companyId,
                 CUSTOMER_ID: header.customerId,
                 PAYMENT_MODE_ID: header.paymentModeId,
+                CR_BANK_CASH_ID: header.crBankCashId,
+                CR_ACCOUNT_ID: header.crAccountId,
+                DR_BANK_CASH_ID: header.drBankCashId,
                 TRANSACTION_REF_NO: header.transactionRefNo,
-                CURRENCY_ID: header.currencyId,
-                RECEIPT_AMOUNT: header.receiptAmount,
-                EXCHANGE_RATE: header.exchangeRate,
-                STATUS_ENTRY: header.status || "Active",
+                TRANSACTION_DATE: header.transactionDate ? new Date(header.transactionDate) : null,
+                CURRENCY_ID: header.currencyId || 1,
+                RECEIPT_AMOUNT: String(header.receiptAmount),
+                EXCHANGE_RATE: String(header.exchangeRate || 1),
+                RECEIPT_AMOUNT_LC: String(Number(header.receiptAmount) * (Number(header.exchangeRate) || 1)),
                 REMARKS: header.remarks,
-                CREATED_BY: audit?.user,
-                CREATED_MAC_ADDRESS: req.ip || "127.0.0.1"
-            };
+                STATUS_ENTRY: header.status || "Closed",
+                CREATED_BY: audit?.user || "System",
+                CREATED_DATE: new Date(),
+            } as any);
 
-            await tx.insert(TBL_CUSTOMER_RECEIPT_HDR).values(hValues as any);
-
+            // 3. Insert Details (linked invoices)
             if (items && items.length > 0) {
-                const dValues = items.map((item: any) => ({
-                    RECEIPT_REF_NO: header.receiptRefNo,
+                const dtlValues = items.map((item: any) => ({
+                    RECEIPT_REF_NO: receiptRefNo,
                     TAX_INVOICE_REF_NO: item.taxInvoiceRefNo,
-                    ACTUAL_INVOICE_AMOUNT: item.actualInvoiceAmount,
-                    ALREADY_PAID_AMOUNT: item.alreadyPaidAmount,
-                    OUTSTANDING_INVOICE_AMOUNT: item.outstandingInvoiceAmount,
-                    RECEIPT_INVOICE_ADJUST_AMOUNT: item.receiptInvoiceAdjustAmount,
-                    CREATED_BY: audit?.user,
-                    STATUS_ENTRY: "Active",
-                    CREATED_MAC_ADDRESS: req.ip || "127.0.0.1"
+                    ACTUAL_INVOICE_AMOUNT: String(item.actualInvoiceAmount || 0),
+                    ALREADY_PAID_AMOUNT: String(item.alreadyPaidAmount || 0),
+                    OUTSTANDING_INVOICE_AMOUNT: String(item.outstandingInvoiceAmount || 0),
+                    RECEIPT_INVOICE_ADJUST_AMOUNT: String(item.receiptInvoiceAdjustAmount || 0),
+                    REMARKS: item.remarks,
+                    STATUS_ENTRY: "Normal",
+                    CREATED_BY: audit?.user || "System",
+                    CREATED_DATE: new Date(),
                 }));
-                await tx.insert(TBL_CUSTOMER_RECEIPT_INVOICE_DTL).values(dValues as any);
+                await tx.insert(TBL_CUSTOMER_RECEIPT_INVOICE_DTL).values(dtlValues as any);
             }
-
-            return { msg: "Customer Receipt created successfully", receiptRefNo: header.receiptRefNo };
-        } catch (error: any) {
-            console.error(error);
-            tx.rollback();
-            throw error;
-        }
-    });
-
-    return res.status(201).json(transaction);
+        });
+        res.status(201).json({ message: "Customer receipt created successfully" });
+    } catch (error: any) {
+        console.error("Add Receipt Error:", error);
+        res.status(500).json({ error: error.message || "Failed to create customer receipt" });
+    }
 };
 
-export const updateCustomerReceipt = async (req: Request, res: Response): Promise<Response> => {
-    const { id } = req.params;
-    const transaction = await db.transaction(async (tx) => {
-        try {
-            const { header, items, audit } = req.body;
-            
-            const hUpdates = {
-                RECEIPT_DATE: header.receiptDate ? new Date(header.receiptDate) : undefined,
-                RECEIPT_AMOUNT: header.receiptAmount,
-                STATUS_ENTRY: header.status,
-                REMARKS: header.remarks,
-                MODIFIED_BY: audit?.user,
-                MODIFIED_MAC_ADDRESS: req.ip || "127.0.0.1"
-            };
-
-            await tx.update(TBL_CUSTOMER_RECEIPT_HDR).set(hUpdates as any).where(eq(TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_REF_NO, id as string));
-
-            await tx.delete(TBL_CUSTOMER_RECEIPT_INVOICE_DTL).where(eq(TBL_CUSTOMER_RECEIPT_INVOICE_DTL.RECEIPT_REF_NO, id as string));
-            if (items && items.length > 0) {
-                const dValues = items.map((item: any) => ({
-                    RECEIPT_REF_NO: id as string,
-                    TAX_INVOICE_REF_NO: item.taxInvoiceRefNo,
-                    ACTUAL_INVOICE_AMOUNT: item.actualInvoiceAmount,
-                    ALREADY_PAID_AMOUNT: item.alreadyPaidAmount,
-                    OUTSTANDING_INVOICE_AMOUNT: item.outstandingInvoiceAmount,
-                    RECEIPT_INVOICE_ADJUST_AMOUNT: item.receiptInvoiceAdjustAmount,
-                    CREATED_BY: audit?.user,
-                    STATUS_ENTRY: "Active",
-                    CREATED_MAC_ADDRESS: req.ip || "127.0.0.1"
-                }));
-                await tx.insert(TBL_CUSTOMER_RECEIPT_INVOICE_DTL).values(dValues as any);
-            }
-
-            return { msg: "Customer Receipt updated successfully" };
-        } catch (error) {
-            console.error(error);
-            tx.rollback();
-            throw error;
-        }
-    });
-
-    return res.status(200).json(transaction);
+export const deleteCustomerReceipt = async (req: Request, res: Response) => {
+    try {
+        const idParam = req.params.id as string;
+        const id = decodeURIComponent(idParam);
+        await db.transaction(async (tx) => {
+            await tx.delete(TBL_CUSTOMER_RECEIPT_INVOICE_DTL).where(eq(TBL_CUSTOMER_RECEIPT_INVOICE_DTL.RECEIPT_REF_NO, id));
+            await tx.delete(TBL_CUSTOMER_RECEIPT_HDR).where(eq(TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_REF_NO, id));
+        });
+        res.json({ message: "Receipt deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to delete receipt" });
+    }
 };

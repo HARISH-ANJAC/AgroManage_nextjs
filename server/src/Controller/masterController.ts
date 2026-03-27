@@ -13,7 +13,8 @@ import {
     TBL_LOCATION_MASTER,
     TBL_BILLING_LOCATION_MASTER,
     TBL_ADDITIONAL_COST_TYPE_MASTER,
-    TBL_PAYMENT_TERM_MASTER
+    TBL_PAYMENT_TERM_MASTER,
+    TBL_ACCOUNTS_HEAD_MASTER
 } from "../db/schema/index.js";
 import { eq, inArray, getTableColumns, getTableName } from "drizzle-orm";
 
@@ -78,7 +79,8 @@ const TABLE_MAP: Record<string, { table: any; pk: string; joins?: any[] }> = {
     "locations": { table: TBL_LOCATION_MASTER, pk: "Location_Id" },
     "billing-locations": { table: TBL_BILLING_LOCATION_MASTER, pk: "Billing_Location_Id" },
     "additional-cost-types": { table: TBL_ADDITIONAL_COST_TYPE_MASTER, pk: "ADDITIONAL_COST_TYPE_ID" },
-    "payment-terms": { table: TBL_PAYMENT_TERM_MASTER, pk: "PAYMENT_TERM_ID" }
+    "payment-terms": { table: TBL_PAYMENT_TERM_MASTER, pk: "PAYMENT_TERM_ID" },
+    "account-heads": { table: TBL_ACCOUNTS_HEAD_MASTER, pk: "ACCOUNT_HEAD_ID" }
 };
 
 // 2. Dynamic Mappers: Bridge the gap between camelCase frontend and DB-specific casing
