@@ -10,10 +10,10 @@ export default function LedgerGroupsPage() {
     domain="ledger-groups" title="Ledger Groups" description="Manage your ledger groups" idPrefix="LGR" fields={[
     { key: "ledgerGroupName", label: "Ledger Group Name", type: "text", required: true },
     { key: "remarks", label: "Remarks", type: "textarea" },
-    { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
+    { key: "statusEntry", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
   ]} initialData={ledgerGroups} columns={[
     { key: "ledgerGroupName", label: "Group Name" }, 
     { key: "remarks", label: "Remarks" }, 
-    { key: "statusMaster", label: "Status" },
+    { key: "statusEntry", label: "Status" },
   ]} />;
 }

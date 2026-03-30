@@ -33,6 +33,14 @@ import {
   TBL_CUSTOMER_WISE_PRODUCT_PRICE_SETTINGS,
   TBL_SALES_PERSON_MASTER,
   TBL_ACCOUNTS_LEDGER_MASTER,
+  TBL_FIELD_HDR,
+  TBL_FIELD_DTL,
+  TBL_PRODUCT_COMPANY_MAIN_CATEGORY_MAPPING,
+  TBL_CHANGE_PASSWORD_LOG,
+  TBL_CUSTOMER_MASTER_FILES_UPLOAD,
+  TBL_CUSTOMER_COMPANY_WISE_BILLING_LOCATION_MAPPING,
+  TBL_CUSTOMER_PRODUCT_VAT_PERCENTAGE_SETTINGS,
+  CUSTOMER_CREDIT_LIMIT_FILE_UPLOAD,
 } from "./schema/index.js";
 import bcrypt from "bcryptjs";
 
@@ -1377,6 +1385,170 @@ async function main() {
           Created_By: "SYSTEM",
           Created_Date: new Date(),
           Created_Mac_Address: "00:00:00:00:00:00",
+        },
+      ])
+      .onConflictDoNothing();
+
+    // 34. Field Header (Dynamic Fields)
+    console.log("Seeding Field Headers...");
+    const fieldHdrsData = [
+      {
+        project_name_fld_hdr: "AgroManage",
+        field_category_fld_hdr: "CRM",
+        field_desc_fld_hdr: "Customer Relationship Management Fields",
+        status_fld_hdr: "Active",
+        remarks_fld_hdr: "Core CRM metadata",
+        created_user_fld_hdr: "SYSTEM",
+        created_date_fld_hdr: new Date(),
+        created_mac_addr_fld_hdr: "00:00:00:00:00:00",
+      },
+      {
+        project_name_fld_hdr: "AgroManage",
+        field_category_fld_hdr: "ERP",
+        field_desc_fld_hdr: "Resource Planning Fields",
+        status_fld_hdr: "Active",
+        remarks_fld_hdr: "Core ERP metadata",
+        created_user_fld_hdr: "SYSTEM",
+        created_date_fld_hdr: new Date(),
+        created_mac_addr_fld_hdr: "00:00:00:00:00:00",
+      },
+    ];
+    const insertedFieldHdrs = await db
+      .insert(TBL_FIELD_HDR)
+      .values(fieldHdrsData)
+      .onConflictDoNothing()
+      .returning();
+    const crmFieldId = insertedFieldHdrs[0]?.field_id_fld_hdr || 1;
+
+    // 35. Field Details
+    console.log("Seeding Field Details...");
+    await db
+      .insert(TBL_FIELD_DTL)
+      .values([
+        {
+          field_id_fld_dtl: crmFieldId,
+          activity_name_fld_dtl: "Lead Source",
+          activity_desc_fld_dtl: "Where the customer came from",
+          status_fld_dtl: "Active",
+          remarks_fld_dtl: "Standard field",
+          created_user_fld_dtl: "SYSTEM",
+          created_date_fld_dtl: new Date(),
+          created_mac_addr_fld_dtl: "00:00:00:00:00:00",
+        },
+      ])
+      .onConflictDoNothing();
+
+    // 36. Product Company Main Category Mapping
+    console.log("Seeding Product Company Mapping...");
+    await db
+      .insert(TBL_PRODUCT_COMPANY_MAIN_CATEGORY_MAPPING)
+      .values([
+        {
+          Company_Id: compId,
+          Main_Category_Id: fertMainId,
+          Remarks: "Mapping for fertilizers",
+          Status_Master: "Active",
+          Created_By: "SYSTEM",
+          Created_Date: new Date(),
+          Created_Mac_Address: "00:00:00:00:00:00",
+        },
+      ])
+      .onConflictDoNothing();
+
+    // 37. Change Password Log
+    console.log("Seeding Change Password Log...");
+    await db
+      .insert(TBL_CHANGE_PASSWORD_LOG)
+      .values([
+        {
+          login_id: sriUserId,
+          User_Name: "Sri",
+          Old_Password: "N/A",
+          New_Password: "ana",
+          Reason: "Initial user creation",
+          status_entry: "ACTIVE",
+          Created_by: "SYSTEM",
+          Created_Date: new Date(),
+          Created_Mac_Address: "00:00:00:00:00:00",
+        },
+      ])
+      .onConflictDoNothing();
+
+    // 38. Customer Master Files Upload (Stub)
+    console.log("Seeding Customer Master Files...");
+    await db
+      .insert(TBL_CUSTOMER_MASTER_FILES_UPLOAD)
+      .values([
+        {
+          Customer_Id: arushaCustomerId,
+          DOCUMENT_TYPE: "TIN Certificate",
+          DESCRIPTIONS: "Standard TIN doc",
+          FILE_NAME: "tin_cert.pdf",
+          CONTENT_TYPE: "application/pdf",
+          STATUS_MASTER: "Active",
+          CREATED_BY: "SYSTEM",
+          CREATED_DATE: new Date(),
+          CREATED_MAC_ADDRESS: "00:00:00:00:00:00",
+        },
+      ])
+      .onConflictDoNothing();
+
+    // 39. Customer Company Wise Billing Location Mapping
+    console.log("Seeding Customer Billing Mapping...");
+    await db
+      .insert(TBL_CUSTOMER_COMPANY_WISE_BILLING_LOCATION_MAPPING)
+      .values([
+        {
+          Customer_Id: arushaCustomerId,
+          Company_id: compId,
+          Billing_Location_Id: arushaBillingId,
+          EFFECTIVE_FROM: new Date("2024-01-01"),
+          EFFECTIVE_TO: new Date("2025-12-31"),
+          REMARKS: "Direct billing mapping",
+          STATUS_MASTER: "Active",
+          CREATED_BY: "SYSTEM",
+          CREATED_DATE: new Date(),
+          CREATED_MAC_ADDRESS: "00:00:00:00:00:00",
+        },
+      ])
+      .onConflictDoNothing();
+
+    // 40. Customer Product VAT Percentage Settings
+    console.log("Seeding Customer VAT Overrides...");
+    await db
+      .insert(TBL_CUSTOMER_PRODUCT_VAT_PERCENTAGE_SETTINGS)
+      .values([
+        {
+          Company_id: compId,
+          Customer_Id: arushaCustomerId,
+          Main_Category_Id: fertMainId,
+          VAT_PERCENTAGE: "18",
+          EFFECTIVE_FROM: new Date("2024-01-01"),
+          EFFECTIVE_TO: new Date("2025-12-31"),
+          REQUEST_STATUS: "Approved",
+          REMARKS: "Standard category VAT",
+          CREATED_BY: "SYSTEM",
+          CREATED_DATE: new Date(),
+          CREATED_MAC_ADDRESS: "00:00:00:00:00:00",
+        },
+      ])
+      .onConflictDoNothing();
+
+    // 41. Customer Credit Limit File Upload
+    console.log("Seeding Credit Limit Files...");
+    await db
+      .insert(CUSTOMER_CREDIT_LIMIT_FILE_UPLOAD)
+      .values([
+        {
+          CREDIT_LIMIT_ID: creditLimitId,
+          DESCRIPTION_DETAILS: "Credit Score Analysis",
+          FILE_NAME: "credit_report.pdf",
+          CONTENT_TYPE: "application/pdf",
+          STATUS_MASTER: "Active",
+          CREATED_BY: "SYSTEM",
+          CREATED_DATE: new Date(),
+          CREATED_MAC_ADDRESS: "00:00:00:00:00:00",
+          Document_Type: "Credit Report",
         },
       ])
       .onConflictDoNothing();

@@ -1,5 +1,6 @@
 import express from "express";
 import authRoute from "./authRoute.js";
+import { dashboardRoute } from "./dashboardRoute.js";
 import { authenticate } from "../Middleware/authMiddleware.js";
 
 import roleRoute from "./roleRoute.js";
@@ -20,6 +21,7 @@ import { purchaseApprovalRoute } from "./purchaseApprovalRoute.js";
 const Router = express.Router();
 
 Router.use("/auth", authRoute);
+Router.use("/dashboard", authenticate, dashboardRoute);
 
 // Apply authentication middleware to all subsequent routes
 Router.use(authenticate);

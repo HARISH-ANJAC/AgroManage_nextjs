@@ -49,7 +49,7 @@ export const login = async (req: Request, res: Response) => {
 
         // Find user
         const userResult = await db.select().from(TBL_USER_INFO_HDR).where(eq(TBL_USER_INFO_HDR.LOGIN_NAME, LOGIN_NAME)).limit(1);
-        
+
         if (userResult.length === 0) {
             return res.status(401).json({ msg: 'Invalid credentials' });
         }
@@ -62,10 +62,10 @@ export const login = async (req: Request, res: Response) => {
             return res.status(401).json({ msg: 'Invalid credentials' });
         }
 
-        const payload = { 
-            id: user.LOGIN_ID_USER_HDR, 
-            loginName: user.LOGIN_NAME, 
-            role: user.ROLE_USER_HDR 
+        const payload = {
+            id: user.LOGIN_ID_USER_HDR,
+            loginName: user.LOGIN_NAME,
+            role: user.ROLE_USER_HDR
         };
 
         // Generate Tokens using utilities

@@ -18,7 +18,8 @@
     "db:drop": "tsx src/db/seed/drop-tables.ts",
     "db:truncate": "tsx src/db/seed/truncate-tables.ts",
     "db:reset": "tsx src/db/seed/reset-and-seed.ts",
-    "db:refresh": "pnpm db:drop && pnpm db:seed"
+    "db:refresh": "pnpm db:drop && pnpm db:seed",
+    "api:test": "tsx test-apis.ts"
   },
   "keywords": [],
   "author": "HARISH PRABHU",
