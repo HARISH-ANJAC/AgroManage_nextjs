@@ -3,6 +3,7 @@ import { db } from "../db/index.js";
 import { TBL_USER_INFO_HDR } from "../db/schema/index.js";
 import { eq, inArray } from "drizzle-orm";
 import { getSystemMacAddress } from "../utils/mac.js";
+import bcrypt from "bcryptjs";
 
 export const getUsers = async (req: Request, res: Response): Promise<Response> => {
     try {
@@ -18,6 +19,7 @@ export const createUser = async (req: Request, res: Response): Promise<Response>
     try {
         const { 
             loginName, 
+            passwordUserHdr,
             role, roleUserHdr, 
             mobileNo, mobileNoUserHdr,
             mailId, mailIdUserHdr,
@@ -29,8 +31,16 @@ export const createUser = async (req: Request, res: Response): Promise<Response>
         } = req.body as any;
         const systemMac = getSystemMacAddress();
         
+        let finalPassword = passwordUserHdr;
+        if (!finalPassword && loginName) {
+            finalPassword = `${loginName}123`;
+        }
+        
+        const hashedPassword = await bcrypt.hash(finalPassword || "123456", 10);
+        
         const values: any = {
             LOGIN_NAME: loginName,
+            PASSWORD_USER_HDR: hashedPassword,
             ROLE_USER_HDR: roleUserHdr || role,
             MOBILE_NO_USER_HDR: mobileNoUserHdr || mobileNo,
             MAIL_ID_USER_HDR: mailIdUserHdr || mailId,
@@ -59,6 +69,7 @@ export const updateUser = async (req: Request, res: Response): Promise<Response>
 
         const { 
             loginName, 
+            passwordUserHdr,
             role, roleUserHdr, 
             mobileNo, mobileNoUserHdr,
             mailId, mailIdUserHdr,
@@ -83,6 +94,9 @@ export const updateUser = async (req: Request, res: Response): Promise<Response>
         
         if (remarksUserHdr !== undefined || remarks !== undefined) updates.REMARKS_USER_HDR = remarksUserHdr ?? remarks;
         if (statusUserHdr !== undefined || status !== undefined) updates.STATUS_USER_HDR = statusUserHdr ?? (status);
+        if (passwordUserHdr !== undefined && passwordUserHdr !== "") {
+            updates.PASSWORD_USER_HDR = await bcrypt.hash(passwordUserHdr, 10);
+        }
 
         const result = await db.update(TBL_USER_INFO_HDR)
             .set(updates)
