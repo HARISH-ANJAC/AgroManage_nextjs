@@ -23,11 +23,7 @@ export default function SalesInvoicesPage() {
     const doc = new jsPDF();
     const currency = "TZS";
 
-    // Header & Logo
-    doc.setFontSize(22);
-    doc.setTextColor(15, 23, 42); 
-    doc.text("TAX INVOICE", 14, 22);
-
+    // Header & Logo — Logo LEFT, Title RIGHT
     try {
       const logoImg = new Image();
       logoImg.src = "/assets/logo.png";
@@ -43,21 +39,26 @@ export default function SalesInvoicesPage() {
         const ctx = canvas.getContext("2d");
         ctx?.drawImage(logoImg, 0, 0);
         const logoData = canvas.toDataURL("image/png");
-        
+
         const imgWidth = 40;
         const imgHeight = (logoImg.naturalHeight * imgWidth) / logoImg.naturalWidth;
-        doc.addImage(logoData, "PNG", 155, 10, imgWidth, imgHeight);
+        doc.addImage(logoData, "PNG", 14, 8, imgWidth, imgHeight);
       }
     } catch (e) {
       console.warn("Logo failed to load", e);
     }
-    
+
+    // TAX INVOICE title on the right
+    doc.setFontSize(22);
+    doc.setTextColor(15, 23, 42);
+    doc.text("TAX INVOICE", 196, 22, { align: "right" });
+
     doc.setFontSize(10);
-    doc.setTextColor(100, 116, 139); 
-    doc.text(`Invoice Ref: ${h.taxInvoiceRefNo || h.id}`, 14, 30);
-    doc.text(`Invoice Date: ${h.invoiceDate ? new Date(h.invoiceDate).toLocaleDateString() : "N/A"}`, 14, 35);
-    doc.text(`Delivery Note: ${h.deliveryNoteRefNo || "N/A"}`, 14, 40);
-    doc.text(`Status: ${h.status || "Open"}`, 14, 45);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Invoice Ref: ${h.taxInvoiceRefNo || h.id}`, 196, 30, { align: "right" });
+    doc.text(`Invoice Date: ${h.invoiceDate ? new Date(h.invoiceDate).toLocaleDateString() : "N/A"}`, 196, 35, { align: "right" });
+    doc.text(`Delivery Note: ${h.deliveryNoteRefNo || "N/A"}`, 196, 40, { align: "right" });
+    doc.text(`Status: ${h.status || "Open"}`, 196, 45, { align: "right" });
 
     // Business Info
     doc.setFontSize(12);

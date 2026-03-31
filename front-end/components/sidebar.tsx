@@ -46,7 +46,8 @@ import {
   Coins,
   Hash,
   ChevronDown,
-  CheckSquare
+  CheckSquare,
+  User
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -155,11 +156,12 @@ const navigation = [
     ]
   },
   {
-    group: 'Stakeholders',
+    group: 'People',
     items: [
       { name: 'Suppliers', href: '/suppliers', icon: Truck },
       { name: 'Customers', href: '/customers', icon: Users },
       { name: 'Employees', href: '/employees', icon: Briefcase },
+      { name: 'Sales Persons', href: '/sales-person', icon: User },
     ]
   },
   {

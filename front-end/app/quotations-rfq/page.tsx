@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from 'next/navigation';
 import { usePurchaseOrders } from "@/hooks/useStoreData";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { toast } from "sonner";
 import {
@@ -35,14 +36,7 @@ export default function QuotationsRFQPage() {
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const navigate = useRouter();
 
-    if (isLoading) {
-        return (
-            <div className="flex flex-col items-center justify-center p-12 space-y-4 min-h-[400px]">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-                <p className="text-sm text-muted-foreground animate-pulse">Loading Quotations{`(RFQ)`}...</p>
-            </div>
-        );
-    }
+
 
     const filtered = (orders || []).filter((o: any) =>
         (o.poNumber || o.poRefNo || "").toLowerCase().includes(search.toLowerCase()) ||
@@ -78,45 +72,71 @@ export default function QuotationsRFQPage() {
                     <Input placeholder="Search RFQ..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
                 </div>
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="border-b bg-muted/50">
-                                <th className="p-3 w-8"><input type="checkbox" className="rounded" /></th>
-                                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Actions</th>
-                                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">RFQ Number</th>
-                                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Date</th>
-                                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Supplier</th>
-                                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Amount</th>
-                                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filtered.map((o: any) => (
-                                <tr key={o.id} className="border-b hover:bg-muted/30">
-                                    <td className="p-3"><input type="checkbox" className="rounded" /></td>
-                                    <td className="p-3">
-                                        <div className="flex gap-1.5">
-                                            <button className="p-1 rounded hover:bg-muted"><Eye className="w-4 h-4 text-muted-foreground" /></button>
-                                            <button className="p-1 rounded hover:bg-muted"><FileText className="w-4 h-4 text-muted-foreground" /></button>
-                                            <button onClick={() => navigate.push(`/purchase-orders/create?id=${o.id}`)} className="p-1 rounded hover:bg-muted"><Pencil className="w-4 h-4 text-muted-foreground" /></button>
-                                            <button onClick={() => setDeleteId(o.id)} className="p-1 rounded hover:bg-destructive/10"><Trash2 className="w-4 h-4 text-destructive" /></button>
-                                        </div>
-                                    </td>
-                                    <td className="p-3 font-mono text-xs font-medium">{o.poNumber || o.poRefNo}</td>
-                                    <td className="p-3">{o.date || o.poDate}</td>
-                                    <td className="p-3">{o.supplier}</td>
-                                    <td className="p-3 text-xs">{o.store}</td>
-                                    <td className="p-3">{o.type || o.purchaseType || "Local"}</td>
-                                    <td className="p-3">{o.payment || o.paymentMode || "Bank Transfer"}</td>
-                                    <td className="p-3 font-medium">${(o.amount || o.finalAmount || 0).toLocaleString()}</td>
-                                    <td className="p-3"><Badge variant="outline" className={statusColors[o.status] || ""}>{o.status}</Badge></td>
-                                </tr>
+                    {isLoading ? (
+                        <div className="w-full space-y-4 py-8">
+                            <div className="flex items-center space-x-4 border-b pb-4">
+                                <Skeleton className="h-4 w-12" />
+                                <Skeleton className="h-4 w-24" />
+                                <Skeleton className="h-4 flex-1" />
+                                <Skeleton className="h-4 flex-1" />
+                                <Skeleton className="h-4 flex-1" />
+                            </div>
+                            {[...Array(5)].map((_, i) => (
+                                <div key={i} className="flex items-center space-x-4 py-4 border-b">
+                                    <div className="flex gap-2">
+                                        <Skeleton className="h-8 w-8 rounded" />
+                                        <Skeleton className="h-8 w-8 rounded" />
+                                        <Skeleton className="h-8 w-8 rounded" />
+                                        <Skeleton className="h-8 w-8 rounded" />
+                                    </div>
+                                    <Skeleton className="h-4 w-24" />
+                                    <Skeleton className="h-4 flex-1" />
+                                    <Skeleton className="h-4 flex-1" />
+                                    <Skeleton className="h-4 flex-1" />
+                                </div>
                             ))}
-                            {filtered.length === 0 && (
-                                <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">No RFQ found</td></tr>
-                            )}
-                        </tbody>
-                    </table>
+                        </div>
+                    ) : (
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="border-b bg-muted/50">
+                                    <th className="p-3 w-8"><input type="checkbox" className="rounded" /></th>
+                                    <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Actions</th>
+                                    <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">RFQ Number</th>
+                                    <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Date</th>
+                                    <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Supplier</th>
+                                    <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Amount</th>
+                                    <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filtered.map((o: any) => (
+                                    <tr key={o.id} className="border-b hover:bg-muted/30">
+                                        <td className="p-3"><input type="checkbox" className="rounded" /></td>
+                                        <td className="p-3">
+                                            <div className="flex gap-1.5">
+                                                <button className="p-1 rounded hover:bg-muted"><Eye className="w-4 h-4 text-muted-foreground" /></button>
+                                                <button className="p-1 rounded hover:bg-muted"><FileText className="w-4 h-4 text-muted-foreground" /></button>
+                                                <button onClick={() => navigate.push(`/purchase-orders/create?id=${o.id}`)} className="p-1 rounded hover:bg-muted"><Pencil className="w-4 h-4 text-muted-foreground" /></button>
+                                                <button onClick={() => setDeleteId(o.id)} className="p-1 rounded hover:bg-destructive/10"><Trash2 className="w-4 h-4 text-destructive" /></button>
+                                            </div>
+                                        </td>
+                                        <td className="p-3 font-mono text-xs font-medium">{o.poNumber || o.poRefNo}</td>
+                                        <td className="p-3">{o.date || o.poDate}</td>
+                                        <td className="p-3">{o.supplier}</td>
+                                        <td className="p-3 text-xs">{o.store}</td>
+                                        <td className="p-3">{o.type || o.purchaseType || "Local"}</td>
+                                        <td className="p-3">{o.payment || o.paymentMode || "Bank Transfer"}</td>
+                                        <td className="p-3 font-medium">${(o.amount || o.finalAmount || 0).toLocaleString()}</td>
+                                        <td className="p-3"><Badge variant="outline" className={statusColors[o.status] || ""}>{o.status}</Badge></td>
+                                    </tr>
+                                ))}
+                                {filtered.length === 0 && (
+                                    <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">No RFQ found</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    )}
                 </div>
             </div>
 

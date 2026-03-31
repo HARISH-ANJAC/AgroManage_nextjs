@@ -22,6 +22,7 @@ import {
 
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const statusColors: Record<string, string> = {
   Approved: "bg-success/10 text-success border-success/30",
@@ -63,12 +64,8 @@ export default function PurchaseOrdersPage() {
     const doc = new jsPDF();
     const currency = h.CURRENCY_ID === 2 ? "TZS" : "$";
 
-    // Header & Logo
-    doc.setFontSize(22);
-    doc.setTextColor(15, 23, 42); // #0F172A
-    doc.text("PURCHASE ORDER", 14, 22);
-
-    // Handle logo with proper aspect ratio
+    // Header & Logo — Logo LEFT, Title RIGHT
+    // Handle logo with proper aspect ratio (placed on the left)
     try {
       const logoImg = new Image();
       logoImg.src = "/assets/logo.png";
@@ -76,21 +73,26 @@ export default function PurchaseOrdersPage() {
         logoImg.onload = resolve;
         logoImg.onerror = resolve; // Continue even if logo fails
       });
-      
+
       if (logoImg.complete && logoImg.naturalWidth) {
         const imgWidth = 40;
         const imgHeight = (logoImg.naturalHeight * imgWidth) / logoImg.naturalWidth;
-        doc.addImage(logoImg, "PNG", 155, 10, imgWidth, imgHeight);
+        doc.addImage(logoImg, "PNG", 14, 8, imgWidth, imgHeight);
       }
     } catch (e) {
       console.warn("Logo failed to load", e);
     }
-    
+
+    // PURCHASE ORDER title on the right
+    doc.setFontSize(22);
+    doc.setTextColor(15, 23, 42); // #0F172A
+    doc.text("PURCHASE ORDER", 196, 22, { align: "right" });
+
     doc.setFontSize(10);
     doc.setTextColor(100, 116, 139); // #64748B
-    doc.text(`Reference: ${h.PO_REF_NO}`, 14, 30);
-    doc.text(`Date: ${formatDate(h.PO_DATE)}`, 14, 35);
-    doc.text(`Status: ${h.STATUS_ENTRY || "Draft"}`, 14, 40);
+    doc.text(`Reference: ${h.PO_REF_NO}`, 196, 30, { align: "right" });
+    doc.text(`Date: ${formatDate(h.PO_DATE)}`, 196, 35, { align: "right" });
+    doc.text(`Status: ${h.STATUS_ENTRY || "Draft"}`, 196, 40, { align: "right" });
 
     // Supplier & Store Info - using IDs as a fallback if names not joined
     doc.setFontSize(12);
@@ -156,14 +158,7 @@ export default function PurchaseOrdersPage() {
     toast.success("PDF generated successfully", { id: "po-pdf" });
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center p-12 space-y-4 min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-        <p className="text-sm text-muted-foreground animate-pulse">Loading purchase orders...</p>
-      </div>
-    );
-  }
+
 
   const filtered = (orders || []).filter((o: any) => {
     const h = o.header || o;
@@ -200,67 +195,93 @@ export default function PurchaseOrdersPage() {
           <Input placeholder="Search purchase orders..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Action</th>
-                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">PO Ref No</th>
-                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Date</th>
-                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Type</th>
-                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Supplier</th>
-                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Store</th>
-                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Items</th>
-                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Product</th>
-                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Amt</th>
-                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs text-right">VAT</th>
-                <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs text-right">Final Amt</th>
-                <th className="text-center p-3 font-semibold text-muted-foreground uppercase text-xs">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((o: any) => {
-                const h = o.header || o;
-                const itemsCount = o.items?.length || h.itemsCount || 0;
-                const currency = h.CURRENCY_ID === 2 ? "TZS" : "$";
-                
-                // Approval summary
-                const headStatus = h.PURCHASE_HEAD_RESPONSE_STATUS || "Pending";
-                const finalStatus = h.STATUS_ENTRY || "Draft";
+          {isLoading ? (
+            <div className="w-full space-y-4 py-8">
+              <div className="flex items-center space-x-4 border-b pb-4">
+                <Skeleton className="h-4 w-12" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 flex-1" />
+                <Skeleton className="h-4 flex-1" />
+                <Skeleton className="h-4 flex-1" />
+              </div>
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center space-x-4 py-4 border-b">
+                  <div className="flex gap-2">
+                    <Skeleton className="h-8 w-8 rounded" />
+                    <Skeleton className="h-8 w-8 rounded" />
+                    <Skeleton className="h-8 w-8 rounded" />
+                    <Skeleton className="h-8 w-8 rounded" />
+                  </div>
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 flex-1" />
+                  <Skeleton className="h-4 flex-1" />
+                  <Skeleton className="h-4 flex-1" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Action</th>
+                  <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">PO Ref No</th>
+                  <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Date</th>
+                  <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Type</th>
+                  <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Supplier</th>
+                  <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Store</th>
+                  <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Items</th>
+                  <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Product</th>
+                  <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Amt</th>
+                  <th className="p-3 font-semibold text-muted-foreground uppercase text-xs text-right">VAT</th>
+                  <th className="p-3 font-semibold text-muted-foreground uppercase text-xs text-right">Final Amt</th>
+                  <th className="text-center p-3 font-semibold text-muted-foreground uppercase text-xs">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((o: any) => {
+                  const h = o.header || o;
+                  const itemsCount = o.items?.length || h.itemsCount || 0;
+                  const currency = h.CURRENCY_ID === 2 ? "TZS" : "$";
+                  
+                  // Approval summary
+                  const headStatus = h.PURCHASE_HEAD_RESPONSE_STATUS || "Pending";
+                  const finalStatus = h.STATUS_ENTRY || "Draft";
 
-                return (
-                  <tr key={h.PO_REF_NO} className="border-b hover:bg-muted/30 transition-colors">
-                    <td className="p-3">
-                      <div className="flex gap-1">
-                        <button onClick={() => navigate.push(`/purchase-orders/create?id=${encodeURIComponent(h.PO_REF_NO)}`)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors" title="View Details"><Eye className="w-4 h-4" /></button>
-                        <button onClick={() => navigate.push(`/purchase-orders/create?id=${encodeURIComponent(h.PO_REF_NO)}`)} className="p-1.5 rounded-lg hover:bg-muted text-[#059669] transition-colors" title="Edit PO"><Pencil className="w-4 h-4" /></button>
-                        <button onClick={() => handleExportPDF(o)} className="p-1.5 rounded-lg hover:bg-muted text-blue-600 transition-colors" title="Export as PDF"><FileText className="w-4 h-4" /></button>
-                        <button onClick={() => setDeleteId(h.PO_REF_NO)} className="p-1.5 rounded-lg hover:bg-destructive/5 text-destructive/40 hover:text-destructive transition-colors" title="Delete PO"><Trash2 className="w-4 h-4" /></button>
-                      </div>
-                    </td>
-                    <td className="p-3 font-mono text-xs font-bold text-[#0F172A]">{h.PO_REF_NO || "-"}</td>
-                    <td className="p-3 text-muted-foreground text-xs">{formatDate(h.PO_DATE)}</td>
-                    <td className="p-3"><Badge variant="secondary" className="bg-[#F1F5F9] text-[#64748B] border-none font-bold text-[10px] whitespace-nowrap">{h.PURCHASE_TYPE || "Local"}</Badge></td>
-                    <td className="p-3 font-semibold text-[#0F172A] text-xs max-w-[150px] truncate">{h.SUPPLIER_ID || "-"}</td>
-                    <td className="p-3 text-[10px] text-[#64748B]">{h.PO_STORE_ID || "-"}</td>
-                    <td className="p-3 text-center font-bold text-[#0F172A]">{itemsCount}</td>
-                    <td className="p-3 text-[10px] font-medium text-[#475569]">{h.SHIPMENT_MODE}</td>
-                    <td className="p-3 text-right font-medium text-[#64748B] text-xs">{(Number(h.PRODUCT_HDR_AMOUNT) || 0).toLocaleString()}</td>
-                    <td className="p-3 text-right font-medium text-[#64748B] text-xs">{(Number(h.TOTAL_VAT_HDR_AMOUNT) || 0).toLocaleString()}</td>
-                    <td className="p-3 text-right font-bold text-[#0F172A] text-xs">{currency} {(Number(h.FINAL_PURCHASE_HDR_AMOUNT) || 0).toLocaleString()}</td>
-                    <td className="p-3 text-center">
-                      <div className="flex flex-col gap-1 items-center">
-                        <Badge variant="outline" className={`${statusColors[finalStatus] || ""} font-bold text-[9px] px-1 h-5`}>{finalStatus}</Badge>
-                        <span className="text-[8px] text-muted-foreground uppercase tracking-tighter">Head: {headStatus}</span>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-              {filtered.length === 0 && (
-                <tr><td colSpan={12} className="p-8 text-center text-muted-foreground">No purchase orders found</td></tr>
-              )}
-            </tbody>
-          </table>
+                  return (
+                    <tr key={h.PO_REF_NO} className="border-b hover:bg-muted/30 transition-colors">
+                      <td className="p-3">
+                        <div className="flex gap-1">
+                          <button onClick={() => navigate.push(`/purchase-orders/create?id=${encodeURIComponent(h.PO_REF_NO)}`)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors" title="View Details"><Eye className="w-4 h-4" /></button>
+                          <button onClick={() => navigate.push(`/purchase-orders/create?id=${encodeURIComponent(h.PO_REF_NO)}`)} className="p-1.5 rounded-lg hover:bg-muted text-[#059669] transition-colors" title="Edit PO"><Pencil className="w-4 h-4" /></button>
+                          <button onClick={() => handleExportPDF(o)} className="p-1.5 rounded-lg hover:bg-muted text-blue-600 transition-colors" title="Export as PDF"><FileText className="w-4 h-4" /></button>
+                          <button onClick={() => setDeleteId(h.PO_REF_NO)} className="p-1.5 rounded-lg hover:bg-destructive/5 text-destructive/40 hover:text-destructive transition-colors" title="Delete PO"><Trash2 className="w-4 h-4" /></button>
+                        </div>
+                      </td>
+                      <td className="p-3 font-mono text-xs font-bold text-[#0F172A]">{h.PO_REF_NO || "-"}</td>
+                      <td className="p-3 text-muted-foreground text-xs">{formatDate(h.PO_DATE)}</td>
+                      <td className="p-3"><Badge variant="secondary" className="bg-[#F1F5F9] text-[#64748B] border-none font-bold text-[10px] whitespace-nowrap">{h.PURCHASE_TYPE || "Local"}</Badge></td>
+                      <td className="p-3 font-semibold text-[#0F172A] text-xs max-w-[150px] truncate">{h.SUPPLIER_ID || "-"}</td>
+                      <td className="p-3 text-[10px] text-[#64748B]">{h.PO_STORE_ID || "-"}</td>
+                      <td className="p-3 text-center font-bold text-[#0F172A]">{itemsCount}</td>
+                      <td className="p-3 text-[10px] font-medium text-[#475569]">{h.SHIPMENT_MODE}</td>
+                      <td className="p-3 text-right font-medium text-[#64748B] text-xs">{(Number(h.PRODUCT_HDR_AMOUNT) || 0).toLocaleString()}</td>
+                      <td className="p-3 text-right font-medium text-[#64748B] text-xs">{(Number(h.TOTAL_VAT_HDR_AMOUNT) || 0).toLocaleString()}</td>
+                      <td className="p-3 text-right font-bold text-[#0F172A] text-xs">{currency} {(Number(h.FINAL_PURCHASE_HDR_AMOUNT) || 0).toLocaleString()}</td>
+                      <td className="p-3 text-center">
+                        <div className="flex flex-col gap-1 items-center">
+                          <Badge variant="outline" className={`${statusColors[finalStatus] || ""} font-bold text-[9px] px-1 h-5`}>{finalStatus}</Badge>
+                          <span className="text-[8px] text-muted-foreground uppercase tracking-tighter">Head: {headStatus}</span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {filtered.length === 0 && (
+                  <tr><td colSpan={12} className="p-8 text-center text-muted-foreground">No purchase orders found</td></tr>
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

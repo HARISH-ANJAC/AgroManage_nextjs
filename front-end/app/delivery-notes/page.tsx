@@ -25,11 +25,7 @@ export default function DeliveryNotesPage() {
     const doc = new jsPDF();
     const currency = "TZS";
 
-    // Header & Logo with Canvas for reliability
-    doc.setFontSize(22);
-    doc.setTextColor(15, 23, 42); 
-    doc.text("DELIVERY NOTE", 14, 22);
-
+    // Header & Logo — Logo LEFT, Title RIGHT
     try {
       const logoImg = new Image();
       logoImg.src = "/assets/logo.png";
@@ -45,21 +41,26 @@ export default function DeliveryNotesPage() {
         const ctx = canvas.getContext("2d");
         ctx?.drawImage(logoImg, 0, 0);
         const logoData = canvas.toDataURL("image/png");
-        
+
         const imgWidth = 40;
         const imgHeight = (logoImg.naturalHeight * imgWidth) / logoImg.naturalWidth;
-        doc.addImage(logoData, "PNG", 155, 10, imgWidth, imgHeight);
+        doc.addImage(logoData, "PNG", 14, 8, imgWidth, imgHeight);
       }
     } catch (e) {
       console.warn("Logo failed to load", e);
     }
-    
+
+    // DELIVERY NOTE title on the right
+    doc.setFontSize(22);
+    doc.setTextColor(15, 23, 42);
+    doc.text("DELIVERY NOTE", 196, 22, { align: "right" });
+
     doc.setFontSize(10);
-    doc.setTextColor(100, 116, 139); 
-    doc.text(`Reference: ${h.deliveryNoteRefNo || h.id}`, 14, 30);
-    doc.text(`Date: ${h.deliveryDate ? new Date(h.deliveryDate).toLocaleDateString() : "N/A"}`, 14, 35);
-    doc.text(`SO Ref: ${h.deliverySourceRefNo || "General"}`, 14, 40);
-    doc.text(`Status: ${h.status || "Pending"}`, 14, 45);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Reference: ${h.deliveryNoteRefNo || h.id}`, 196, 30, { align: "right" });
+    doc.text(`Date: ${h.deliveryDate ? new Date(h.deliveryDate).toLocaleDateString() : "N/A"}`, 196, 35, { align: "right" });
+    doc.text(`SO Ref: ${h.deliverySourceRefNo || "General"}`, 196, 40, { align: "right" });
+    doc.text(`Status: ${h.status || "Pending"}`, 196, 45, { align: "right" });
 
     // Logistics & Customer Info
     doc.setFontSize(12);

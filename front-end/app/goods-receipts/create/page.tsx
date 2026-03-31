@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useMasterData } from "@/hooks/useMasterData";
 import { usePurchaseOrderStore } from "@/hooks/usePurchaseOrderStore";
 import { useGoodsReceiptStore } from "@/hooks/useGoodsReceiptStore";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface GRNItem {
   id: number;
@@ -38,6 +39,7 @@ function CreateGRNContent() {
 
   const [poLoading, setPoLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [isFetchingData, setIsFetchingData] = useState(false);
 
   // Compute next GRN ref no from existing GRNs
   const nextGrnRefNo = useMemo(() => {
@@ -156,8 +158,9 @@ function CreateGRNContent() {
     if (!editId) return;
 
     const loadEdit = async () => {
+      setIsFetchingData(true);
       const existing = await getGRNById(editId);
-      if (!existing) { toast.error("GRN not found."); return; }
+      if (!existing) { toast.error("GRN not found."); setIsFetchingData(false); return; }
 
       const eHeader = existing.header || existing;
       setHeader({
@@ -194,6 +197,7 @@ function CreateGRNContent() {
         qtyPerPack: Number(item.QTY_PER_PACKING || item.qtyPerPack || 0),
         remarks: item.REMARKS || "",
       })));
+      setIsFetchingData(false);
     };
 
     loadEdit();
@@ -271,6 +275,38 @@ function CreateGRNContent() {
   };
 
   const isLoading = posLoading || grnsLoading;
+
+  if (isFetchingData) {
+    return (
+      <div className="max-w-full mx-auto pb-20 px-4 sm:px-6 space-y-8 mt-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+          <div className="flex items-center gap-4">
+            <Skeleton className="w-10 h-10 rounded-full" />
+            <div>
+               <Skeleton className="h-8 w-64 mb-2" />
+               <Skeleton className="h-5 w-48" />
+            </div>
+          </div>
+          <Skeleton className="h-11 w-40 rounded-xl" />
+        </div>
+        <div className="space-y-6">
+          <div className="bg-white rounded-[24px] border p-8">
+            <Skeleton className="h-6 w-32 mb-6" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
+              {[...Array(12)].map((_, i) => <Skeleton key={i} className="h-11 w-full" />)}
+            </div>
+          </div>
+          <div className="bg-white rounded-[24px] border p-8">
+            <Skeleton className="h-6 w-48 mb-6" />
+            <div className="space-y-4">
+              <Skeleton className="h-10 w-full bg-slate-100" />
+              {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-full mx-auto pb-20 px-4 sm:px-6">

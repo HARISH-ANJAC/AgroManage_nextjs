@@ -21,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
@@ -28,7 +29,7 @@ import * as XLSX from "xlsx";
 export interface MasterField {
   key: string;
   label: string;
-  type: "text" | "number" | "select" | "textarea" | "date";
+  type: "text" | "number" | "select" | "textarea" | "date" | "password";
   required?: boolean;
   options?: (string | { value: string | number; label: string })[];
   placeholder?: string;
@@ -214,11 +215,9 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
   // Export functions
   const exportPDF = async () => {
     const doc = new jsPDF();
-    doc.setFontSize(16);
 
-    doc.text(title, 14, 20);
-
-    // Handle logo with proper aspect ratio
+    // Header & Logo — Logo LEFT, Title RIGHT
+    // Handle logo with proper aspect ratio (placed on the left)
     try {
       const logoImg = new Image();
       logoImg.src = "/assets/logo.png";
@@ -226,18 +225,22 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
         logoImg.onload = resolve;
         logoImg.onerror = resolve; // Continue even if logo fails
       });
-      
+
       if (logoImg.complete && logoImg.naturalWidth) {
         const imgWidth = 30; // Slightly smaller for list reports
         const imgHeight = (logoImg.naturalHeight * imgWidth) / logoImg.naturalWidth;
-        doc.addImage(logoImg, "PNG", 165, 8, imgWidth, imgHeight);
+        doc.addImage(logoImg, "PNG", 14, 8, imgWidth, imgHeight);
       }
     } catch (e) {
       console.warn("Logo failed to load", e);
     }
 
+    // Title on the right
+    doc.setFontSize(16);
+    doc.text(title, 196, 20, { align: "right" });
+
     doc.setFontSize(10);
-    doc.text(`Exported: ${new Date().toLocaleString()}`, 14, 28);
+    doc.text(`Exported: ${new Date().toLocaleString()}`, 196, 28, { align: "right" });
     const headers = ["ID", ...columns.map(c => c.label)];
     const rows = filtered.map((item: Record<string, any>) => [item.id, ...columns.map(c => String(getNestedValue(item, c.key) || ""))]);
     autoTable(doc, { head: [headers], body: rows, startY: 34, styles: { fontSize: 8 }, headStyles: { fillColor: [34, 68, 50] } });
@@ -330,9 +333,26 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
 
         <div className="overflow-x-auto w-full max-w-[calc(100vw-2rem)] sm:max-w-none">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center p-12 space-y-4">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-              <p className="text-sm text-muted-foreground animate-pulse">Loading {title.toLowerCase()}...</p>
+            <div className="w-full space-y-4">
+              <div className="flex items-center space-x-4 border-b pb-4">
+                <Skeleton className="h-4 w-4" />
+                <Skeleton className="h-4 w-20" />
+                {columns.map((_, i) => (
+                  <Skeleton key={i} className="h-4 flex-1" />
+                ))}
+              </div>
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center space-x-4 py-4 border-b">
+                  <Skeleton className="h-4 w-4" />
+                  <div className="flex gap-2">
+                    <Skeleton className="h-8 w-8 rounded" />
+                    <Skeleton className="h-8 w-8 rounded" />
+                  </div>
+                  {columns.map((_, j) => (
+                    <Skeleton key={j} className="h-4 flex-1" />
+                  ))}
+                </div>
+              ))}
             </div>
           ) : (
             <table className="w-full text-sm">
@@ -469,7 +489,7 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
                     <Textarea value={form[field.key] || ""} onChange={(e) => setForm({ ...form, [field.key]: e.target.value })} placeholder={field.placeholder} />
                   ) : (
                     <Input
-                      type={field.type === "date" ? "date" : field.type}
+                      type={field.type === "date" ? "date" : field.type === "password" ? "password" : field.type}
                       placeholder={field.placeholder}
                       value={form[field.key] ?? ""}
                       onChange={(e) => setForm({ ...form, [field.key]: field.type === "number" ? Number(e.target.value) : e.target.value })}

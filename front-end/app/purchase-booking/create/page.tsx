@@ -14,6 +14,7 @@ import { usePurchaseOrderStore } from "@/hooks/usePurchaseOrderStore";
 import { useGoodsReceiptStore } from "@/hooks/useGoodsReceiptStore";
 import { usePurchaseBookingStore } from "@/hooks/usePurchaseBookingStore";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface InvoiceItem {
     id: number;
@@ -100,6 +101,7 @@ function CreatePurchaseBookingContent() {
     const [additionalCosts, setAdditionalCosts] = useState<AdditionalCost[]>([]);
     const [existingFiles, setExistingFiles] = useState<UploadedFile[]>([]);
     const [uploading, setUploading] = useState(false);
+    const [isFetchingData, setIsFetchingData] = useState(false);
 
     // PI Ref No Logic
     const nextPiRefNo = useMemo(() => {
@@ -232,8 +234,12 @@ function CreatePurchaseBookingContent() {
     useEffect(() => {
         if (!editId) return;
         const load = async () => {
+            setIsFetchingData(true);
             const res = await getBookingById(editId);
-            if (!res) return;
+            if (!res) {
+                setIsFetchingData(false);
+                return;
+            }
             const h = res.header || res;
             setHeader({
                 purchaseInvoiceRefNo: h.PURCHASE_INVOICE_REF_NO || h.purchaseInvoiceRefNo,
@@ -259,9 +265,46 @@ function CreatePurchaseBookingContent() {
             if (res.additionalCosts) setAdditionalCosts(res.additionalCosts.map((c: any, idx: number) => ({ id: idx, typeId: String(c.ADDITIONAL_COST_TYPE_ID), amount: Number(c.ADDITIONAL_COST_AMOUNT), remarks: c.REMARKS })));
             const files = await getFiles(editId);
             setExistingFiles(files);
+            setIsFetchingData(false);
         };
         load();
     }, [editId, today]);
+
+    if (isFetchingData) {
+        return (
+            <div className="max-w-7xl mx-auto pb-20 px-4 sm:px-6 pt-6 space-y-8">
+                <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                        <Skeleton className="h-10 w-10 rounded-xl" />
+                        <div>
+                            <Skeleton className="h-8 w-64 mb-2" />
+                            <Skeleton className="h-5 w-32" />
+                        </div>
+                    </div>
+                    <div className="flex gap-3">
+                        <Skeleton className="h-12 w-24 rounded-xl" />
+                        <Skeleton className="h-12 w-40 rounded-xl" />
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    <main className="lg:col-span-8 space-y-6">
+                        <Skeleton className="h-16 w-full rounded-2xl" />
+                        <div className="bg-white rounded-[32px] border p-8 space-y-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t">
+                                {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+                            </div>
+                        </div>
+                    </main>
+                    <aside className="lg:col-span-4 sticky top-6">
+                        <Skeleton className="h-96 w-full rounded-[40px]" />
+                    </aside>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-7xl mx-auto pb-20 px-4 sm:px-6 pt-6">

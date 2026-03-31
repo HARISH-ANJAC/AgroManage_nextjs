@@ -7,7 +7,7 @@ import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
 
 export default function SalesOrdersPage() {
-  const { orders, addOrder, updateOrder, deleteOrder, getOrderById } = useSalesOrderStore();
+  const { orders, isLoading, addOrder, updateOrder, deleteOrder, getOrderById } = useSalesOrderStore();
 
   const handleExportPDF = async (order: any) => {
     toast.loading("Generating Sales Order PDF...", { id: "so-pdf" });
@@ -23,11 +23,7 @@ export default function SalesOrdersPage() {
     const doc = new jsPDF();
     const currency = "TZS";
 
-    // Header & Logo with Canvas for reliability
-    doc.setFontSize(22);
-    doc.setTextColor(15, 23, 42);
-    doc.text("SALES ORDER", 14, 22);
-
+    // Header & Logo — Logo LEFT, Title RIGHT
     try {
       const logoImg = new Image();
       logoImg.src = "/assets/logo.png";
@@ -43,20 +39,25 @@ export default function SalesOrdersPage() {
         const ctx = canvas.getContext("2d");
         ctx?.drawImage(logoImg, 0, 0);
         const logoData = canvas.toDataURL("image/png");
-        
+
         const imgWidth = 40;
         const imgHeight = (logoImg.naturalHeight * imgWidth) / logoImg.naturalWidth;
-        doc.addImage(logoData, "PNG", 155, 10, imgWidth, imgHeight);
+        doc.addImage(logoData, "PNG", 14, 8, imgWidth, imgHeight);
       }
     } catch (e) {
       console.warn("Logo failed to load", e);
     }
 
+    // SALES ORDER title on the right
+    doc.setFontSize(22);
+    doc.setTextColor(15, 23, 42);
+    doc.text("SALES ORDER", 196, 22, { align: "right" });
+
     doc.setFontSize(10);
     doc.setTextColor(100, 116, 139);
-    doc.text(`Reference: ${h.salesOrderRefNo || order.id}`, 14, 30);
-    doc.text(`Date: ${h.salesOrderDate ? new Date(h.salesOrderDate).toLocaleDateString() : "N/A"}`, 14, 35);
-    doc.text(`Status: ${h.status || "Draft"}`, 14, 40);
+    doc.text(`Reference: ${h.salesOrderRefNo || order.id}`, 196, 30, { align: "right" });
+    doc.text(`Date: ${h.salesOrderDate ? new Date(h.salesOrderDate).toLocaleDateString() : "N/A"}`, 196, 35, { align: "right" });
+    doc.text(`Status: ${h.status || "Draft"}`, 196, 40, { align: "right" });
 
     // Customer Info
     doc.setFontSize(12);
@@ -131,7 +132,8 @@ export default function SalesOrdersPage() {
       }),
       add: addOrder,
       update: (item: any) => updateOrder(item.id, item),
-      remove: deleteOrder
+      remove: deleteOrder,
+      isLoading
     }}
     fields={[
       { key: "salesOrderRefNo", label: "SO Ref", type: "text", required: true },

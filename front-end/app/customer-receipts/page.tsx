@@ -23,11 +23,7 @@ export default function CustomerReceiptsPage() {
     const doc = new jsPDF();
     const currency = "TZS";
 
-    // Header & Logo
-    doc.setFontSize(22);
-    doc.setTextColor(15, 23, 42); 
-    doc.text("OFFICIAL RECEIPT", 14, 22);
-
+    // Header & Logo — Logo LEFT, Title RIGHT
     try {
       const logoImg = new Image();
       logoImg.src = "/assets/logo.png";
@@ -43,20 +39,25 @@ export default function CustomerReceiptsPage() {
         const ctx = canvas.getContext("2d");
         ctx?.drawImage(logoImg, 0, 0);
         const logoData = canvas.toDataURL("image/png");
-        
+
         const imgWidth = 40;
         const imgHeight = (logoImg.naturalHeight * imgWidth) / logoImg.naturalWidth;
-        doc.addImage(logoData, "PNG", 155, 10, imgWidth, imgHeight);
+        doc.addImage(logoData, "PNG", 14, 8, imgWidth, imgHeight);
       }
     } catch (e) {
       console.warn("Logo failed to load", e);
     }
-    
+
+    // OFFICIAL RECEIPT title on the right
+    doc.setFontSize(22);
+    doc.setTextColor(15, 23, 42);
+    doc.text("OFFICIAL RECEIPT", 196, 22, { align: "right" });
+
     doc.setFontSize(10);
-    doc.setTextColor(100, 116, 139); 
-    doc.text(`Receipt Ref: ${h.receiptRefNo || h.id}`, 14, 30);
-    doc.text(`Date: ${h.receiptDate ? new Date(h.receiptDate).toLocaleDateString() : "N/A"}`, 14, 35);
-    doc.text(`Payment Mode: ${h.paymentModeName || "Regular Payment"}`, 14, 40);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Receipt Ref: ${h.receiptRefNo || h.id}`, 196, 30, { align: "right" });
+    doc.text(`Date: ${h.receiptDate ? new Date(h.receiptDate).toLocaleDateString() : "N/A"}`, 196, 35, { align: "right" });
+    doc.text(`Payment Mode: ${h.paymentModeName || "Regular Payment"}`, 196, 40, { align: "right" });
 
     // Business Info
     doc.setFontSize(12);

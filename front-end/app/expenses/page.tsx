@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useRouter } from 'next/navigation';
 import { useExpenseStore } from "@/hooks/useExpenseStore";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,14 +63,6 @@ export default function ExpensesPage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center p-12 space-y-4 min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-        <p className="text-sm text-muted-foreground animate-pulse tracking-widest uppercase font-bold">Synchronizing Ledger...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="p-4 md:p-8">
@@ -95,82 +88,107 @@ export default function ExpensesPage() {
         </div>
 
         <div className="overflow-x-auto -mx-6">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/30">
-                <th className="text-left p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-widest pl-6 w-32">Action</th>
-                <th className="text-left p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-widest">Expense Ref</th>
-                <th className="text-left p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-widest">Date</th>
-                <th className="text-left p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-widest">PO Reference</th>
-                <th className="text-left p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-widest">Account Head</th>
-                <th className="text-right p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-widest">Amount (TZS)</th>
-                <th className="text-center p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-widest pr-6">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/50">
-              {filtered.map((e: any) => {
-                const status = e.status || "Draft";
-                return (
-                  <tr key={e.expenseRefNo} className="border-b hover:bg-muted/10 transition-colors group">
-                    <td className="p-4 pl-6">
-                      <div className="flex gap-1.5">
-                        <button 
-                          onClick={() => router.push(`/expenses/create?id=${encodeURIComponent(e.expenseRefNo)}`)} 
-                          className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-all hover:text-blue-600" 
-                          title="View Details"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => router.push(`/expenses/create?id=${encodeURIComponent(e.expenseRefNo)}`)} 
-                          className="p-2 rounded-lg hover:bg-muted text-[#059669] transition-all hover:scale-110" 
-                          title="Edit Expense"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => setDeleteId(e.expenseRefNo)} 
-                          className="p-2 rounded-lg hover:bg-destructive/5 text-destructive/40 hover:text-destructive transition-all" 
-                          title="Delete Expense"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                    <td className="p-4 font-mono text-[13px] font-black text-foreground">{e.expenseRefNo}</td>
-                    <td className="p-4 text-muted-foreground font-medium">{formatDate(e.expenseDate)}</td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-3.5 h-3.5 text-blue-500/70" />
-                        <span className="font-bold text-[#334155]">{e.poRefNo}</span>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex flex-col">
-                        <span className="font-bold text-foreground">{e.accountHeadName}</span>
-                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">{e.supplierName || 'Internal'}</span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-right font-black text-foreground tabular-nums">
-                      {(Number(e.totalExpenseAmount) || 0).toLocaleString()}
-                    </td>
-                    <td className="p-4 text-center pr-6">
-                      <Badge variant="outline" className={`${statusColors[status] || ""} font-black text-[10px] px-2.5 h-6 rounded-lg uppercase tracking-tight`}>
-                        {status}
-                      </Badge>
+          {isLoading ? (
+            <div className="w-full space-y-4 py-8 px-6">
+              <div className="flex items-center space-x-4 border-b pb-4">
+                <Skeleton className="h-4 w-12" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 flex-1" />
+                <Skeleton className="h-4 flex-1" />
+                <Skeleton className="h-4 flex-1" />
+              </div>
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center space-x-4 py-4 border-b">
+                  <div className="flex gap-2">
+                    <Skeleton className="h-8 w-8 rounded" />
+                    <Skeleton className="h-8 w-8 rounded" />
+                    <Skeleton className="h-8 w-8 rounded" />
+                  </div>
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 flex-1" />
+                  <Skeleton className="h-4 flex-1" />
+                  <Skeleton className="h-4 flex-1" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/30">
+                  <th className="text-left p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-widest pl-6 w-32">Action</th>
+                  <th className="text-left p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-widest">Expense Ref</th>
+                  <th className="text-left p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-widest">Date</th>
+                  <th className="text-left p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-widest">PO Reference</th>
+                  <th className="text-left p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-widest">Account Head</th>
+                  <th className="text-right p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-widest">Amount (TZS)</th>
+                  <th className="text-center p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-widest pr-6">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {filtered.map((e: any) => {
+                  const status = e.status || "Draft";
+                  return (
+                    <tr key={e.expenseRefNo} className="border-b hover:bg-muted/10 transition-colors group">
+                      <td className="p-4 pl-6">
+                        <div className="flex gap-1.5">
+                          <button 
+                            onClick={() => router.push(`/expenses/create?id=${encodeURIComponent(e.expenseRefNo)}`)} 
+                            className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-all hover:text-blue-600" 
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => router.push(`/expenses/create?id=${encodeURIComponent(e.expenseRefNo)}`)} 
+                            className="p-2 rounded-lg hover:bg-muted text-[#059669] transition-all hover:scale-110" 
+                            title="Edit Expense"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => setDeleteId(e.expenseRefNo)} 
+                            className="p-2 rounded-lg hover:bg-destructive/5 text-destructive/40 hover:text-destructive transition-all" 
+                            title="Delete Expense"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                      <td className="p-4 font-mono text-[13px] font-black text-foreground">{e.expenseRefNo}</td>
+                      <td className="p-4 text-muted-foreground font-medium">{formatDate(e.expenseDate)}</td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-3.5 h-3.5 text-blue-500/70" />
+                          <span className="font-bold text-[#334155]">{e.poRefNo}</span>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-foreground">{e.accountHeadName}</span>
+                          <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">{e.supplierName || 'Internal'}</span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-right font-black text-foreground tabular-nums">
+                        {(Number(e.totalExpenseAmount) || 0).toLocaleString()}
+                      </td>
+                      <td className="p-4 text-center pr-6">
+                        <Badge variant="outline" className={`${statusColors[status] || ""} font-black text-[10px] px-2.5 h-6 rounded-lg uppercase tracking-tight`}>
+                          {status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="p-12 text-center text-muted-foreground italic font-medium">
+                      No expense records matching your criteria.
                     </td>
                   </tr>
-                );
-              })}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="p-12 text-center text-muted-foreground italic font-medium">
-                    No expense records matching your criteria.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

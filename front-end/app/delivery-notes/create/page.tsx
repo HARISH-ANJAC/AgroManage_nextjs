@@ -31,6 +31,7 @@ import { useSalesOrderStore } from "@/hooks/useSalesOrderStore";
 import { useDeliveryNoteStore } from "@/hooks/useDeliveryNoteStore";
 import { useStores } from "@/hooks/useStoreData";
 import { getCurrentUser } from "@/lib/auth";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function CreateDNContent() {
   const router = useRouter();
@@ -61,12 +62,13 @@ function CreateDNContent() {
   });
 
   const [items, setItems] = useState<any[]>([]);
+  const [isFetchingData, setIsFetchingData] = useState(false);
 
   // Load existing data if editing
   useEffect(() => {
     const loadNote = async () => {
       if (editId) {
-        toast.loading("Loading Delivery Note details...", { id: "load-dn" });
+        setIsFetchingData(true);
         const res = await getNoteById(editId as string);
         if (res && res.header) {
           const h = res.header;
@@ -101,10 +103,10 @@ function CreateDNContent() {
               salesOrderDtlSno: it.salesOrderDtlSno
             })));
           }
-          toast.success("Details loaded", { id: "load-dn" });
         } else {
-          toast.error("Delivery Note not found", { id: "load-dn" });
+          toast.error("Delivery Note not found");
         }
+        setIsFetchingData(false);
       }
     };
     loadNote();
@@ -201,6 +203,48 @@ function CreateDNContent() {
       toast.error("Failed to save Delivery Note");
     }
   };
+
+  if (isFetchingData) {
+    return (
+      <div className="max-w-full mx-auto pb-20 px-4 sm:px-6 space-y-8">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-8 gap-4 mt-4">
+          <div className="flex items-center gap-4">
+            <Skeleton className="w-10 h-10 rounded-full" />
+            <div>
+              <Skeleton className="h-8 w-64 mb-2" />
+              <Skeleton className="h-5 w-48" />
+            </div>
+          </div>
+          <div className="flex gap-3">
+             <Skeleton className="h-11 w-32 rounded-xl" />
+             <Skeleton className="h-11 w-40 rounded-xl" />
+          </div>
+        </div>
+        <div className="space-y-6">
+          <div className="bg-white rounded-[24px] border p-8">
+             <Skeleton className="h-6 w-48 mb-6" />
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+               {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-11 w-full" />)}
+             </div>
+          </div>
+          <div className="bg-white rounded-[24px] border p-8">
+             <Skeleton className="h-6 w-48 mb-6" />
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+               {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-11 w-full" />)}
+               <div className="lg:col-span-2">
+                 <Skeleton className="h-11 w-full" />
+               </div>
+             </div>
+          </div>
+          <div className="bg-white rounded-[24px] border p-8">
+             <Skeleton className="h-6 w-48 mb-6" />
+             <Skeleton className="h-12 w-full mb-4 bg-slate-50" />
+             {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-16 w-full mb-2" />)}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-full mx-auto pb-20 px-4 sm:px-6">

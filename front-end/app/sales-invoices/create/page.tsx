@@ -24,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useSalesInvoiceStore } from "@/hooks/useSalesInvoiceStore";
 import { useDeliveryNoteStore } from "@/hooks/useDeliveryNoteStore";
 import { useStores } from "@/hooks/useStoreData";
@@ -55,12 +56,13 @@ function CreateInvoiceContent() {
   });
 
   const [items, setItems] = useState<any[]>([]);
+  const [isFetchingData, setIsFetchingData] = useState(false);
 
   // Load existing data if editing
   useEffect(() => {
     const loadInvoice = async () => {
       if (editId) {
-        toast.loading("Loading Invoice details...", { id: "load-inv" });
+        setIsFetchingData(true);
         const res = await getInvoiceById(editId as string);
         if (res && res.header) {
           const h = res.header;
@@ -95,10 +97,10 @@ function CreateInvoiceContent() {
               deliveryNoteDtlSno: it.deliveryNoteDtlSno
             })));
           }
-          toast.success("Details loaded", { id: "load-inv" });
         } else {
-          toast.error("Invoice not found", { id: "load-inv" });
+          toast.error("Invoice not found");
         }
+        setIsFetchingData(false);
       }
     };
     loadInvoice();
@@ -196,6 +198,44 @@ function CreateInvoiceContent() {
       toast.error(e.message || "Error saving invoice");
     }
   };
+
+  if (isFetchingData) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] p-8 space-y-8">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <Skeleton className="h-10 w-48" />
+          <div className="flex gap-3">
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-36" />
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto grid grid-cols-12 gap-8">
+          <div className="col-span-12 lg:col-span-8 space-y-8">
+            <div className="bg-white rounded-2xl border p-8">
+              <Skeleton className="h-6 w-32 mb-6" />
+              <div className="grid grid-cols-2 gap-6">
+                <Skeleton className="h-14 w-full" />
+                <Skeleton className="h-14 w-full" />
+                <Skeleton className="h-14 w-full" />
+                <Skeleton className="h-14 w-full" />
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl border p-8 space-y-4">
+              <Skeleton className="h-8 w-40 mb-4" />
+              {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+            </div>
+          </div>
+          <div className="col-span-12 lg:col-span-4 space-y-8">
+            <div className="bg-white rounded-2xl border p-8 h-64">
+              <Skeleton className="h-8 w-32 mb-8" />
+              <Skeleton className="h-6 w-full mb-4" />
+              <Skeleton className="h-12 w-3/4" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">

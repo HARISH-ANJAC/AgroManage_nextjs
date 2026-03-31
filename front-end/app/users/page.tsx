@@ -9,6 +9,7 @@ export default function UsersPage() {
   return <MasterCrudPage
     domain="users" title="Users" description="Manage your users" idPrefix="USR" fields={[
     { key: "loginName", label: "Login Name", type: "text", required: true },
+    { key: "passwordUserHdr", label: "Password", type: "password", required: false, placeholder: "Default: [name]123" },
     { key: "roleUserHdr", label: "Role", type: "select", options: ["Super Admin", "Manager", "User", "Viewer"] },
     { key: "mobileNoUserHdr", label: "Mobile No", type: "text" },
     { key: "mailIdUserHdr", label: "Email", type: "text" },

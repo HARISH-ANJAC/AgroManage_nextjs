@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { usePurchaseOrderStore } from "@/hooks/usePurchaseOrderStore";
 import { useMasterData } from "@/hooks/useMasterData";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface LineItem {
   id: string | number;
@@ -301,6 +302,42 @@ function CreatePurchaseOrderContent() {
       toast.error("Process Failed");
     }
   };
+
+  if (editId && !dbData) {
+    return (
+      <div className="max-w-[1600px] mx-auto pb-20 px-4 pt-6 space-y-8">
+        <div className="flex items-center justify-between mb-8">
+          <Skeleton className="h-10 w-48" />
+          <div className="flex gap-3">
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="lg:col-span-3 space-y-8">
+            <div className="bg-white rounded-3xl border p-8 space-y-6">
+              <Skeleton className="h-6 w-40" />
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
+              </div>
+            </div>
+            <div className="bg-white rounded-3xl border p-8 space-y-6">
+              <Skeleton className="h-6 w-32" />
+              {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+            </div>
+          </div>
+          <div className="space-y-8">
+            <div className="bg-[#1A2E28] rounded-[32px] p-8 h-80">
+              <Skeleton className="h-8 w-32 mb-8 bg-white/20" />
+              <div className="space-y-4">
+                {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-4 w-full bg-white/10" />)}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-[1600px] mx-auto pb-20 px-4 pt-6">

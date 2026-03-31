@@ -11,6 +11,7 @@ import { useMasterData } from "@/hooks/useMasterData";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,11 +66,8 @@ export default function GoodsReceiptsPage() {
     const supplierName = supplierMap[grn.SUPPLIER_ID] || grn.supplierName || "N/A";
     const storeName = storeMap[grn.GRN_STORE_ID] || grn.storeName || "N/A";
 
-    doc.setFontSize(22);
-    doc.setTextColor(15, 23, 42);
-    doc.text("GOODS RECEIPT NOTE", 14, 22);
-
-    // Handle logo with proper aspect ratio
+    // Header & Logo — Logo LEFT, Title RIGHT
+    // Handle logo with proper aspect ratio (placed on the left)
     try {
       const logoImg = new Image();
       logoImg.src = "/assets/logo.png";
@@ -77,22 +75,27 @@ export default function GoodsReceiptsPage() {
         logoImg.onload = resolve;
         logoImg.onerror = resolve; // Continue even if logo fails
       });
-      
+
       if (logoImg.complete && logoImg.naturalWidth) {
         const imgWidth = 40;
         const imgHeight = (logoImg.naturalHeight * imgWidth) / logoImg.naturalWidth;
-        doc.addImage(logoImg, "PNG", 155, 10, imgWidth, imgHeight);
+        doc.addImage(logoImg, "PNG", 14, 8, imgWidth, imgHeight);
       }
     } catch (e) {
       console.warn("Logo failed to load", e);
     }
 
+    // GOODS RECEIPT NOTE title on the right
+    doc.setFontSize(22);
+    doc.setTextColor(15, 23, 42);
+    doc.text("GOODS RECEIPT NOTE", 196, 22, { align: "right" });
+
     doc.setFontSize(10);
     doc.setTextColor(100, 116, 139);
-    doc.text(`GRN Ref: ${refNo}`, 14, 30);
-    doc.text(`Date: ${date}`, 14, 35);
-    doc.text(`PO Ref: ${poRef}`, 14, 40);
-    doc.text(`Status: ${grn.STATUS_ENTRY || grn.status || "Received"}`, 14, 45);
+    doc.text(`GRN Ref: ${refNo}`, 196, 30, { align: "right" });
+    doc.text(`Date: ${date}`, 196, 35, { align: "right" });
+    doc.text(`PO Ref: ${poRef}`, 196, 40, { align: "right" });
+    doc.text(`Status: ${grn.STATUS_ENTRY || grn.status || "Received"}`, 196, 45, { align: "right" });
 
     doc.setFontSize(12);
     doc.setTextColor(15, 23, 42);
@@ -184,9 +187,27 @@ export default function GoodsReceiptsPage() {
         </div>
 
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-16 space-y-4">
-            <Loader2 className="w-10 h-10 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground animate-pulse">Loading goods receipts...</p>
+          <div className="w-full space-y-4 py-8">
+            <div className="flex items-center space-x-4 border-b pb-4">
+              <Skeleton className="h-4 w-4" />
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 flex-1" />
+              <Skeleton className="h-4 flex-1" />
+              <Skeleton className="h-4 flex-1" />
+            </div>
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center space-x-4 py-4 border-b">
+                <Skeleton className="h-4 w-4" />
+                <div className="flex gap-2">
+                  <Skeleton className="h-8 w-8 rounded" />
+                  <Skeleton className="h-8 w-8 rounded" />
+                  <Skeleton className="h-8 w-8 rounded" />
+                </div>
+                <Skeleton className="h-4 flex-1" />
+                <Skeleton className="h-4 flex-1" />
+                <Skeleton className="h-4 flex-1" />
+              </div>
+            ))}
           </div>
         ) : (
           <div className="overflow-x-auto">
