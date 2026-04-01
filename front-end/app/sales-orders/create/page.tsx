@@ -15,8 +15,10 @@ import {
   Briefcase,
   FileText,
   Upload,
-  Info
+  Info,
+  X
 } from 'lucide-react';
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -104,6 +106,7 @@ function CreateSalesOrderContent(): JSX.Element {
   const [files, setFiles] = useState<any[]>([]);
   const [conversations, setConversations] = useState<any[]>([]);
   const [isFetchingData, setIsFetchingData] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Load existing data if editing
   useEffect(() => {
@@ -446,12 +449,25 @@ function CreateSalesOrderContent(): JSX.Element {
               <tbody className="divide-y divide-slate-100">
                 {items.map(item => (
                   <tr key={item.id} className="hover:bg-slate-50/80 transition-colors group">
-                    <td className="p-4 min-w-[200px]">
-                      <Select value={item.productName} onValueChange={v => updateItem(item.id, "productName", v)}>
-                        <SelectTrigger className="w-full border-none shadow-none focus:ring-0 font-bold text-slate-700"><SelectValue placeholder="Select Product" /></SelectTrigger>
-                        <SelectContent>{productsData.map((p: any) => <SelectItem key={p.id} value={p.productName}>{p.productName}</SelectItem>)}</SelectContent>
-                      </Select>
-                      {item.mainCategoryId && <p className="text-[10px] text-slate-400 px-3 uppercase font-bold tracking-tighter">ID: {item.productId} | Cat: {item.mainCategoryId}</p>}
+                    <td className="p-4 min-w-[280px]">
+                      <div className="flex items-center gap-3">
+                        {(() => {
+                          const selectedProd = productsData.find((p: any) => p.productName === item.productName);
+                          const imgData = selectedProd?.contentData;
+                          return imgData ? (
+                            <img src={imgData} alt="Product" className="w-8 h-8 rounded shrink-0 object-cover border border-slate-200 shadow-sm cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all" onClick={() => setPreviewImage(imgData)} title="Click to view" />
+                          ) : (
+                            <div className="w-8 h-8 rounded shrink-0 bg-slate-50 flex items-center justify-center border border-slate-200 text-[10px] text-slate-400 shadow-sm uppercase font-bold text-center leading-none">Img</div>
+                          );
+                        })()}
+                        <div className="flex-1">
+                          <Select value={item.productName} onValueChange={v => updateItem(item.id, "productName", v)}>
+                            <SelectTrigger className="w-full border-none shadow-none focus:ring-0 font-bold text-slate-700"><SelectValue placeholder="Select Product" /></SelectTrigger>
+                            <SelectContent>{productsData.map((p: any) => <SelectItem key={p.id} value={p.productName}>{p.productName}</SelectItem>)}</SelectContent>
+                          </Select>
+                          {item.mainCategoryId && <p className="text-[10px] text-slate-400 px-3 uppercase font-bold tracking-tighter">ID: {item.productId} | Cat: {item.mainCategoryId}</p>}
+                        </div>
+                      </div>
                     </td>
                     <td className="p-4">
                       <Input
@@ -540,6 +556,27 @@ function CreateSalesOrderContent(): JSX.Element {
           </div>
         </div>
       </div>
+
+      <Dialog open={!!previewImage} onOpenChange={(open) => !open && setPreviewImage(null)}>
+        <DialogContent className="max-w-4xl border-none bg-transparent shadow-none p-0 flex items-center justify-center outline-none">
+          <DialogTitle className="sr-only">Image Preview</DialogTitle>
+          <div className="relative group">
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute -top-3 -right-3 z-50 bg-white text-black hover:bg-destructive hover:text-white p-1.5 rounded-full shadow-2xl border border-black/10 transition-all duration-200"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            {previewImage && (
+              <img
+                src={previewImage}
+                alt="Preview Snapshot"
+                className="max-h-[85vh] max-w-full rounded-lg shadow-2xl border-4 border-white object-contain bg-white/50 backdrop-blur-sm"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

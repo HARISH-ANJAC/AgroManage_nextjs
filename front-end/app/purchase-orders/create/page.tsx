@@ -3,7 +3,7 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useMemo, Suspense } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Send, Plus, Trash2, Upload, Info, FileText, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowLeft, Save, Send, Plus, Trash2, Upload, Info, FileText, CheckCircle2, XCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import { usePurchaseOrderStore } from "@/hooks/usePurchaseOrderStore";
 import { useMasterData } from "@/hooks/useMasterData";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface LineItem {
   id: string | number;
@@ -80,6 +81,7 @@ function CreatePurchaseOrderContent() {
   const [rawDbItems, setRawDbItems] = useState<any[]>([]); // raw items from DB
   const [rawDbCosts, setRawDbCosts] = useState<any[]>([]); // raw costs from DB
   const [approvalRemarks, setApprovalRemarks] = useState("");
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Step 1: Fetch PO data from DB (only depends on editId)
   useEffect(() => {
@@ -481,11 +483,22 @@ function CreatePurchaseOrderContent() {
 
                   return (
                     <tr key={item.id} className="border-b">
-                      <td className="p-4 min-w-[200px]">
-                        <Select value={item.productName} onValueChange={v => handleUpdateItem(item.id, "productName", v)}>
-                          <SelectTrigger className="w-full border-none shadow-none focus:ring-0 font-medium"><SelectValue placeholder="Select Product" /></SelectTrigger>
-                          <SelectContent>{productsData.map((p: any) => <SelectItem key={p.id} value={p.productName}>{p.productName}</SelectItem>)}</SelectContent>
-                        </Select>
+                      <td className="p-4 min-w-[280px]">
+                        <div className="flex items-center gap-3">
+                          {(() => {
+                            const selectedProd = productsData.find((p: any) => p.productName === item.productName);
+                            const imgData = selectedProd?.contentData;
+                            return imgData ? (
+                              <img src={imgData} alt="Product" className="w-8 h-8 rounded shrink-0 object-cover border border-slate-200 shadow-sm cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all" onClick={() => setPreviewImage(imgData)} title="Click to view" />
+                            ) : (
+                              <div className="w-8 h-8 rounded shrink-0 bg-slate-50 flex items-center justify-center border border-slate-200 text-[10px] text-slate-400 shadow-sm uppercase font-bold text-center leading-none">Img</div>
+                            );
+                          })()}
+                          <Select value={item.productName} onValueChange={v => handleUpdateItem(item.id, "productName", v)}>
+                            <SelectTrigger className="flex-1 border-none shadow-none focus:ring-0 font-medium"><SelectValue placeholder="Select Product" /></SelectTrigger>
+                            <SelectContent>{productsData.map((p: any) => <SelectItem key={p.id} value={p.productName}>{p.productName}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
                       </td>
                       <td className="p-4"><Input type="number" value={item.totalQty} onChange={e => handleUpdateItem(item.id, "totalQty", Number(e.target.value))} className="w-20 mx-auto text-center border-none" /></td>
                       <td className="p-4 text-center text-muted-foreground text-xs font-bold">{item.uom}</td>
@@ -674,6 +687,26 @@ function CreatePurchaseOrderContent() {
           )}
         </div>
       </div>
+      <Dialog open={!!previewImage} onOpenChange={(open) => !open && setPreviewImage(null)}>
+        <DialogContent className="max-w-4xl border-none bg-transparent shadow-none p-0 flex items-center justify-center outline-none">
+          <DialogTitle className="sr-only">Image Preview</DialogTitle>
+          <div className="relative group">
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute -top-3 -right-3 z-50 bg-white text-black hover:bg-destructive hover:text-white p-1.5 rounded-full shadow-2xl border border-black/10 transition-all duration-200"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            {previewImage && (
+              <img
+                src={previewImage}
+                alt="Preview Snapshot"
+                className="max-h-[85vh] max-w-full rounded-lg shadow-2xl border-4 border-white object-contain bg-white/50 backdrop-blur-sm"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

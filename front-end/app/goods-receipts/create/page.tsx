@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Send, Info, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Send, Info, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import { useMasterData } from "@/hooks/useMasterData";
 import { usePurchaseOrderStore } from "@/hooks/usePurchaseOrderStore";
 import { useGoodsReceiptStore } from "@/hooks/useGoodsReceiptStore";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface GRNItem {
   id: number;
@@ -36,10 +37,12 @@ function CreateGRNContent() {
   const { orders: pos, getOrderById, isLoading: posLoading } = usePurchaseOrderStore();
   const { data: stores } = useMasterData("stores");
   const { addGRN, updateGRN, getGRNById, grns = [], isLoading: grnsLoading } = useGoodsReceiptStore();
+  const { data: productsData = [] } = useMasterData("products");
 
   const [poLoading, setPoLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isFetchingData, setIsFetchingData] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Compute next GRN ref no from existing GRNs
   const nextGrnRefNo = useMemo(() => {
@@ -518,7 +521,20 @@ function CreateGRNContent() {
                     return (
                       <tr key={item.id} className="border-b transition-colors hover:bg-[#F8FAFC]/50">
                         <td className="p-4 text-[#94A3B8] font-medium text-sm">{idx + 1}</td>
-                        <td className="p-4 font-bold text-[#0F172A]">{item.productName}</td>
+                        <td className="p-4 font-bold text-[#0F172A]">
+                          <div className="flex items-center gap-3">
+                            {(() => {
+                              const selectedProd = productsData.find((p: any) => p.productName === item.productName);
+                              const imgData = selectedProd?.contentData;
+                              return imgData ? (
+                                <img src={imgData} alt="Product" className="w-8 h-8 rounded shrink-0 object-cover border border-slate-200 shadow-sm cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all" onClick={() => setPreviewImage(imgData)} title="Click to view" />
+                              ) : (
+                                <div className="w-8 h-8 rounded shrink-0 bg-slate-50 flex items-center justify-center border border-slate-200 text-[10px] text-slate-400 shadow-sm uppercase font-bold text-center leading-none">Img</div>
+                              );
+                            })()}
+                            <span>{item.productName}</span>
+                          </div>
+                        </td>
                         <td className="p-4 text-center font-medium text-[#64748B]">{item.poQty}</td>
                         <td className="p-4 text-center">
                           <Input
@@ -584,6 +600,27 @@ function CreateGRNContent() {
           )}
         </div>
       </div>
+
+      <Dialog open={!!previewImage} onOpenChange={(open) => !open && setPreviewImage(null)}>
+        <DialogContent className="max-w-4xl border-none bg-transparent shadow-none p-0 flex items-center justify-center outline-none">
+          <DialogTitle className="sr-only">Image Preview</DialogTitle>
+          <div className="relative group">
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute -top-3 -right-3 z-50 bg-white text-black hover:bg-destructive hover:text-white p-1.5 rounded-full shadow-2xl border border-black/10 transition-all duration-200"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            {previewImage && (
+              <img
+                src={previewImage}
+                alt="Preview Snapshot"
+                className="max-h-[85vh] max-w-full rounded-lg shadow-2xl border-4 border-white object-contain bg-white/50 backdrop-blur-sm"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

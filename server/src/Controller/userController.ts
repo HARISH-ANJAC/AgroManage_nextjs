@@ -8,7 +8,8 @@ import bcrypt from "bcryptjs";
 export const getUsers = async (req: Request, res: Response): Promise<Response> => {
     try {
         const data = await db.select().from(TBL_USER_INFO_HDR);
-        return res.status(200).json(data);
+        const mappedData = data.map(record => ({ ...record, id: record.LOGIN_ID_USER_HDR }));
+        return res.status(200).json(mappedData);
     } catch (error) {
         console.error(error);
         return res.status(500).json({ msg: "Internal server error" });
@@ -54,7 +55,7 @@ export const createUser = async (req: Request, res: Response): Promise<Response>
         if (statusUserHdr !== undefined || status !== undefined) values.STATUS_USER_HDR = statusUserHdr ?? (status || "Active");
         
         const result = await db.insert(TBL_USER_INFO_HDR).values(values).returning();
-        return res.status(201).json(result[0]);
+        return res.status(201).json({ ...result[0], id: result[0].LOGIN_ID_USER_HDR });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ msg: "Internal server error" });
@@ -104,7 +105,7 @@ export const updateUser = async (req: Request, res: Response): Promise<Response>
             .returning();
         
         if (!result.length) return res.status(404).json({ msg: "User not found" });
-        return res.status(200).json(result[0]);
+        return res.status(200).json({ ...result[0], id: result[0].LOGIN_ID_USER_HDR });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ msg: "Internal server error" });

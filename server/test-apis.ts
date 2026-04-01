@@ -41,7 +41,8 @@ const getSampleData = (domain: string) => {
         "ledger-groups": { ledgerGroupName: `Test Group ${randomSuffix}`, ledgerGroupType: "Asset" },
         "ledger-master": { ledgerName: `Test Ledger ${randomSuffix}`, ledgerGroupId: 1, companyId: 1 },
         "field-headers": { fieldCategoryFldHdr: `Category ${randomSuffix}`, projectNameFldHdr: `Project ${randomSuffix}`, statusFldHdr: "Active" },
-        "sales-person": { salesPersonName: `Agent ${randomSuffix}`, statusMaster: "Active" }
+        "sales-person": { salesPersonName: `Agent ${randomSuffix}`, statusMaster: "Active" },
+        "users": { loginName: `TestUser_${randomSuffix}`, passwordUserHdr: `Password@123`, role: 'User', mobileNo: '9999999999', mailId: `test${randomSuffix}@example.com`, status: 'Active' }
     };
 
     return { ...(samples[domain] || { name: `Test ${domain} ${randomSuffix}` }), ...common };
@@ -51,7 +52,7 @@ async function runTests() {
     await login();
     const MASTER_URL = BASE_URL;
     const domains = [
-        "companies", "stores", "categories", "sub-categories", "products",
+        "users", "companies", "stores", "categories", "sub-categories", "products",
         "suppliers", "countries", "regions", "districts", "customers",
         "currencies", "locations", "billing-locations", "additional-cost-types",
         "payment-terms", "account-heads", "customer-payment-modes", "banks",
