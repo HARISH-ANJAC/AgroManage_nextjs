@@ -1073,10 +1073,9 @@ async function main() {
       .values([
         {
           Customer_Id: arushaCustomerId,
-          Address_Count: 1,
-          Contact_Person: "John Mwita",
-          Contact_Number: "255712345680",
+          ADDRESS_TYPE: "Billing",
           Address: "Sokoine Road, Arusha",
+          LOCATION_AREA: "Arusha CBD",
           Remarks: "Main office",
           Status_Master: "Active",
           Created_By: "SYSTEM",
@@ -1368,6 +1367,7 @@ async function main() {
           Main_Category_Id: fertMainId,
           Sub_Category_Id: npkSubId,
           Product_Id: yaraProductId,
+          UNIT_PRICE: "45000",
           VAT_Percentage: "18",
           Valid_Type: "Annual",
           currency_id: tzsId,

@@ -18,6 +18,6 @@ export default function ProductCompanyCategoryMappingPage() {
     { key: "remarks", label: "Remarks", type: "textarea" },
     { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
   ]} initialData={mappings || []} columns={[
-    { key: "companyName", label: "Company" }, { key: "mainCategoryName", label: "Category" }, { key: "statusMaster", label: "Status" },
+    { key: "companyName", label: "Company" }, { key: "categoryName", label: "Category" }, { key: "statusMaster", label: "Status" },
   ]} />;
 }

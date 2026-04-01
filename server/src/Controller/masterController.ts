@@ -38,7 +38,8 @@ import {
     TBL_CUSTOMER_CREDIT_LIMIT_DETAILS,
     CUSTOMER_CREDIT_LIMIT_FILE_UPLOAD,
     TBL_SALES_PERSON_MASTER,
-    TBL_USER_INFO_HDR
+    TBL_USER_INFO_HDR,
+    TBL_ROLE_MASTER
 } from "../db/schema/index.js";
 import { eq, inArray, getTableColumns, getTableName } from "drizzle-orm";
 
@@ -125,7 +126,9 @@ const TABLE_MAP: Record<string, { table: any; pk: string; joins?: any[] }> = {
         pk: "USER_TO_LOCATION_ID_USER_TO_ROLE",
         joins: [
             { table: TBL_COMPANY_MASTER, on: eq(TBL_USER_TO_STORE_MAPPING.COMPANY_ID, TBL_COMPANY_MASTER.Company_Id), prefix: "COMPANY" },
-            { table: TBL_STORE_MASTER, on: eq(TBL_USER_TO_STORE_MAPPING.STORE_ID_USER_TO_ROLE, TBL_STORE_MASTER.Store_Id), prefix: "STORE" }
+            { table: TBL_STORE_MASTER, on: eq(TBL_USER_TO_STORE_MAPPING.STORE_ID_USER_TO_ROLE, TBL_STORE_MASTER.Store_Id), prefix: "STORE" },
+            { table: TBL_USER_INFO_HDR, on: eq(TBL_USER_TO_STORE_MAPPING.USER_ID_USER_TO_ROLE, TBL_USER_INFO_HDR.LOGIN_ID_USER_HDR), prefix: "USER" },
+            { table: TBL_ROLE_MASTER, on: eq(TBL_USER_TO_STORE_MAPPING.ROLE_ID_USER_TO_ROLE, TBL_ROLE_MASTER.ROLE_ID), prefix: "ROLE" }
         ]
     },
     "payment-modes": { table: TBL_PAYMENT_MODE_MASTER, pk: "PAYMENT_MODE_ID" },
@@ -173,7 +176,8 @@ const TABLE_MAP: Record<string, { table: any; pk: string; joins?: any[] }> = {
         pk: "Account_Id",
         joins: [
             { table: TBL_COMPANY_MASTER, on: eq(TBL_COMPANY_BANK_ACCOUNT_MASTER.Company_id, TBL_COMPANY_MASTER.Company_Id), prefix: "COMPANY" },
-            { table: TBL_BANK_MASTER, on: eq(TBL_COMPANY_BANK_ACCOUNT_MASTER.Bank_Id, TBL_BANK_MASTER.BANK_ID), prefix: "BANK" }
+            { table: TBL_BANK_MASTER, on: eq(TBL_COMPANY_BANK_ACCOUNT_MASTER.Bank_Id, TBL_BANK_MASTER.BANK_ID), prefix: "BANK" },
+            { table: TBL_CURRENCY_MASTER, on: eq(TBL_COMPANY_BANK_ACCOUNT_MASTER.Currency_Id, TBL_CURRENCY_MASTER.CURRENCY_ID), prefix: "CURRENCY" }
         ]
     },
     "password-logs": {
@@ -252,14 +256,34 @@ const toDbCase = (table: any, data: any, excludePk: boolean = false) => {
 
         if (targetKey) {
             let value = data[key];
-            // Ensure timestamp columns receive Date objects
-            const columnType = (columns[targetKey] as any).columnType;
+            const columnInfo = columns[targetKey] as any;
+            const columnType = columnInfo.columnType;
+
+            // Handle timestamps
             if (columnType === 'PgTimestamp' && value && typeof value === 'string') {
                 const parsedDate = new Date(value);
                 if (!isNaN(parsedDate.getTime())) {
                     value = parsedDate;
                 }
             }
+
+            // Handle binary data (bytea) - Convert Base64 to Buffer
+            if (typeof value === 'string' && value.startsWith('data:') && value.includes('base64,')) {
+                // If it's a data URI, extract the base64 part
+                const base64Data = value.split(',')[1];
+                value = Buffer.from(base64Data, 'base64');
+            } else if (typeof value === 'string' && (targetKey.toLowerCase().includes('data') || targetKey.toLowerCase().includes('logo')) && value.length > 50) {
+                // Heuristic: if it's a long string and the column name suggests binary, try to treat as raw base64
+                try {
+                    // Check if it's valid base64 (very basic check)
+                    if (/^[A-Za-z0-9+/=]+$/.test(value)) {
+                        value = Buffer.from(value, 'base64');
+                    }
+                } catch (e) {
+                    // Fail silently and keep as string
+                }
+            }
+
             mapped[targetKey] = value;
         }
     });
@@ -275,7 +299,23 @@ const fromDbCase = (data: any) => {
             mapped[colKey] = data[colKey];
             return;
         }
-        mapped[normalizeKey(colKey)] = data[colKey];
+
+        let value = data[colKey];
+
+        // Convert Buffer (bytea) to Base64 for the frontend
+        if (Buffer.isBuffer(value)) {
+            // Check if there's a corresponding CONTENT_TYPE field to make it a Data URI
+            // We look for a key that ends with _TYPE or starts with CONTENT_TYPE etc.
+            const contentTypeKey = Object.keys(data).find(k => k.toUpperCase() === 'CONTENT_TYPE' || k.toUpperCase().includes('_CONTENT_TYPE'));
+            if (contentTypeKey && data[contentTypeKey]) {
+                value = `data:${data[contentTypeKey]};base64,${value.toString('base64')}`;
+            } else {
+                // Fallback to raw base64 if no type info is found
+                value = value.toString('base64');
+            }
+        }
+
+        mapped[normalizeKey(colKey)] = value;
     });
     return mapped;
 };
@@ -334,13 +374,21 @@ export const getAll = async (req: Request, res: Response): Promise<Response> => 
                     if (joinedData) {
                         const prefix = normalizeKey(join.prefix);
                         Object.keys(joinedData).forEach(col => {
-                            // Map name fields: e.g. COUNTRY prefix + name field -> countryName
+                            const normalizedCol = normalizeKey(col);
+                            
+                            // Map all columns with prefix: e.g. PRODUCT + productName -> productName
+                            // If the column already contains the prefix or is a generic 'name' field, map it smartly
                             if (col.toLowerCase().includes("name")) {
                                 final[prefix + "Name"] = joinedData[col];
                             }
-                            // Map code fields: e.g. LOCATION prefix + short code -> locationShortCode
-                            if (col.toLowerCase().includes("code") || col.toLowerCase().includes("symbol")) {
-                                final[prefix + col.charAt(0).toUpperCase() + col.slice(1).toLowerCase()] = joinedData[col];
+                            
+                            // Also map the original normalized column with prefix for safe access
+                            // This ensures keys like 'productName' or 'unitPrice' work if they come from the join
+                            final[prefix + normalizedCol.charAt(0).toUpperCase() + normalizedCol.slice(1)] = joinedData[col];
+                            
+                            // Compatibility: map common name fields directly if not already set
+                            if (!final[prefix + "Name"] && col.toLowerCase().includes("name")) {
+                                final[prefix + "Name"] = joinedData[col];
                             }
                         });
                     }

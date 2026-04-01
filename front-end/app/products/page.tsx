@@ -20,6 +20,7 @@ export default function ProductsPage() {
     idPrefix="PRD"
     fields={[
       { key: "productName", label: "Product Name", type: "text", required: true },
+      { key: "contentData", label: "Product Image", type: "image" },
       { 
         key: "mainCategoryId", 
         label: "Main Category", 
@@ -53,6 +54,7 @@ export default function ProductsPage() {
     ]}
     initialData={products || []}
     columns={[
+      { key: "contentData", label: "Image" },
       { key: "productName", label: "Product Name" },
       { key: "mainCategoryName", label: "Main Category" },
       { key: "subCategoryName", label: "Sub Category" },

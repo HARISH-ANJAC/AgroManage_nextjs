@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Geo Tag Photo Editor</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+<style>
+body{
+font-family: Arial;
+margin:20px;
+}
+
+#map{
+height:400px;
+margin-top:20px;
+}
+
+img{
+max-width:300px;
+margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Geo Tag Photo Editor</h2>
+
+<input type="file" id="upload" accept="image/*">
+
+<br>
+<img id="preview">
+
+<div id="map"></div>
+
+<br>
+
+<button id="save">Save Photo with New Location</button>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+<script src="https://cdn.jsdelivr.net/npm/piexifjs"></script>
+
+<script>
+
+let map
+let marker
+let uploadedImage
+
+const mapInit = (lat,lng)=>{
+
+map = L.map('map').setView([lat,lng],13)
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+maxZoom:19
+}).addTo(map)
+
+marker = L.marker([lat,lng],{draggable:true}).addTo(map)
+
+marker.on('dragend',function(e){
+let pos = marker.getLatLng()
+map.setView(pos)
+})
+
+}
+
+document.getElementById("upload").addEventListener("change",function(e){
+
+const file = e.target.files[0]
+const reader = new FileReader()
+
+reader.onload = function(event){
+
+uploadedImage = event.target.result
+
+document.getElementById("preview").src = uploadedImage
+
+EXIF.getData(file,function(){
+
+let lat = EXIF.getTag(this,"GPSLatitude")
+let lng = EXIF.getTag(this,"GPSLongitude")
+
+if(lat && lng){
+
+lat = lat[0]+lat[1]/60+lat[2]/3600
+lng = lng[0]+lng[1]/60+lng[2]/3600
+
+mapInit(lat,lng)
+
+}else{
+
+mapInit(20,78)
+
+}
+
+})
+
+}
+
+reader.readAsDataURL(file)
+
+})
+
+
+document.getElementById("save").onclick = function(){
+
+let pos = marker.getLatLng()
+
+let lat = pos.lat
+let lng = pos.lng
+
+let zeroth = {}
+let exif = {}
+let gps = {}
+
+gps[piexif.GPSIFD.GPSLatitudeRef] = lat >=0 ? "N":"S"
+gps[piexif.GPSIFD.GPSLongitudeRef] = lng >=0 ? "E":"W"
+
+gps[piexif.GPSIFD.GPSLatitude] = piexif.GPSHelper.degToDmsRational(Math.abs(lat))
+gps[piexif.GPSIFD.GPSLongitude] = piexif.GPSHelper.degToDmsRational(Math.abs(lng))
+
+let exifObj = {"0th":zeroth,"Exif":exif,"GPS":gps}
+
+let exifBytes = piexif.dump(exifObj)
+
+let newImage = piexif.insert(exifBytes,uploadedImage)
+
+let link = document.createElement("a")
+
+link.href = newImage
+link.download = "geo-tagged-photo.jpg"
+link.click()
+
+}
+
+</script>
+
+</body>
+</html>

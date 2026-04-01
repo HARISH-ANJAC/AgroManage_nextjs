@@ -35,7 +35,7 @@ export default function LedgerMasterPage() {
         initialData={ledgers || []} 
         columns={[
             { key: "ledgerName", label: "Ledger" }, 
-            { key: "groupLedgerGroupName", label: "Group" }, 
+            { key: "groupName", label: "Group" }, 
             { key: "ledgerType", label: "Type" }, 
             { key: "statusMaster", label: "Status" },
         ]} 

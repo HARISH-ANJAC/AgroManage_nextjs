@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Plus, Search, Pencil, Trash2, Download, FileSpreadsheet, FileText } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Download, FileSpreadsheet, FileText, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +29,7 @@ import * as XLSX from "xlsx";
 export interface MasterField {
   key: string;
   label: string;
-  type: "text" | "number" | "select" | "textarea" | "date" | "password";
+  type: "text" | "number" | "select" | "textarea" | "date" | "password" | "image";
   required?: boolean;
   options?: (string | { value: string | number; label: string })[];
   placeholder?: string;
@@ -88,6 +88,7 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const role = useMemo(() => {
     if (typeof window !== 'undefined') {
@@ -409,8 +410,22 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
                           </Badge>
                         ) : (
                           (() => {
-                            const field = fields.find(f => f.key === c.key);
                             const val = getNestedValue(item, c.key);
+                            const field = fields.find(f => f.key === c.key);
+
+                            // Image rendering
+                            if (field?.type === "image" || (typeof val === 'string' && val.startsWith('data:image'))) {
+                              return val ? (
+                                <div
+                                  className="w-10 h-10 rounded border overflow-hidden bg-muted flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all"
+                                  onClick={() => setPreviewImage(val)}
+                                  title="Click to preview"
+                                >
+                                  <img src={val} alt="Thumbnail" className="w-full h-full object-cover" />
+                                </div>
+                              ) : <div className="w-10 h-10 rounded border bg-muted flex items-center justify-center text-[10px] text-muted-foreground">N/A</div>;
+                            }
+
                             if (field?.type === "select" && field.options) {
                               const found = field.options.find((o: any) => typeof o === "object" && String(o.value) === String(val));
                               if (found && typeof found === "object") return found.label;
@@ -487,6 +502,41 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
                     </Select>
                   ) : field.type === "textarea" ? (
                     <Textarea value={form[field.key] || ""} onChange={(e) => setForm({ ...form, [field.key]: e.target.value })} placeholder={field.placeholder} />
+                  ) : field.type === "image" ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-4">
+                        <div className="w-20 h-20 rounded border bg-muted flex items-center justify-center overflow-hidden shrink-0">
+                          {form[field.key] ? (
+                            <img src={form[field.key]} alt="Preview" className="w-full h-full object-cover" />
+                          ) : (
+                            <Plus className="w-6 h-6 text-muted-foreground/40" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            className="text-xs"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                  setForm({
+                                    ...form,
+                                    [field.key]: reader.result as string,
+                                    contentType: file.type,
+                                    fileName: file.name
+                                  });
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
+                          <p className="text-[10px] text-muted-foreground mt-1">Recommended: Square image, max 2MB</p>
+                        </div>
+                      </div>
+                    </div>
                   ) : (
                     <Input
                       type={field.type === "date" ? "date" : field.type === "password" ? "password" : field.type}
@@ -535,6 +585,27 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!previewImage} onOpenChange={(open) => !open && setPreviewImage(null)}>
+        <DialogContent className="max-w-4xl border-none bg-transparent shadow-none p-0 flex items-center justify-center outline-none">
+          <DialogTitle className="sr-only">Image Preview</DialogTitle>
+          <div className="relative group">
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute -top-3 -right-3 z-100 bg-white text-black hover:bg-destructive hover:text-white p-1.5 rounded-full shadow-2xl border border-black/10 transition-all duration-200"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            {previewImage && (
+              <img
+                src={previewImage}
+                alt="Preview"
+                className="max-h-[85vh] max-w-[95vw] rounded-xl shadow-[0_0_60px_-15px_rgba(0,0,0,0.8)] object-contain animate-in zoom-in-95 duration-200"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

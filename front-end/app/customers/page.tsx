@@ -106,15 +106,15 @@ export default function CustomersPage() {
                             { key: "customerId", label: "Customer", type: "select", required: true, options: customerOptions },
                             { key: "addressType", label: "Address Type", type: "select", options: ["Billing", "Shipping", "Residential", "Office"] },
                             { key: "address", label: "Full Address", type: "textarea", required: true },
-                            { key: "location", label: "Location/Area", type: "text" },
+                            { key: "locationArea", label: "Location/Area", type: "text" },
                             { key: "isPrimary", label: "Is Primary", type: "select", options: ["Yes", "No"] },
                             { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
                         ]}
                         initialData={addresses || []}
                         columns={[
-                            { key: "customerCustomerName", label: "Customer" },
+                            { key: "customerName", label: "Customer" },
                             { key: "addressType", label: "Type" },
-                            { key: "location", label: "Area" },
+                            { key: "locationArea", label: "Area" },
                             { key: "statusMaster", label: "Status" },
                         ]}
                     />
@@ -128,16 +128,17 @@ export default function CustomersPage() {
                         idPrefix="CFL"
                         fields={[
                             { key: "customerId", label: "Customer", type: "select", required: true, options: customerOptions },
-                            { key: "fileType", label: "File Type", type: "text", placeholder: "e.g. License, Passport, ID" },
-                            { key: "fileName", label: "File Name", type: "text", required: true },
-                            { key: "filePath", label: "File Path/URL", type: "text", required: true },
-                            { key: "remarks", label: "Remarks", type: "textarea" },
+                            { key: "documentType", label: "Document Type", type: "text", placeholder: "e.g. License, Passport, ID" },
+                            { key: "contentData", label: "Select File", type: "image", required: true },
+                            { key: "fileName", label: "File Name (Auto-filled)", type: "text", required: true },
+                            { key: "descriptions", label: "Remarks/Description", type: "textarea" },
                             { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
                         ]}
                         initialData={files || []}
                         columns={[
-                            { key: "customerCustomerName", label: "Customer" },
-                            { key: "fileType", label: "Type" },
+                            { key: "customerName", label: "Customer" },
+                            { key: "contentData", label: "File" },
+                            { key: "documentType", label: "Type" },
                             { key: "fileName", label: "File Name" },
                             { key: "statusMaster", label: "Status" },
                         ]}
@@ -159,8 +160,8 @@ export default function CustomersPage() {
                         ]}
                         initialData={billingMappings || []}
                         columns={[
-                            { key: "customerCustomerName", label: "Customer" },
-                            { key: "billingBillingLocationName", label: "Billing Loc" },
+                            { key: "customerName", label: "Customer" },
+                            { key: "billingName", label: "Billing Loc" },
                             { key: "statusMaster", label: "Status" },
                         ]}
                     />
@@ -177,14 +178,14 @@ export default function CustomersPage() {
                             { key: "vatPercentage", label: "VAT Percentage (%)", type: "number", required: true },
                             { key: "effectiveFrom", label: "Effective From", type: "date" },
                             { key: "effectiveTo", label: "Effective To", type: "date" },
-                            { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
+                            { key: "requestStatus", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
                         ]}
                         initialData={vatSettings || []}
                         columns={[
-                            { key: "customerCustomerName", label: "Customer" },
+                            { key: "customerName", label: "Customer" },
                             { key: "vatPercentage", label: "VAT %" },
                             { key: "effectiveFrom", label: "From" },
-                            { key: "statusMaster", label: "Status" },
+                            { key: "requestStatus", label: "Status" },
                         ]}
                     />
                 </TabsContent>
@@ -206,8 +207,8 @@ export default function CustomersPage() {
                         ]}
                         initialData={prices || []}
                         columns={[
-                            { key: "customerCustomerName", label: "Customer" },
-                            { key: "productProductName", label: "Product" },
+                            { key: "customerName", label: "Customer" },
+                            { key: "productName", label: "Product" },
                             { key: "unitPrice", label: "Price" },
                             { key: "statusMaster", label: "Status" },
                         ]}
@@ -223,16 +224,16 @@ export default function CustomersPage() {
                         fields={[
                             { key: "customerId", label: "Customer", type: "select", required: true, options: customerOptions },
                             { key: "companyId", label: "Company", type: "select", options: companyOptions },
-                            { key: "creditLimitAmount", label: "Credit Limit Amount", type: "number", required: true },
-                            { key: "currentBalance", label: "Current Balance", type: "number" },
+                            { key: "approvedCreditLimitAmount", label: "Credit Limit Amount", type: "number", required: true },
+                            { key: "totalOutstandingAmount", label: "Current Balance", type: "number" },
                             { key: "remarks", label: "Remarks", type: "textarea" },
                             { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
                         ]}
                         initialData={creditLimits || []}
                         columns={[
-                            { key: "customerCustomerName", label: "Customer" },
-                            { key: "creditLimitAmount", label: "Limit" },
-                            { key: "currentBalance", label: "Balance" },
+                            { key: "customerName", label: "Customer" },
+                            { key: "approvedCreditLimitAmount", label: "Limit" },
+                            { key: "totalOutstandingAmount", label: "Balance" },
                             { key: "statusMaster", label: "Status" },
                         ]}
                     />
@@ -252,7 +253,7 @@ export default function CustomersPage() {
                         ]}
                         initialData={creditFiles || []}
                         columns={[
-                            { key: "customerCustomerName", label: "Customer" },
+                            { key: "customerName", label: "Customer" },
                             { key: "fileName", label: "File Name" },
                             { key: "statusMaster", label: "Status" },
                         ]}

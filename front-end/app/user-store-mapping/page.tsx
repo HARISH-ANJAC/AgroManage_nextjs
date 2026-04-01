@@ -23,6 +23,6 @@ export default function UserStoreMappingPage() {
     { key: "roleId", label: "Role", type: "select", options: roleOptions },
     { key: "status", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
   ]} initialData={mappings || []} columns={[
-    { key: "loginName", label: "User" }, { key: "companyName", label: "Company" }, { key: "storeName", label: "Store" }, { key: "roleName", label: "Role" }, { key: "statusUserToRole", label: "Status" },
+    { key: "userName", label: "User" }, { key: "companyName", label: "Company" }, { key: "storeName", label: "Store" }, { key: "roleName", label: "Role" }, { key: "statusUserToRole", label: "Status" },
   ]} />;
 }
