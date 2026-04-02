@@ -62,13 +62,13 @@ function CreatePurchaseBookingContent() {
     const today = new Date().toISOString().split("T")[0];
 
     // Master Data
-    const { data: stores } = useMasterData("stores");
-    const { data: companies } = useMasterData("companies");
-    const { data: suppliers } = useMasterData("suppliers");
-    const { data: currencies } = useMasterData("currencies");
-    const { data: paymentTerms } = useMasterData("payment-terms");
-    const { data: costTypes } = useMasterData("additional-cost-types");
-    const { data: categories } = useMasterData("categories");
+    const { data: stores, isLoading: storesLoading } = useMasterData("stores");
+    const { data: companies, isLoading: companiesLoading } = useMasterData("product-company-category-mappings");
+    const { data: suppliers, isLoading: suppliersLoading } = useMasterData("suppliers");
+    const { data: currencies, isLoading: currenciesLoading } = useMasterData("currencies");
+    const { data: paymentTerms, isLoading: paymentTermsLoading } = useMasterData("payment-terms");
+    const { data: costTypes, isLoading: costTypesLoading } = useMasterData("additional-cost-types");
+    const { data: categories, isLoading: categoriesLoading } = useMasterData("categories");
 
     // Enterprise Stores
     const { orders: pos, getOrderById: getPOById } = usePurchaseOrderStore();
@@ -117,8 +117,14 @@ function CreatePurchaseBookingContent() {
     }, [bookings, editId]);
 
     useEffect(() => {
-        if (!editId) setHeader(prev => ({ ...prev, purchaseInvoiceRefNo: nextPiRefNo }));
-    }, [nextPiRefNo, editId]);
+        if (!editId) {
+            setHeader(prev => ({ 
+                ...prev, 
+                purchaseInvoiceRefNo: nextPiRefNo,
+                companyId: prev.companyId || (companies[0]?.companyId || "")
+            }));
+        }
+    }, [nextPiRefNo, editId, companies]);
 
     // Financials
     const financials = useMemo(() => {
@@ -353,10 +359,14 @@ function CreatePurchaseBookingContent() {
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Company</Label>
-                                        <Select value={String(header.companyId)} onValueChange={(v) => setHeader({...header, companyId: v})}>
-                                            <SelectTrigger className="h-12 rounded-2xl bg-slate-50/50"><SelectValue placeholder="Select Company" /></SelectTrigger>
-                                            <SelectContent>{companies.map((c: any) => <SelectItem key={c.id || c.Company_Id} value={String(c.id || c.Company_Id)}>{c.companyName || c.Company_Name}</SelectItem>)}</SelectContent>
-                                        </Select>
+                                        {companiesLoading ? (
+                                            <Skeleton className="h-12 w-full rounded-2xl" />
+                                        ) : (
+                                            <Select value={String(header.companyId)} onValueChange={(v) => setHeader({...header, companyId: v})}>
+                                                <SelectTrigger className="h-12 rounded-2xl bg-slate-50/50"><SelectValue placeholder="Select Company" /></SelectTrigger>
+                                                <SelectContent>{companies.map((c: any) => <SelectItem key={c.id} value={String(c.companyId)}>{c.companyName} (@{c.categoryName})</SelectItem>)}</SelectContent>
+                                            </Select>
+                                        )}
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">PO Reference</Label>
@@ -373,7 +383,11 @@ function CreatePurchaseBookingContent() {
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-slate-100">
                                      <div className="space-y-2">
                                         <Label className="text-xs font-bold uppercase text-slate-400">Supplier</Label>
-                                        <Input value={suppliers.find((s:any) => (s.id || s.Supplier_Id) == header.supplierId)?.supplierName || ""} disabled className="h-12 rounded-2xl bg-slate-100/50" placeholder="Auto-filled" />
+                                        {suppliersLoading ? (
+                                            <Skeleton className="h-12 w-full rounded-2xl" />
+                                        ) : (
+                                            <Input value={suppliers.find((s:any) => (s.id || s.Supplier_Id) == header.supplierId)?.supplierName || ""} disabled className="h-12 rounded-2xl bg-slate-100/50" placeholder="Auto-filled" />
+                                        )}
                                      </div>
                                      <div className="space-y-2">
                                         <Label className="text-xs font-bold uppercase text-slate-400">Payment Mode</Label>

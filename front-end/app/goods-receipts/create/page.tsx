@@ -35,9 +35,9 @@ function CreateGRNContent() {
   const today = new Date().toISOString().split("T")[0];
 
   const { orders: pos, getOrderById, isLoading: posLoading } = usePurchaseOrderStore();
-  const { data: stores } = useMasterData("stores");
+  const { data: stores, isLoading: storesLoading } = useMasterData("user-store-mappings");
   const { addGRN, updateGRN, getGRNById, grns = [], isLoading: grnsLoading } = useGoodsReceiptStore();
-  const { data: productsData = [] } = useMasterData("products");
+  const { data: productsData = [], isLoading: productsDataLoading } = useMasterData("products");
 
   const [poLoading, setPoLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -103,9 +103,13 @@ function CreateGRNContent() {
   // Update GRN ref no once grns load (only for new GRN)
   useEffect(() => {
     if (!editId) {
-      setHeader(prev => ({ ...prev, grnRefNo: nextGrnRefNo }));
+      setHeader(prev => ({ 
+        ...prev, 
+        grnRefNo: nextGrnRefNo,
+        grnStoreId: prev.grnStoreId || (stores[0]?.storeIdUserToRole || ""),
+      }));
     }
-  }, [nextGrnRefNo, editId]);
+  }, [nextGrnRefNo, editId, stores]);
 
   // Auto-populate from PO when selected
   useEffect(() => {
@@ -403,12 +407,16 @@ function CreateGRNContent() {
             {/* GRN Store */}
             <div className="space-y-2">
               <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">GRN Store *</Label>
-              <Select value={String(header.grnStoreId)} onValueChange={(v) => setHeader({ ...header, grnStoreId: Number(v) })}>
-                <SelectTrigger className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11"><SelectValue placeholder="Select Store" /></SelectTrigger>
-                <SelectContent>
-                  {stores.map((s: any) => <SelectItem key={s.id} value={String(s.id)}>{s.storeName}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              {storesLoading ? (
+                <Skeleton className="h-11 w-full rounded-xl" />
+              ) : (
+                <Select value={String(header.grnStoreId)} onValueChange={(v) => setHeader({ ...header, grnStoreId: Number(v) })}>
+                  <SelectTrigger className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11"><SelectValue placeholder="Select Store" /></SelectTrigger>
+                  <SelectContent>
+                    {stores.map((s: any) => <SelectItem key={s.id} value={String(s.storeIdUserToRole)}>{s.storeName} (@{s.userName})</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             {/* GRN Source */}

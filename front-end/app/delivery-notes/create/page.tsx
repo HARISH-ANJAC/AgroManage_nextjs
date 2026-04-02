@@ -44,8 +44,8 @@ function CreateDNContent() {
 
   const { orders: salesOrders, getOrderById } = useSalesOrderStore();
   const { notes, addNote, updateNote, getNoteById } = useDeliveryNoteStore();
-  const { data: stores = [] } = useStores();
-  const { data: productsData = [] } = useMasterData("products");
+  const { data: stores = [], isLoading: storesLoading } = useStores();
+  const { data: productsData = [], isLoading: productsDataLoading } = useMasterData("products");
 
   const [header, setHeader] = useState({
     deliveryDate: today,
@@ -368,14 +368,18 @@ function CreateDNContent() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="space-y-2">
               <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">From Store</Label>
-              <Select value={header.fromStoreId.toString()} onValueChange={(v) => setHeader({ ...header, fromStoreId: Number(v) })}>
-                <SelectTrigger className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11 font-bold text-[#0F172A]">
-                  <SelectValue placeholder="Select Warehouse" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  {stores.map((s: any) => <SelectItem key={s.id} value={s.id.toString()}>{s.storeName}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              {storesLoading ? (
+                <Skeleton className="h-11 w-full rounded-xl" />
+              ) : (
+                <Select value={header.fromStoreId.toString()} onValueChange={(v) => setHeader({ ...header, fromStoreId: Number(v) })}>
+                  <SelectTrigger className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11 font-bold text-[#0F172A]">
+                    <SelectValue placeholder="Select Warehouse" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {stores.map((s: any) => <SelectItem key={s.id} value={s.storeIdUserToRole.toString()}>{s.storeName} (@{s.userName})</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             <div className="space-y-2">

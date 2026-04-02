@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { useCustomerReceiptStore } from "@/hooks/useCustomerReceiptStore";
 import { useCustomers, useCompanies, useCurrencies } from "@/hooks/useStoreData";
 import { getCurrentUser } from "@/lib/auth";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function CreateReceiptContent() {
   const router = useRouter();
@@ -33,9 +34,9 @@ function CreateReceiptContent() {
   const today = new Date().toISOString().split("T")[0];
 
   const { addReceipt, getReceiptById, getUnpaidInvoicesByCustomerId, isLoading } = useCustomerReceiptStore();
-  const { data: customers = [] } = useCustomers();
-  const { data: companies = [] } = useCompanies();
-  const { data: currencies = [] } = useCurrencies();
+  const { data: customers = [], isLoading: customersLoading } = useCustomers();
+  const { data: companies = [], isLoading: companiesLoading } = useCompanies();
+  const { data: currencies = [], isLoading: currenciesLoading } = useCurrencies();
 
   const [header, setHeader] = useState({
     receiptDate: today,
@@ -54,6 +55,16 @@ function CreateReceiptContent() {
 
   const [items, setItems] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
+
+  // Initialize defaults
+  useEffect(() => {
+    if (!editId && (companies as any[]).length > 0) {
+      setHeader(prev => ({
+        ...prev,
+        companyId: prev.companyId || ((companies as any[])[0]?.companyId || 0)
+      }));
+    }
+  }, [editId, companies]);
 
   // Load existing data if editing
   useEffect(() => {
@@ -195,16 +206,20 @@ function CreateReceiptContent() {
 
                 <div className="space-y-2">
                   <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Customer*</Label>
-                  <Select value={String(header.customerId)} onValueChange={(v) => setHeader({ ...header, customerId: Number(v) })}>
-                    <SelectTrigger className="rounded-xl h-11 font-bold">
-                      <SelectValue placeholder="Select Customer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {customers.map((c: any) => (
-                        <SelectItem key={c.id} value={String(c.id)}>{c.customerName}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {customersLoading ? (
+                    <Skeleton className="h-11 w-full rounded-xl" />
+                  ) : (
+                    <Select value={String(header.customerId)} onValueChange={(v) => setHeader({ ...header, customerId: Number(v) })}>
+                      <SelectTrigger className="rounded-xl h-11 font-bold">
+                        <SelectValue placeholder="Select Customer" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {customers.map((c: any) => (
+                          <SelectItem key={c.id} value={String(c.id)}>{c.customerName || c.CUSTOMER_NAME}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -301,16 +316,20 @@ function CreateReceiptContent() {
             <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-6 space-y-6">
               <div className="space-y-2">
                 <Label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Company Account</Label>
-                <Select value={String(header.companyId)} onValueChange={(v) => setHeader({ ...header, companyId: Number(v) })}>
-                  <SelectTrigger className="rounded-xl font-bold bg-[#F8FAFC]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {companies.map((c: any) => (
-                      <SelectItem key={c.id} value={String(c.id)}>{c.companyName}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {companiesLoading ? (
+                  <Skeleton className="h-11 w-full rounded-xl" />
+                ) : (
+                  <Select value={String(header.companyId)} onValueChange={(v) => setHeader({ ...header, companyId: Number(v) })}>
+                    <SelectTrigger className="rounded-xl font-bold bg-[#F8FAFC]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(companies as any[]).map((c: any) => (
+                        <SelectItem key={c.id} value={String(c.companyId)}>{c.companyName} (@{c.categoryName})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
 
               <div className="space-y-2">

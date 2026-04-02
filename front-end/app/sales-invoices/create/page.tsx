@@ -38,7 +38,7 @@ function CreateInvoiceContent() {
 
   const { notes: deliveryNotes, getNoteById: getDNById } = useDeliveryNoteStore();
   const { invoices, addInvoice, updateInvoice, getInvoiceById, isLoading } = useSalesInvoiceStore();
-  const { data: stores = [] } = useStores();
+  const { data: stores = [], isLoading: storesLoading } = useStores();
 
   const [header, setHeader] = useState({
     invoiceDate: today,
@@ -57,6 +57,16 @@ function CreateInvoiceContent() {
 
   const [items, setItems] = useState<any[]>([]);
   const [isFetchingData, setIsFetchingData] = useState(false);
+
+  // Initialize defaults
+  useEffect(() => {
+    if (!editId && stores.length > 0) {
+      setHeader(prev => ({
+        ...prev,
+        fromStoreId: prev.fromStoreId || (stores[0]?.storeIdUserToRole || 0)
+      }));
+    }
+  }, [editId, stores]);
 
   // Load existing data if editing
   useEffect(() => {
@@ -449,16 +459,20 @@ function CreateInvoiceContent() {
 
               <div className="space-y-2">
                 <Label className="text-[10px] font-bold text-[#94A3B8] uppercase">Dispatch Hub</Label>
-                <Select value={String(header.fromStoreId)} onValueChange={(v) => setHeader({ ...header, fromStoreId: Number(v) })}>
-                  <SelectTrigger className="h-10 rounded-xl font-bold bg-[#F8FAFC]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {stores.map((s: any, sIdx: number) => (
-                      <SelectItem key={s.id || `store-${sIdx}`} value={String(s.id)}>{s.storeName}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {storesLoading ? (
+                  <Skeleton className="h-10 w-full rounded-xl" />
+                ) : (
+                  <Select value={String(header.fromStoreId)} onValueChange={(v) => setHeader({ ...header, fromStoreId: Number(v) })}>
+                    <SelectTrigger className="h-10 rounded-xl font-bold bg-[#F8FAFC]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {stores.map((s: any, sIdx: number) => (
+                        <SelectItem key={s.id || `store-${sIdx}`} value={String(s.storeIdUserToRole)}>{s.storeName} (@{s.userName})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
 
               <div className="space-y-2">

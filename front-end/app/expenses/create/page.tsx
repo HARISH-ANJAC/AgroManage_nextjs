@@ -20,6 +20,7 @@ import {
   User,
   Hash
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,10 +47,10 @@ function CreateExpenseContent() {
 
   const { expenses = [], getExpenseById, addExpense, updateExpense } = useExpenseStore();
   const { orders: poList = [], getOrderById, isLoading: isPOListLoading } = usePurchaseOrderStore();
-  const { data: companies = [] } = useMasterData("companies");
-  const { data: accountHeads = [] } = useMasterData("account-heads");
-  const { data: suppliers = [] } = useMasterData("suppliers");
-  const { data: currencies = [] } = useMasterData("currencies");
+  const { data: companies = [], isLoading: companiesLoading } = useMasterData("product-company-category-mappings");
+  const { data: accountHeads = [], isLoading: accountHeadsLoading } = useMasterData("account-heads");
+  const { data: suppliers = [], isLoading: suppliersLoading } = useMasterData("suppliers");
+  const { data: currencies = [], isLoading: currenciesLoading } = useMasterData("currencies");
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -80,6 +81,16 @@ function CreateExpenseContent() {
   }, [poList, expenses, editId, header.poRefNo]);
 
   const [allocations, setAllocations] = useState<AllocationLine[]>([]);
+
+  // Initialize defaults
+  useEffect(() => {
+    if (!editId && (companies as any[]).length > 0) {
+      setHeader(prev => ({
+        ...prev,
+        companyId: prev.companyId || ((companies as any[])[0]?.companyId || 0)
+      }));
+    }
+  }, [editId, companies]);
 
   const totalAmount = useMemo(() =>
     allocations.reduce((sum, item) => sum + item.allocatedAmount, 0)
@@ -235,16 +246,20 @@ function CreateExpenseContent() {
 
                 <div className="space-y-2">
                   <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Account Head*</Label>
-                  <Select value={String(header.accountHeadId)} onValueChange={(v) => setHeader({ ...header, accountHeadId: Number(v) })}>
-                    <SelectTrigger className="rounded-xl h-11 font-bold">
-                      <SelectValue placeholder="Select Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {accountHeads.map((ah: any, idx: number) => (
-                        <SelectItem key={`${ah.id || ah.accountHeadId}-${idx}`} value={String(ah.id || ah.accountHeadId)}>{ah.accountHeadName}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {accountHeadsLoading ? (
+                    <Skeleton className="h-11 w-full rounded-xl" />
+                  ) : (
+                    <Select value={String(header.accountHeadId)} onValueChange={(v) => setHeader({ ...header, accountHeadId: Number(v) })}>
+                      <SelectTrigger className="rounded-xl h-11 font-bold">
+                        <SelectValue placeholder="Select Category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {accountHeads.map((ah: any, idx: number) => (
+                          <SelectItem key={`${ah.id || ah.accountHeadId}-${idx}`} value={String(ah.id || ah.accountHeadId)}>{ah.accountHeadName}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -322,30 +337,38 @@ function CreateExpenseContent() {
             <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-sm p-6 space-y-6">
               <div className="space-y-2">
                 <Label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Company Account</Label>
-                <Select value={String(header.companyId)} onValueChange={(v) => setHeader({ ...header, companyId: Number(v) })}>
-                  <SelectTrigger className="rounded-xl font-bold bg-[#F8FAFC]">
-                    <SelectValue placeholder="Select Company" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {companies.map((c: any, idx: number) => (
-                      <SelectItem key={`${c.id}-${idx}`} value={String(c.id)}>{c.companyName}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {companiesLoading ? (
+                  <Skeleton className="h-11 w-full rounded-xl" />
+                ) : (
+                  <Select value={String(header.companyId)} onValueChange={(v) => setHeader({ ...header, companyId: Number(v) })}>
+                    <SelectTrigger className="rounded-xl font-bold bg-[#F8FAFC]">
+                      <SelectValue placeholder="Select Company" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(companies as any[]).map((c: any, idx: number) => (
+                        <SelectItem key={`${c.id}-${idx}`} value={String(c.companyId)}>{c.companyName} (@{c.categoryName})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Service Provider (Supplier)</Label>
-                <Select value={String(header.expenseSupplierId)} onValueChange={(v) => setHeader({ ...header, expenseSupplierId: Number(v) })}>
-                  <SelectTrigger className="rounded-xl font-bold bg-[#F8FAFC]">
-                    <SelectValue placeholder="Select Supplier" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {suppliers.map((s: any, idx: number) => (
-                      <SelectItem key={`${s.id}-${idx}`} value={String(s.id)}>{s.supplierName}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {suppliersLoading ? (
+                  <Skeleton className="h-11 w-full rounded-xl" />
+                ) : (
+                  <Select value={String(header.expenseSupplierId)} onValueChange={(v) => setHeader({ ...header, expenseSupplierId: Number(v) })}>
+                    <SelectTrigger className="rounded-xl font-bold bg-[#F8FAFC]">
+                      <SelectValue placeholder="Select Supplier" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {suppliers.map((s: any, idx: number) => (
+                        <SelectItem key={`${s.id}-${idx}`} value={String(s.id)}>{s.supplierName}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
 
               <div className="space-y-2">

@@ -71,15 +71,15 @@ function CreateSalesOrderContent(): JSX.Element {
   const today = new Date().toISOString().split("T")[0];
 
   // Master Data Hooks
-  const { data: companies = [] } = useCompanies();
-  const { data: customers = [] } = useCustomers();
-  const { data: stores = [] } = useStores();
-  const { data: salesPersons = [] } = useSalesPersons();
-  const { data: currencies = [] } = useCurrencies();
-  const { data: paymentTerms = [] } = usePaymentTerms();
-  const { data: productsData = [] } = useProducts();
-  const { data: uoms = [] } = useUoms();
-  const { data: billingLocations = [] } = useBillingLocations();
+  const { data: companies = [], isLoading: companiesLoading } = useCompanies();
+  const { data: customers = [], isLoading: customersLoading } = useCustomers();
+  const { data: stores = [], isLoading: storesLoading } = useStores();
+  const { data: salesPersons = [], isLoading: salesPersonsLoading } = useSalesPersons();
+  const { data: currencies = [], isLoading: currenciesLoading } = useCurrencies();
+  const { data: paymentTerms = [], isLoading: paymentTermsLoading } = usePaymentTerms();
+  const { data: productsData = [], isLoading: productsDataLoading } = useProducts();
+  const { data: uoms = [], isLoading: uomsLoading } = useUoms();
+  const { data: billingLocations = [], isLoading: billingLocationsLoading } = useBillingLocations();
 
   const [header, setHeader] = useState({
     salesOrderDate: today,
@@ -159,8 +159,8 @@ function CreateSalesOrderContent(): JSX.Element {
         if (companies.length && !header.companyId) {
           setHeader(prev => ({
             ...prev,
-            companyId: prev.companyId || (companies[0]?.id || 0),
-            storeId: prev.storeId || (stores[0]?.id || 0),
+            companyId: prev.companyId || (companies[0]?.companyId || 0),
+            storeId: prev.storeId || (stores[0]?.storeIdUserToRole || 0),
             currencyId: prev.currencyId || (currencies[0]?.id || 0),
             paymentTermId: prev.paymentTermId || (paymentTerms[0]?.id || 0),
             salesPersonId: prev.salesPersonId || (salesPersons[0]?.id || 0),
@@ -345,27 +345,39 @@ function CreateSalesOrderContent(): JSX.Element {
               </div>
               <div className="space-y-2">
                 <Label>Company</Label>
-                <Select value={String(header.companyId)} onValueChange={v => setHeader({ ...header, companyId: Number(v) })}>
-                  <SelectTrigger className="rounded-xl h-11 font-bold"><SelectValue placeholder="Select Company" /></SelectTrigger>
-                  <SelectContent>{companies.map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.COMPANY_NAME || c.companyName}</SelectItem>)}</SelectContent>
-                </Select>
+                {companiesLoading ? (
+                  <Skeleton className="h-11 w-full rounded-xl" />
+                ) : (
+                  <Select value={String(header.companyId)} onValueChange={v => setHeader({ ...header, companyId: Number(v) })}>
+                    <SelectTrigger className="rounded-xl h-11 font-bold"><SelectValue placeholder="Select Company" /></SelectTrigger>
+                    <SelectContent>{companies.map((c: any) => <SelectItem key={c.id} value={String(c.companyId)}>{c.companyName} (@{c.categoryName})</SelectItem>)}</SelectContent>
+                  </Select>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Customer</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground z-10" />
-                  <Select value={String(header.customerId)} onValueChange={v => setHeader({ ...header, customerId: Number(v) })}>
-                    <SelectTrigger className="rounded-xl h-11 pl-9 font-bold text-slate-700 shadow-sm transition-all focus:ring-emerald-500"><SelectValue placeholder="Select Customer" /></SelectTrigger>
-                    <SelectContent>{customers.map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.CUSTOMER_NAME || c.customerName}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
+                {customersLoading ? (
+                  <Skeleton className="h-11 w-full rounded-xl" />
+                ) : (
+                  <div className="relative">
+                    <User className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground z-10" />
+                    <Select value={String(header.customerId)} onValueChange={v => setHeader({ ...header, customerId: Number(v) })}>
+                      <SelectTrigger className="rounded-xl h-11 pl-9 font-bold text-slate-700 shadow-sm transition-all focus:ring-emerald-500"><SelectValue placeholder="Select Customer" /></SelectTrigger>
+                      <SelectContent>{customers.map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.CUSTOMER_NAME || c.customerName}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Store</Label>
-                <Select value={String(header.storeId)} onValueChange={v => setHeader({ ...header, storeId: Number(v) })}>
-                  <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select Store" /></SelectTrigger>
-                  <SelectContent>{stores.map((s: any) => <SelectItem key={s.id} value={String(s.id)}>{s.STORE_NAME || s.storeName}</SelectItem>)}</SelectContent>
-                </Select>
+                {storesLoading ? (
+                  <Skeleton className="h-11 w-full rounded-xl" />
+                ) : (
+                  <Select value={String(header.storeId)} onValueChange={v => setHeader({ ...header, storeId: Number(v) })}>
+                    <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select Store" /></SelectTrigger>
+                    <SelectContent>{stores.map((s: any) => <SelectItem key={s.id} value={String(s.storeIdUserToRole)}>{s.storeName} (@{s.userName})</SelectItem>)}</SelectContent>
+                  </Select>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Billing Location</Label>

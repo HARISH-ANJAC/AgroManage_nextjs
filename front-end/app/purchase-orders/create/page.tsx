@@ -43,13 +43,13 @@ function CreatePurchaseOrderContent() {
   const today = new Date().toISOString().split("T")[0];
 
   // Master Data
-  const { data: companies = [] } = useMasterData("companies");
-  const { data: suppliers = [] } = useMasterData("suppliers");
-  const { data: stores = [] } = useMasterData("stores");
-  const { data: paymentTerms = [] } = useMasterData("payment-terms");
-  const { data: currencies = [] } = useMasterData("currencies");
-  const { data: productsData = [] } = useMasterData("products");
-  const { data: additionalCostTypes = [] } = useMasterData("additional-cost-types");
+  const { data: companies = [], isLoading: companiesLoading } = useMasterData("product-company-category-mappings");
+  const { data: suppliers = [], isLoading: suppliersLoading } = useMasterData("suppliers");
+  const { data: stores = [], isLoading: storesLoading } = useMasterData("user-store-mappings");
+  const { data: paymentTerms = [], isLoading: paymentTermsLoading } = useMasterData("payment-terms");
+  const { data: currencies = [], isLoading: currenciesLoading } = useMasterData("currencies");
+  const { data: productsData = [], isLoading: productsDataLoading } = useMasterData("products");
+  const { data: additionalCostTypes = [], isLoading: additionalCostTypesLoading } = useMasterData("additional-cost-types");
 
   const [header, setHeader] = useState({
     poDate: today,
@@ -138,9 +138,9 @@ function CreatePurchaseOrderContent() {
 
     setHeader(prev => ({
       ...prev,
-      companyId: prev.companyId || (companies[0]?.id || 0),
+      companyId: prev.companyId || (companies[0]?.companyId || 0),
       supplierId: prev.supplierId || (suppliers[0]?.id || 0),
-      storeId: prev.storeId || (stores[0]?.id || 0),
+      storeId: prev.storeId || (stores[0]?.storeIdUserToRole || 0),
       paymentTermId: prev.paymentTermId || (paymentTerms[0]?.id || 0),
       currencyId: prev.currencyId || (currencies[0]?.id || 0),
       modeOfPayment: prev.modeOfPayment || "Cash"
@@ -376,24 +376,36 @@ function CreatePurchaseOrderContent() {
               </div>
               <div className="space-y-2">
                 <Label>Company</Label>
-                <Select value={String(header.companyId)} onValueChange={v => setHeader({ ...header, companyId: Number(v) })}>
-                  <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select Company" /></SelectTrigger>
-                  <SelectContent>{companies.map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.companyName}</SelectItem>)}</SelectContent>
-                </Select>
+                {companiesLoading ? (
+                  <Skeleton className="h-11 w-full rounded-xl" />
+                ) : (
+                  <Select value={String(header.companyId)} onValueChange={v => setHeader({ ...header, companyId: Number(v) })}>
+                    <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select Company" /></SelectTrigger>
+                    <SelectContent>{companies.map((c: any) => <SelectItem key={c.id} value={String(c.companyId)}>{c.companyName} (@{c.categoryName})</SelectItem>)}</SelectContent>
+                  </Select>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Supplier</Label>
-                <Select value={String(header.supplierId)} onValueChange={v => setHeader({ ...header, supplierId: Number(v) })}>
-                  <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select Supplier" /></SelectTrigger>
-                  <SelectContent>{suppliers.map((s: any) => <SelectItem key={s.id} value={String(s.id)}>{s.supplierName}</SelectItem>)}</SelectContent>
-                </Select>
+                {suppliersLoading ? (
+                  <Skeleton className="h-11 w-full rounded-xl" />
+                ) : (
+                  <Select value={String(header.supplierId)} onValueChange={v => setHeader({ ...header, supplierId: Number(v) })}>
+                    <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select Supplier" /></SelectTrigger>
+                    <SelectContent>{suppliers.map((s: any) => <SelectItem key={s.id} value={String(s.id)}>{s.supplierName}</SelectItem>)}</SelectContent>
+                  </Select>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Store</Label>
-                <Select value={String(header.storeId)} onValueChange={v => setHeader({ ...header, storeId: Number(v) })}>
-                  <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select Store" /></SelectTrigger>
-                  <SelectContent>{stores.map((s: any) => <SelectItem key={s.id} value={String(s.id)}>{s.storeName}</SelectItem>)}</SelectContent>
-                </Select>
+                {storesLoading ? (
+                  <Skeleton className="h-11 w-full rounded-xl" />
+                ) : (
+                  <Select value={String(header.storeId)} onValueChange={v => setHeader({ ...header, storeId: Number(v) })}>
+                    <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select Store" /></SelectTrigger>
+                    <SelectContent>{stores.map((s: any) => <SelectItem key={s.id} value={String(s.storeIdUserToRole)}>{s.storeName} (@{s.userName})</SelectItem>)}</SelectContent>
+                  </Select>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Payment Term</Label>

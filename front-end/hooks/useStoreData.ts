@@ -54,8 +54,8 @@ export function useTaxInvoices() {
 }
 
 export function useCompanies() {
-  return useMasterData("companies", [
-    { id: 1, COMPANY_NAME: "AgroManage Tanzania Ltd", status: "Active" }
+  return useMasterData("product-company-category-mappings", [
+    { id: 1, companyName: "AgroManage Tanzania Ltd", status: "Active" }
   ], "CMP");
 }
 
@@ -67,9 +67,9 @@ export function useCustomers() {
 }
 
 export function useStores() {
-  return useMasterData("stores", [
-    { id: 1, STORE_NAME: "Main Warehouse", status: "Active" },
-    { id: 2, STORE_NAME: "Zanzibar Hub", status: "Active" }
+  return useMasterData("user-store-mappings", [
+    { id: 1, storeName: "Main Warehouse", status: "Active" },
+    { id: 2, storeName: "Zanzibar Hub", status: "Active" }
   ], "STR");
 }
 
