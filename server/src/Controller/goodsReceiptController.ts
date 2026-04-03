@@ -3,6 +3,7 @@ import { db } from "../db/index.js";
 import { 
     TBL_GOODS_INWARD_GRN_HDR,
     TBL_GOODS_INWARD_GRN_DTL,
+    TBL_GOODS_FILES_UPLOAD,
     TBL_PURCHASE_ORDER_HDR,
     TBL_PRODUCT_MASTER,
     TBL_PURCHASE_ORDER_DTL
@@ -35,9 +36,16 @@ export const getGoodsReceiptById = async (req: Request, res: Response): Promise<
         .leftJoin(TBL_PURCHASE_ORDER_DTL, eq(TBL_GOODS_INWARD_GRN_DTL.PO_DTL_SNO, TBL_PURCHASE_ORDER_DTL.SNO))
         .where(eq(TBL_GOODS_INWARD_GRN_DTL.GRN_REF_NO, id as string));
 
+        const filesData = await db.select().from(TBL_GOODS_FILES_UPLOAD).where(eq(TBL_GOODS_FILES_UPLOAD.GRN_REF_NO, id as string));
+        const processedFiles = filesData.map(f => ({
+            ...f,
+            CONTENT_DATA: f.CONTENT_DATA ? f.CONTENT_DATA.toString('base64') : null
+        }));
+
         return res.status(200).json({
             header: header[0],
-            items
+            items,
+            files: processedFiles
         });
     } catch (error) {
         console.error(error);
@@ -97,6 +105,23 @@ export const createGoodsReceipt = async (req: Request, res: Response): Promise<R
                 await tx.insert(TBL_GOODS_INWARD_GRN_DTL).values(dValues as any);
             }
 
+            if (req.body.files && req.body.files.length > 0) {
+                const fValues = req.body.files.map((f: any) => ({
+                    GRN_REF_NO: header.grnRefNo,
+                    DOCUMENT_TYPE: f.documentType,
+                    DESCRIPTION_DETAILS: f.descriptionDetails,
+                    FILE_NAME: f.fileName,
+                    CONTENT_TYPE: f.contentType,
+                    CONTENT_DATA: f.contentData ? Buffer.from(f.contentData, 'base64') : null,
+                    REMARKS: f.remarks,
+                    STATUS_MASTER: "Active",
+                    CREATED_BY: audit?.user,
+                    CREATED_IP_ADDRESS: req.ip || "127.0.0.1",
+                    CREATED_DATE: new Date()
+                }));
+                await tx.insert(TBL_GOODS_FILES_UPLOAD).values(fValues as any);
+            }
+
             return { msg: "Goods Receipt created successfully", grnRefNo: header.grnRefNo };
         } catch (error: any) {
             console.error(error);
@@ -145,6 +170,24 @@ export const updateGoodsReceipt = async (req: Request, res: Response): Promise<R
                     CREATED_IP_ADDRESS: req.ip || "127.0.0.1"
                 }));
                 await tx.insert(TBL_GOODS_INWARD_GRN_DTL).values(dValues as any);
+            }
+
+            await tx.delete(TBL_GOODS_FILES_UPLOAD).where(eq(TBL_GOODS_FILES_UPLOAD.GRN_REF_NO, id as string));
+            if (req.body.files && req.body.files.length > 0) {
+                const fValues = req.body.files.map((f: any) => ({
+                    GRN_REF_NO: id as string,
+                    DOCUMENT_TYPE: f.documentType,
+                    DESCRIPTION_DETAILS: f.descriptionDetails,
+                    FILE_NAME: f.fileName,
+                    CONTENT_TYPE: f.contentType,
+                    CONTENT_DATA: f.contentData ? Buffer.from(f.contentData, 'base64') : null,
+                    REMARKS: f.remarks,
+                    STATUS_MASTER: "Active",
+                    CREATED_BY: audit?.user,
+                    CREATED_IP_ADDRESS: req.ip || "127.0.0.1",
+                    CREATED_DATE: new Date()
+                }));
+                await tx.insert(TBL_GOODS_FILES_UPLOAD).values(fValues as any);
             }
 
             return { msg: "Goods Receipt updated successfully" };

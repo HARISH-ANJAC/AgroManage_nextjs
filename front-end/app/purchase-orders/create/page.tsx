@@ -3,7 +3,7 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useMemo, Suspense } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Send, Plus, Trash2, Upload, Info, FileText, CheckCircle2, XCircle, X } from "lucide-react";
+import { ArrowLeft, Save, Send, Plus, Trash2, Upload, Info, FileText, CheckCircle2, XCircle, X, History, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import { usePurchaseOrderStore } from "@/hooks/usePurchaseOrderStore";
 import { useMasterData } from "@/hooks/useMasterData";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SupportingDoc } from "@/components/ui/Supporting-Doc";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface LineItem {
@@ -39,7 +40,7 @@ function CreatePurchaseOrderContent() {
   const navigate = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get("id");
-  const { addOrder, updateOrder, getOrderById, approveOrder } = usePurchaseOrderStore();
+  const { orders, addOrder, updateOrder, getOrderById, approveOrder } = usePurchaseOrderStore();
   const today = new Date().toISOString().split("T")[0];
 
   // Master Data
@@ -205,6 +206,15 @@ function CreatePurchaseOrderContent() {
     return curr?.currencyCode || curr?.currencyName || "$";
   }, [header.currencyId, currencies]);
 
+  const purchaseHistory = useMemo(() => {
+    if (!header.companyId || !header.supplierId) return [];
+    return orders.filter((o: any) => 
+      Number(o.COMPANY_ID) === Number(header.companyId) && 
+      Number(o.SUPPLIER_ID) === Number(header.supplierId) &&
+      o.PO_REF_NO !== header.poRefNo
+    ).sort((a: any, b: any) => new Date(b.PO_DATE).getTime() - new Date(a.PO_DATE).getTime());
+  }, [orders, header.companyId, header.supplierId, header.poRefNo]);
+
   // Calculations
   const subtotal = useMemo(() => items.reduce((sum, i) => sum + i.amount, 0), [items]);
   const totalDisc = useMemo(() => items.reduce((sum, i) => sum + (i.amount * i.discPercent) / 100, 0), [items]);
@@ -238,42 +248,6 @@ function CreatePurchaseOrderContent() {
     setAdditionalCosts(prev => [...prev, { id: Date.now(), typeName: "", amount: 0 }]);
   };
 
-  const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const droppedFiles = Array.from(e.dataTransfer.files || []);
-    processFiles(droppedFiles);
-  };
-
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      processFiles(Array.from(e.target.files));
-    }
-  };
-
-  const processFiles = (newFiles: File[]) => {
-    newFiles.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const base64String = (event.target?.result as string).split(",")[1];
-        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-
-        setFiles(prev => [
-          ...prev,
-          {
-            id: Date.now() + Math.random(),
-            documentType: "Other",
-            descriptionDetails: file.name,
-            fileName: file.name,
-            contentType: file.type,
-            contentData: base64String,
-            remarks: "",
-            sizeMB: fileSizeMB
-          }
-        ]);
-      };
-      reader.readAsDataURL(file);
-    });
-  };
 
   const handleSave = async (isSubmit: boolean = false) => {
     if (!header.supplierId || !header.companyId) {
@@ -544,60 +518,61 @@ function CreatePurchaseOrderContent() {
               </div>
             </div>
 
-            <div className="bg-white rounded-[24px] border p-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-              <h3 className="text-[17px] font-bold text-slate-800 mb-6 tracking-tight">Supporting Documents</h3>
+            <SupportingDoc files={files} onFilesChange={setFiles} />
 
-              <div
-                className="w-full flex flex-col items-center justify-center py-14 px-10 border-2 border-dashed border-slate-200/80 rounded-[20px] bg-slate-50/30 mb-8 relative hover:border-primary/30 transition-colors group"
-                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                onDrop={handleFileDrop}
-              >
-                <input
-                  type="file"
-                  multiple
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                  onChange={handleFileInput}
-                />
-                <div className="w-[52px] h-[52px] bg-white rounded-[14px] flex items-center justify-center text-slate-400 mb-5 shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-slate-200/60 group-hover:scale-105 transition-transform duration-300 group-hover:text-primary">
-                  <Upload className="w-6 h-6" strokeWidth={2.5} />
-                </div>
-                <p className="font-bold text-slate-800 text-[15px] mb-1.5">Click to upload or drag and drop</p>
-                <p className="text-slate-400 text-[13px] font-medium">PDF, JPG, PNG up to 10MB</p>
-              </div>
-
-              {files.length > 0 && (
-                <div className="space-y-4">
-                  <p className="text-[11px] font-bold text-slate-400 tracking-widest uppercase">
-                    SELECTED FILES ({files.length})
-                  </p>
-                  <div className="space-y-3">
-                    {files.map(f => {
-                      const sizeStr = f.sizeMB ? `${f.sizeMB} MB` : (f.contentData ? `${(f.contentData.length * 0.75 / (1024 * 1024)).toFixed(2)} MB` : "0.01 MB");
-                      return (
-                        <div key={f.id} className="flex items-center justify-between p-4 border border-slate-200/70 rounded-[14px] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 border border-emerald-100/50 rounded-[10px] flex items-center justify-center text-emerald-500 bg-emerald-50/50 shrink-0">
-                              <FileText className="w-5 h-5" />
-                            </div>
-                            <div className="flex flex-col gap-0.5">
-                              <span className="text-[15px] font-bold text-slate-800 leading-tight">{f.fileName || 'Unnamed File'}</span>
-                              <span className="text-xs font-semibold text-slate-400">{sizeStr}</span>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => setFiles(prev => prev.filter(file => file.id !== f.id))}
-                            className="text-red-300 hover:text-red-500 transition-colors p-2 shrink-0 mr-1"
-                            type="button"
-                          >
-                            <Trash2 className="w-[18px] h-[18px]" />
-                          </button>
-                        </div>
-                      );
-                    })}
+            {/* Purchase History */}
+            <div className="bg-white rounded-3xl border p-8 shadow-sm">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-6">Purchase History</h3>
+              <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                {purchaseHistory.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-12 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                    <div className="size-10 rounded-full bg-white flex items-center justify-center text-slate-300 mb-3 border shadow-sm">
+                       <History className="w-5 h-5" />
+                    </div>
+                    <p className="text-xs font-medium text-slate-500">No past purchases found</p>
+                    <p className="text-[10px] text-slate-400 mt-1">Select a Supplier & Company to see history</p>
                   </div>
-                </div>
-              )}
+                )}
+                {purchaseHistory.map((po: any) => {
+                   const curr = currencies.find((c: any) => Number(c.id) === Number(po.CURRENCY_ID));
+                   const sym = curr?.currencyCode || "$";
+                   return (
+                    <div key={po.PO_REF_NO} className="p-4 bg-slate-50/30 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-md hover:border-slate-200 transition-all group">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                             <span className="text-[13px] font-bold text-slate-900 group-hover:text-primary transition-colors">{po.PO_REF_NO}</span>
+                             {po.STATUS_ENTRY === 'Approved' && <CheckCircle2 className="w-3 h-3 text-emerald-500" />}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                             <Calendar className="w-3 h-3" />
+                             {new Date(po.PO_DATE).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </div>
+                        </div>
+                        <Badge variant={po.STATUS_ENTRY === 'Approved' ? 'success' : 'secondary'} className="text-[10px] px-2 py-0 h-5">
+                          {po.STATUS_ENTRY}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between items-center bg-white/50 p-2 rounded-xl border border-slate-100 group-hover:border-slate-200 transition-all">
+                        <span className="text-sm font-bold text-slate-800">
+                           <span className="text-[10px] text-slate-400 font-medium mr-1">Total:</span> 
+                           {sym} {Number(po.FINAL_PURCHASE_HDR_AMOUNT).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </span>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 text-[11px] font-bold px-3 rounded-lg hover:bg-primary hover:text-white transition-all shadow-sm group-hover:shadow"
+                          onClick={() => window.open(`/purchase-orders/create?id=${encodeURIComponent(po.PO_REF_NO)}`, '_blank')}
+                        >
+                          View PO
+                        </Button>
+                      </div>
+                    </div>
+                   );
+                })}
+              </div>
             </div>
+
             {/* Conversations/History Tracker */}
             <div className="bg-white rounded-3xl border p-8 shadow-sm">
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-6">Discussion & Audit History</h3>

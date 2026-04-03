@@ -582,7 +582,7 @@ export const TBL_CUSTOMER_ADDRESS_DETAILS = StoMasterSchema.table("tbl_Customer_
 });
 
 export const TBL_CUSTOMER_MASTER_FILES_UPLOAD = StoMasterSchema.table("TBL_CUSTOMER_MASTER_FILES_UPLOAD", {
-  SNO: serial("SNO").primaryKey(),
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
   Customer_Id: integer("Customer_Id").references(() => TBL_CUSTOMER_MASTER.Customer_Id),
   DOCUMENT_TYPE: varchar("DOCUMENT_TYPE", { length: 50 }),
   DESCRIPTIONS: varchar("DESCRIPTIONS", { length: 100 }),
@@ -710,7 +710,7 @@ export const TBL_CUSTOMER_CREDIT_LIMIT_DETAILS = StoMasterSchema.table("tbl_Cust
 });
 
 export const CUSTOMER_CREDIT_LIMIT_FILE_UPLOAD = StoMasterSchema.table("CUSTOMER_CREDIT_LIMIT_FILE_UPLOAD", {
-  SNO: serial("SNO").primaryKey(),
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
   CREDIT_LIMIT_ID: integer("CREDIT_LIMIT_ID").references(() => TBL_CUSTOMER_CREDIT_LIMIT_DETAILS.Sno),
   DESCRIPTION_DETAILS: varchar("DESCRIPTION_DETAILS", { length: 100 }),
   FILE_NAME: varchar("FILE_NAME", { length: 150 }),
@@ -723,7 +723,7 @@ export const CUSTOMER_CREDIT_LIMIT_FILE_UPLOAD = StoMasterSchema.table("CUSTOMER
   MODIFIED_BY: varchar("MODIFIED_BY", { length: 50 }),
   MODIFIED_DATE: timestamp("MODIFIED_DATE", { mode: "date" }),
   MODIFIED_MAC_ADDRESS: varchar("MODIFIED_MAC_ADDRESS", { length: 50 }),
-  Document_Type: varchar("Document_Type", { length: 60 }),
+  DOCUMENT_TYPE: varchar("DOCUMENT_TYPE", { length: 60 }),
 });
 
 export const TBL_ACCOUNTS_LEDGER_MASTER = StoMasterSchema.table("TBL_ACCOUNTS_LEDGER_MASTER", {

@@ -26,6 +26,7 @@ import { useCustomerReceiptStore } from "@/hooks/useCustomerReceiptStore";
 import { useCustomers, useCompanies, useCurrencies } from "@/hooks/useStoreData";
 import { getCurrentUser } from "@/lib/auth";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SupportingDoc } from "@/components/ui/Supporting-Doc";
 
 function CreateReceiptContent() {
   const router = useRouter();
@@ -55,6 +56,7 @@ function CreateReceiptContent() {
 
   const [items, setItems] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
+  const [files, setFiles] = useState<any[]>([]);
 
   // Initialize defaults
   useEffect(() => {
@@ -100,6 +102,10 @@ function CreateReceiptContent() {
               remarks: it.remarks || ""
             })));
           }
+
+          if (res.files) {
+            setFiles(res.files);
+          }
           toast.success("Details loaded", { id: "load-cr" });
         }
       }
@@ -143,6 +149,14 @@ function CreateReceiptContent() {
       const payload = {
         header: header,
         items: items.filter(it => it.receiptInvoiceAdjustAmount > 0),
+        files: files.map(f => ({
+          documentType: f.DOCUMENT_TYPE || f.documentType,
+          descriptionDetails: f.DESCRIPTION_DETAILS || f.descriptionDetails,
+          fileName: f.FILE_NAME || f.fileName,
+          contentType: f.CONTENT_TYPE || f.contentType,
+          contentData: f.CONTENT_DATA || f.contentData,
+          remarks: f.REMARKS || f.remarks,
+        })),
         audit: { user: getCurrentUser()?.username || "System" }
       };
 
@@ -291,6 +305,12 @@ function CreateReceiptContent() {
                 )}
               </div>
             </div>
+
+            {/* Supporting Documents Section */}
+            <SupportingDoc 
+              files={files} 
+              onFilesChange={setFiles} 
+            />
           </div>
 
           <div className="col-span-12 lg:col-span-4 space-y-8">

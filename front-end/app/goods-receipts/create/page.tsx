@@ -13,6 +13,7 @@ import { usePurchaseOrderStore } from "@/hooks/usePurchaseOrderStore";
 import { useGoodsReceiptStore } from "@/hooks/useGoodsReceiptStore";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { SupportingDoc } from "@/components/ui/Supporting-Doc";
 
 interface GRNItem {
   id: number;
@@ -99,6 +100,7 @@ function CreateGRNContent() {
   });
 
   const [items, setItems] = useState<GRNItem[]>([]);
+  const [files, setFiles] = useState<any[]>([]);
 
   // Update GRN ref no once grns load (only for new GRN)
   useEffect(() => {
@@ -204,6 +206,10 @@ function CreateGRNContent() {
         qtyPerPack: Number(item.QTY_PER_PACKING || item.qtyPerPack || 0),
         remarks: item.REMARKS || "",
       })));
+
+      if (existing.files) {
+        setFiles(existing.files);
+      }
       setIsFetchingData(false);
     };
 
@@ -262,6 +268,14 @@ function CreateGRNContent() {
           qtyPerPacking: item.qtyPerPack,
           uom: item.uom,
           remarks: item.remarks,
+        })),
+        files: files.map(f => ({
+          documentType: f.DOCUMENT_TYPE || f.documentType,
+          descriptionDetails: f.DESCRIPTION_DETAILS || f.descriptionDetails,
+          fileName: f.FILE_NAME || f.fileName,
+          contentType: f.CONTENT_TYPE || f.contentType,
+          contentData: f.CONTENT_DATA || f.contentData,
+          remarks: f.REMARKS || f.remarks,
         })),
         audit: { user: typeof window !== "undefined" ? (localStorage.getItem("userName") || "Admin") : "Admin" }
       };
@@ -607,6 +621,12 @@ function CreateGRNContent() {
             </div>
           )}
         </div>
+
+        {/* Supporting Documents Section */}
+        <SupportingDoc 
+          files={files} 
+          onFilesChange={setFiles} 
+        />
       </div>
 
       <Dialog open={!!previewImage} onOpenChange={(open) => !open && setPreviewImage(null)}>

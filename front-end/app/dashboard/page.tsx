@@ -81,6 +81,13 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+       <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 font-primary italic">Management Dashboard</h1>
+            <p className="text-sm text-slate-500">Corporate overview of overall business performance</p>
+          </div>
+       </div>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {stats.map((s: any) => {

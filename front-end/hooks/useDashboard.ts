@@ -5,60 +5,87 @@ import { useQuery } from "@tanstack/react-query";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api';
 
 export function useDashboard() {
-  const getAuthToken = () => {
-    if (typeof window === "undefined") return "";
-    return localStorage.getItem("accessToken") || "";
-  };
-
   const fetchDashboardData = async () => {
-    const token = getAuthToken();
+    const token = localStorage.getItem("accessToken");
     const response = await fetch(`${API_URL}/dashboard`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
-
-    if (!response.ok) {
-      if (response.status === 401 || response.status === 403) {
-        // Handle auth error if needed
-      }
-      throw new Error("Failed to fetch dashboard data");
-    }
-
+    if (!response.ok) throw new Error("Failed to fetch dashboard data");
     const data = await response.json();
     
-    // Map recentActivity to include statusColor and formatted amount
-    const mappedRecentActivity = (data.recentActivity || []).map((a: any) => {
-      let statusColor = "bg-muted-foreground";
-      if (a.status === "PENDING") statusColor = "bg-amber-500";
-      if (a.status === "RECEIVED") statusColor = "bg-green-500";
-      if (a.status === "DELIVERED") statusColor = "bg-green-500";
-      if (a.status === "IN TRANSIT") statusColor = "bg-blue-500";
-
-      return {
-        ...a,
-        amount: `$${Number(a.amount).toLocaleString()}`,
-        statusColor
-      };
-    });
-
     return {
       stats: [
-        { label: "TOTAL PURCHASES", value: `$${Number(data.stats.totalPurchases).toLocaleString()}`, change: "+12% from last month", icon: "ShoppingCart", color: "text-primary" },
-        { label: "TOTAL SALES", value: `$${Number(data.stats.totalSales).toLocaleString()}`, change: "+18% from last month", icon: "DollarSign", color: "text-green-500" },
-        { label: "PRODUCTS", value: data.stats.products.toString(), change: "3 new this month", icon: "Package", color: "text-blue-500" },
-        { label: "REVENUE", value: `$${Number(data.stats.revenue).toLocaleString()}`, change: "+23% from last month", icon: "TrendingUp", color: "text-amber-500" },
-        { label: "PENDING DELIVERIES", value: data.stats.pendingDeliveries.toString(), change: "5 due today", icon: "Truck", color: "text-primary" },
-        { label: "LOW STOCK ALERTS", value: data.stats.lowStockAlerts.toString(), change: "Action required", icon: "AlertTriangle", color: "text-destructive" },
+        { label: "TOTAL PURCHASES", value: `$${Number(data.stats.totalPurchases).toLocaleString()}`, change: "+12%", icon: "ShoppingCart", color: "text-primary" },
+        { label: "TOTAL SALES", value: `$${Number(data.stats.totalSales).toLocaleString()}`, change: "+18%", icon: "DollarSign", color: "text-green-500" },
+        { label: "PRODUCTS", value: data.stats.products.toString(), change: "Check Stock", icon: "Package", color: "text-blue-500" },
+        { label: "REVENUE", value: `$${Number(data.stats.revenue).toLocaleString()}`, change: "+23%", icon: "TrendingUp", color: "text-amber-500" },
+        { label: "PENDING DELIVERIES", value: data.stats.pendingDeliveries.toString(), change: "Due today", icon: "Truck", color: "text-primary" },
+        { label: "LOW STOCK", value: data.stats.lowStockAlerts.toString(), change: "Urgent", icon: "AlertTriangle", color: "text-destructive" },
       ],
       monthlyData: data.monthlyData,
       categories: data.categories,
-      recentActivity: mappedRecentActivity
+      recentActivity: mapActivity(data.recentActivity)
     };
   };
 
-  return useQuery({
-    queryKey: ["dashboard"],
-    queryFn: fetchDashboardData,
+  return useQuery({ queryKey: ["dashboard"], queryFn: fetchDashboardData });
+}
+
+export function usePurchaseDashboard() {
+  const fetchPurchaseData = async () => {
+    const token = localStorage.getItem("accessToken");
+    const response = await fetch(`${API_URL}/dashboard/purchase`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) throw new Error("Failed to fetch purchase dashboard");
+    const data = await response.json();
+    return {
+      ...data,
+      stats: [
+        { label: "TOTAL POs", value: data.stats.totalPOs, icon: "Package", color: "text-primary" },
+        { label: "APPROVED", value: data.stats.approvedPOs, icon: "CheckCircle2", color: "text-green-500" },
+        { label: "PENDING", value: data.stats.pendingPOs, icon: "Clock", color: "text-amber-500" },
+        { label: "TOTAL SPENT", value: `$${Number(data.stats.totalSpent).toLocaleString()}`, icon: "DollarSign", color: "text-emerald-600" },
+        { label: "ACTIVE SUPPLIERS", value: data.stats.activeSuppliers, icon: "Users", color: "text-blue-600" },
+      ],
+      recentActivity: mapActivity(data.recentActivity)
+    };
+  };
+  return useQuery({ queryKey: ["dashboard", "purchase"], queryFn: fetchPurchaseData });
+}
+
+export function useSalesDashboard() {
+  const fetchSalesData = async () => {
+    const token = localStorage.getItem("accessToken");
+    const response = await fetch(`${API_URL}/dashboard/sales`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) throw new Error("Failed to fetch sales dashboard");
+    const data = await response.json();
+    return {
+      ...data,
+      stats: [
+        { label: "TOTAL ORDERS", value: data.stats.totalOrders, icon: "ShoppingCart", color: "text-primary" },
+        { label: "TAX INVOICES", value: data.stats.totalInvoices, icon: "FileText", color: "text-blue-500" },
+        { label: "REVENUE", value: `$${Number(data.stats.revenue).toLocaleString()}`, icon: "TrendingUp", color: "text-green-600" },
+        { label: "CUSTOMERS", value: data.stats.activeCustomers, icon: "Users", color: "text-amber-600" },
+      ],
+      recentActivity: mapActivity(data.recentActivity)
+    };
+  };
+  return useQuery({ queryKey: ["dashboard", "sales"], queryFn: fetchSalesData });
+}
+
+function mapActivity(items: any[]) {
+  return (items || []).map((a: any) => {
+    let statusColor = "bg-slate-400";
+    if (a.status === "Approved" || a.status === "RECEIVED" || a.status === "DELIVERED") statusColor = "bg-emerald-500";
+    if (a.status === "PENDING") statusColor = "bg-amber-500";
+    if (a.status === "Draft") statusColor = "bg-slate-300";
+    return {
+      ...a,
+      amount: `$${Number(a.amount).toLocaleString()}`,
+      statusColor
+    };
   });
 }

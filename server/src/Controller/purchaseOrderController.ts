@@ -1,14 +1,17 @@
 import { Request, Response } from "express";
 import { db } from "../db/index.js";
-import { 
-    TBL_PURCHASE_ORDER_HDR, 
-    TBL_PURCHASE_ORDER_DTL, 
-    TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS, 
-    TBL_PURCHASE_ORDER_FILES_UPLOAD, 
+import {
+    TBL_PURCHASE_ORDER_HDR,
+    TBL_PURCHASE_ORDER_DTL,
+    TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS,
+    TBL_PURCHASE_ORDER_FILES_UPLOAD,
     TBL_PURCHASE_ORDER_CONVERSATION_DTL,
     TBL_PRODUCT_MASTER
 } from "../db/schema/index.js";
 import { eq, and, sql, like, desc, getTableColumns } from "drizzle-orm";
+import { sendEmail, getBaseTemplate } from "../utils/emailService.js";
+import { TBL_SUPPLIER_MASTER } from "../db/schema/StoMaster.js";
+import { generatePdfFromHtml } from "../utils/pdfGenerator.js";
 
 export const getPurchaseOrders = async (req: Request, res: Response): Promise<Response> => {
     try {
@@ -32,9 +35,9 @@ export const getPurchaseOrderById = async (req: Request, res: Response): Promise
             ...getTableColumns(TBL_PURCHASE_ORDER_DTL),
             PRODUCT_NAME: TBL_PRODUCT_MASTER.PRODUCT_NAME
         })
-        .from(TBL_PURCHASE_ORDER_DTL)
-        .leftJoin(TBL_PRODUCT_MASTER, eq(TBL_PURCHASE_ORDER_DTL.PRODUCT_ID, TBL_PRODUCT_MASTER.PRODUCT_ID))
-        .where(eq(TBL_PURCHASE_ORDER_DTL.PO_REF_NO, id as string));
+            .from(TBL_PURCHASE_ORDER_DTL)
+            .leftJoin(TBL_PRODUCT_MASTER, eq(TBL_PURCHASE_ORDER_DTL.PRODUCT_ID, TBL_PRODUCT_MASTER.PRODUCT_ID))
+            .where(eq(TBL_PURCHASE_ORDER_DTL.PO_REF_NO, id as string));
         const additionalCosts = await db.select().from(TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS).where(eq(TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS.PO_REF_NO, id as string));
         const files = await db.select().from(TBL_PURCHASE_ORDER_FILES_UPLOAD).where(eq(TBL_PURCHASE_ORDER_FILES_UPLOAD.PO_REF_NO, id as string));
         const conversations = await db.select().from(TBL_PURCHASE_ORDER_CONVERSATION_DTL).where(eq(TBL_PURCHASE_ORDER_CONVERSATION_DTL.PO_REF_NO, id as string)).orderBy(sql`${TBL_PURCHASE_ORDER_CONVERSATION_DTL.CREATED_DATE} ASC`);
@@ -61,7 +64,7 @@ export const createPurchaseOrder = async (req: Request, res: Response): Promise<
     const transaction = await db.transaction(async (tx) => {
         try {
             const { header, items, additionalCosts, files, audit } = req.body;
-            
+
             let finalPoRefNo = header.poRefNo;
 
             // Generate PO Ref uniquely based on product code and month
@@ -74,7 +77,7 @@ export const createPurchaseOrder = async (req: Request, res: Response): Promise<
 
                 const poDate = header.poDate ? new Date(header.poDate) : new Date();
                 const mStr = (poDate.getMonth() + 1).toString().padStart(2, '0');
-                
+
                 // e.g., PO/MA/02/
                 const searchPrefix = `PO/${prdCode}/${mStr}/%`;
 
@@ -222,7 +225,7 @@ export const approvePurchaseOrder = async (req: Request, res: Response): Promise
 
         await db.transaction(async (tx) => {
             await tx.update(TBL_PURCHASE_ORDER_HDR).set(updateObj).where(eq(TBL_PURCHASE_ORDER_HDR.PO_REF_NO, id as string));
-            
+
             // Add entry to Conversation/History table
             await tx.insert(TBL_PURCHASE_ORDER_CONVERSATION_DTL).values({
                 PO_REF_NO: id as string,
@@ -235,6 +238,62 @@ export const approvePurchaseOrder = async (req: Request, res: Response): Promise
                 CREATED_IP_ADDRESS: ip
             } as any);
         });
+
+        // If it was the final approval, send email to Supplier
+        if (level === "final" && status === "Approved") {
+            try {
+                // Fetch Header and Items to generate PDF/Summary
+                const header = (await db.select().from(TBL_PURCHASE_ORDER_HDR).where(eq(TBL_PURCHASE_ORDER_HDR.PO_REF_NO, id as string)).limit(1))[0];
+                const supplier = (await db.select().from(TBL_SUPPLIER_MASTER).where(eq(TBL_SUPPLIER_MASTER.Supplier_Id, header.SUPPLIER_ID as number)).limit(1))[0];
+                const items = await db.select({ name: TBL_PRODUCT_MASTER.PRODUCT_NAME, qty: TBL_PURCHASE_ORDER_DTL.TOTAL_QTY, rate: TBL_PURCHASE_ORDER_DTL.RATE_PER_QTY, amt: TBL_PURCHASE_ORDER_DTL.PRODUCT_AMOUNT })
+                    .from(TBL_PURCHASE_ORDER_DTL)
+                    .leftJoin(TBL_PRODUCT_MASTER, eq(TBL_PURCHASE_ORDER_DTL.PRODUCT_ID, TBL_PRODUCT_MASTER.PRODUCT_ID))
+                    .where(eq(TBL_PURCHASE_ORDER_DTL.PO_REF_NO, id as string));
+
+                if (supplier?.Mail_Id) {
+                    const emailContent = `
+                        <h2>PO Number: <span class="highlight">${id}</span></h2>
+                        <p>We are pleased to inform you that the above purchase order has been approved and is ready for fulfilment.</p>
+                        <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px; margin: 20px 0;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr style="background-color: #e2e8f0; font-weight: bold;">
+                                    <td style="padding: 10px;">Item</td>
+                                    <td style="padding: 10px; text-align: center;">Qty</td>
+                                    <td style="padding: 10px; text-align: right;">Total Amount</td>
+                                </tr>
+                                ${items.map(i => `
+                                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                                        <td style="padding: 10px;">${i.name}</td>
+                                        <td style="padding: 10px; text-align: center;">${i.qty}</td>
+                                        <td style="padding: 10px; text-align: right;">$${Number(i.amt).toLocaleString()}</td>
+                                    </tr>
+                                `).join('')}
+                            </table>
+                            <div style="text-align: right; margin-top: 15px; font-size: 18px; font-weight: 800;">TOTAL: $${Number(header.FINAL_PURCHASE_HDR_AMOUNT).toLocaleString()}</div>
+                        </div>
+                        <p>Please review the attached PDF for full details including delivery instructions and shipping marks.</p>
+                    `;
+
+                    // Simple PDF version of the same table
+                    const pdfHtml = getBaseTemplate('Purchase Order', emailContent);
+                    const pdfBuffer = await generatePdfFromHtml(pdfHtml);
+
+                    await sendEmail({
+                        to: supplier.Mail_Id,
+                        subject: `ORDER CONFIRMED: ${id} | Prime Harvest`,
+                        html: getBaseTemplate('Order Confirmation', emailContent),
+                        attachments: [{
+                            filename: `PO_${id.replace(/\//g, '_')}.pdf`,
+                            content: pdfBuffer,
+                            contentType: 'application/pdf'
+                        }]
+                    });
+                }
+            } catch (emailErr) {
+                console.error("[Email Notification Error]", emailErr);
+                // Don't fail the response if only email fails
+            }
+        }
 
         return res.status(200).json({ msg: `PO ${level} approval updated and logged` });
     } catch (error) {
@@ -250,7 +309,7 @@ export const updatePurchaseOrder = async (req: Request, res: Response): Promise<
     const transaction = await db.transaction(async (tx) => {
         try {
             const { header, items, additionalCosts, files, audit } = req.body;
-            
+
             // 1. Update Header
             const hUpdates = {
                 PO_DATE: header.poDate ? new Date(header.poDate) : undefined,
@@ -351,6 +410,30 @@ export const archivePurchaseOrder = async (req: Request, res: Response): Promise
             .set({ STATUS_ENTRY: "Archived" })
             .where(eq(TBL_PURCHASE_ORDER_HDR.PO_REF_NO, id as string));
         return res.status(200).json({ msg: "PO archived" });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ msg: "Internal server error" });
+    }
+};
+
+export const updatePurchaseOrderPOD = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        let idRaw = (req.query.id || req.params.id || req.params[0]) as string;
+        if (Array.isArray(idRaw)) idRaw = idRaw.join('/');
+        const id = decodeURIComponent(idRaw);
+        const { deliveryPerson, deliveryDate, remarks } = req.body;
+
+        await db.update(TBL_PURCHASE_ORDER_HDR)
+            .set({
+                POD_DELIVERY_PERSON: deliveryPerson,
+                POD_DELIVERY_DATE: deliveryDate ? new Date(deliveryDate) : null,
+                POD_REMARKS: remarks,
+                MODIFIED_DATE: new Date(),
+                MODIFIED_IP_ADDRESS: req.ip || "127.0.0.1"
+            })
+            .where(eq(TBL_PURCHASE_ORDER_HDR.PO_REF_NO, id));
+
+        return res.status(200).json({ msg: "POD details updated successfully" });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ msg: "Internal server error" });

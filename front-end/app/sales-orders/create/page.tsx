@@ -45,6 +45,7 @@ import {
   useBillingLocations
 } from "@/hooks/useStoreData";
 import { useSalesOrderStore } from "@/hooks/useSalesOrderStore";
+import { SupportingDoc } from "@/components/ui/Supporting-Doc";
 
 interface LineItem {
   id: string | number;
@@ -152,6 +153,10 @@ function CreateSalesOrderContent(): JSX.Element {
               amount: Number(it.amount) || 0
             })));
           }
+
+          if (res.files) {
+            setFiles(res.files);
+          }
         }
         setIsFetchingData(false);
       } else {
@@ -249,10 +254,16 @@ function CreateSalesOrderContent(): JSX.Element {
         vatPercent: it.vatPercent,
         vatAmount: it.amount * (it.vatPercent / 100),
         finalAmount: it.amount + (it.amount * (it.vatPercent / 100)),
-        uom: it.uom,
-        qtyPerPack: it.qtyPerPack,
         poRefNo: it.poRefNo,
         poDtlSno: it.poDtlSno
+      })),
+      files: files.map(f => ({
+        documentType: f.DOCUMENT_TYPE || f.documentType,
+        descriptionDetails: f.DESCRIPTION_DETAILS || f.descriptionDetails,
+        fileName: f.FILE_NAME || f.fileName,
+        contentType: f.CONTENT_TYPE || f.contentType,
+        contentData: f.CONTENT_DATA || f.contentData,
+        remarks: f.REMARKS || f.remarks,
       })),
       audit: { user: userInfo.loginName }
     };
@@ -531,6 +542,11 @@ function CreateSalesOrderContent(): JSX.Element {
             </table>
           </div>
 
+          {/* Supporting Documents Section */}
+          <SupportingDoc 
+            files={files} 
+            onFilesChange={setFiles} 
+          />
         </div>
 
         {/* Financial Sidebar */}

@@ -49,10 +49,17 @@ export const getPurchaseInvoiceById = async (req: Request, res: Response): Promi
         const items = await db.select().from(TBL_PURCHASE_INVOICE_DTL).where(eq(TBL_PURCHASE_INVOICE_DTL.PURCHASE_INVOICE_REF_NO, id));
         const additionalCosts = await db.select().from(TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS).where(eq(TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS.PURCHASE_INVOICE_NO, id));
 
+        const filesData = await db.select().from(TBL_PURCHASE_INVOICE_FILES_UPLOAD).where(eq(TBL_PURCHASE_INVOICE_FILES_UPLOAD.PURCHASE_INVOICE_REF_NO, id));
+        const processedFiles = filesData.map(f => ({
+            ...f,
+            CONTENT_DATA: f.CONTENT_DATA ? f.CONTENT_DATA.toString('base64') : null
+        }));
+
         return res.status(200).json({
             header: header[0],
             items,
-            additionalCosts
+            additionalCosts,
+            files: processedFiles
         });
     } catch (error) {
         console.error(error);
@@ -159,6 +166,23 @@ export const createPurchaseInvoice = async (req: Request, res: Response): Promis
                     STATUS_MASTER: "Active"
                 }));
                 await tx.insert(TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS).values(acValues as any);
+            }
+
+            if (req.body.files && req.body.files.length > 0) {
+                const fValues = req.body.files.map((f: any) => ({
+                    PURCHASE_INVOICE_REF_NO: header.purchaseInvoiceRefNo,
+                    DOCUMENT_TYPE: f.documentType,
+                    DESCRIPTION_DETAILS: f.descriptionDetails,
+                    FILE_NAME: f.fileName,
+                    CONTENT_TYPE: f.contentType,
+                    CONTENT_DATA: f.contentData ? Buffer.from(f.contentData, 'base64') : null,
+                    REMARKS: f.remarks,
+                    STATUS_MASTER: "Active",
+                    CREATED_BY: audit?.user,
+                    CREATED_IP_ADDRESS: req.ip || "127.0.0.1",
+                    CREATED_DATE: new Date()
+                }));
+                await tx.insert(TBL_PURCHASE_INVOICE_FILES_UPLOAD).values(fValues as any);
             }
 
             return { msg: "Purchase Invoice created successfully", id: header.purchaseInvoiceRefNo };
@@ -278,6 +302,24 @@ export const updatePurchaseInvoice = async (req: Request, res: Response): Promis
                     STATUS_MASTER: "Active"
                 }));
                 await tx.insert(TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS).values(acValues as any);
+            }
+
+            await tx.delete(TBL_PURCHASE_INVOICE_FILES_UPLOAD).where(eq(TBL_PURCHASE_INVOICE_FILES_UPLOAD.PURCHASE_INVOICE_REF_NO, id));
+            if (req.body.files && req.body.files.length > 0) {
+                const fValues = req.body.files.map((f: any) => ({
+                    PURCHASE_INVOICE_REF_NO: id,
+                    DOCUMENT_TYPE: f.documentType,
+                    DESCRIPTION_DETAILS: f.descriptionDetails,
+                    FILE_NAME: f.fileName,
+                    CONTENT_TYPE: f.contentType,
+                    CONTENT_DATA: f.contentData ? Buffer.from(f.contentData, 'base64') : null,
+                    REMARKS: f.remarks,
+                    STATUS_MASTER: "Active",
+                    CREATED_BY: audit?.user,
+                    CREATED_IP_ADDRESS: req.ip || "127.0.0.1",
+                    CREATED_DATE: new Date()
+                }));
+                await tx.insert(TBL_PURCHASE_INVOICE_FILES_UPLOAD).values(fValues as any);
             }
 
             return { msg: "Purchase Invoice updated successfully" };

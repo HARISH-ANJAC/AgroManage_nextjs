@@ -1548,7 +1548,7 @@ async function main() {
           CREATED_BY: "SYSTEM",
           CREATED_DATE: new Date(),
           CREATED_MAC_ADDRESS: "00:00:00:00:00:00",
-          Document_Type: "Credit Report",
+          DOCUMENT_TYPE: "Credit Report",
         },
       ])
       .onConflictDoNothing();

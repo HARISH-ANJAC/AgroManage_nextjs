@@ -117,6 +117,20 @@ export function usePurchaseOrderStore() {
     updateOrder: (id: string, payload: any) => updateMutation.mutateAsync({ id, payload }),
     approveOrder: approveMutation.mutateAsync,
     deleteOrder: deleteMutation.mutateAsync,
+    updatePOD: async ({ id, deliveryPerson, deliveryDate, remarks }: any) => {
+       const encodedId = encodeURIComponent(encodeURIComponent(id));
+       const response = await fetch(`${API_URL}/purchase-orders/pod/${encodedId}`, {
+         method: "PUT",
+         headers: { 
+           "Content-Type": "application/json",
+           "Authorization": `Bearer ${getAuthToken()}`
+         },
+         body: JSON.stringify({ deliveryPerson, deliveryDate, remarks })
+       });
+       if (!response.ok) throw new Error("Failed to update POD");
+       queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+       return response.json();
+    },
     getOrderById
   };
 }

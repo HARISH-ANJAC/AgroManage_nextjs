@@ -55,6 +55,9 @@ export const TBL_PURCHASE_ORDER_HDR = StoEntriesSchema.table("TBL_PURCHASE_ORDER
   FINAL_RESPONSE_DATE: timestamp("FINAL_RESPONSE_DATE", { mode: "date" }),
   FINAL_RESPONSE_STATUS: varchar("FINAL_RESPONSE_STATUS", { length: 50 }),
   FINAL_RESPONSE_REMARKS: varchar("FINAL_RESPONSE_REMARKS", { length: 5000 }),
+  POD_DELIVERY_PERSON: varchar("POD_DELIVERY_PERSON", { length: 150 }),
+  POD_DELIVERY_DATE: timestamp("POD_DELIVERY_DATE", { mode: "date" }),
+  POD_REMARKS: varchar("POD_REMARKS", { length: 2000 }),
   REMARKS: varchar("REMARKS", { length: 2000 }),
   STATUS_ENTRY: varchar("STATUS_ENTRY", { length: 20 }),
   CREATED_BY: varchar("CREATED_BY", { length: 50 }),
@@ -781,5 +784,137 @@ export const TBL_CUSTOMER_RECEIPT_HDRRelations = relations(TBL_CUSTOMER_RECEIPT_
 export const TBL_CUSTOMER_RECEIPT_INVOICE_DTLRelations = relations(TBL_CUSTOMER_RECEIPT_INVOICE_DTL, ({ one }) => ({
   customer_receipt_hdr: one(TBL_CUSTOMER_RECEIPT_HDR, { fields: [TBL_CUSTOMER_RECEIPT_INVOICE_DTL.RECEIPT_REF_NO], references: [TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_REF_NO] }),
   tax_invoice_hdr: one(TBL_TAX_INVOICE_HDR, { fields: [TBL_CUSTOMER_RECEIPT_INVOICE_DTL.TAX_INVOICE_REF_NO], references: [TBL_TAX_INVOICE_HDR.TAX_INVOICE_REF_NO] }),
+}));
+
+export const TBL_GOODS_FILES_UPLOAD = StoEntriesSchema.table("TBL_GOODS_FILES_UPLOAD", {
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
+  GRN_REF_NO: varchar("GRN_REF_NO", { length: 50 }).references(() => TBL_GOODS_INWARD_GRN_HDR.GRN_REF_NO),
+  DOCUMENT_TYPE: varchar("DOCUMENT_TYPE", { length: 50 }),
+  DESCRIPTION_DETAILS: varchar("DESCRIPTION_DETAILS", { length: 100 }),
+  FILE_NAME: varchar("FILE_NAME", { length: 150 }),
+  CONTENT_TYPE: varchar("CONTENT_TYPE", { length: 50 }),
+  CONTENT_DATA: bytea("CONTENT_DATA"),
+  REMARKS: varchar("REMARKS", { length: 1000 }),
+  STATUS_MASTER: varchar("STATUS_MASTER", { length: 20 }),
+  CREATED_BY: varchar("CREATED_BY", { length: 50 }),
+  CREATED_DATE: timestamp("CREATED_DATE", { mode: "date" }),
+  CREATED_IP_ADDRESS: varchar("CREATED_IP_ADDRESS", { length: 50 }),
+  MODIFIED_BY: varchar("MODIFIED_BY", { length: 50 }),
+  MODIFIED_DATE: timestamp("MODIFIED_DATE", { mode: "date" }),
+  MODIFIED_IP_ADDRESS: varchar("MODIFIED_IP_ADDRESS", { length: 50 }),
+});
+
+export const TBL_EXPENSE_FILES_UPLOAD = StoEntriesSchema.table("TBL_EXPENSE_FILES_UPLOAD", {
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
+  EXPENSE_REF_NO: varchar("EXPENSE_REF_NO", { length: 50 }).references(() => TBL_EXPENSE_HDR.EXPENSE_REF_NO),
+  DOCUMENT_TYPE: varchar("DOCUMENT_TYPE", { length: 50 }),
+  DESCRIPTION_DETAILS: varchar("DESCRIPTION_DETAILS", { length: 100 }),
+  FILE_NAME: varchar("FILE_NAME", { length: 150 }),
+  CONTENT_TYPE: varchar("CONTENT_TYPE", { length: 50 }),
+  CONTENT_DATA: bytea("CONTENT_DATA"),
+  REMARKS: varchar("REMARKS", { length: 1000 }),
+  STATUS_MASTER: varchar("STATUS_MASTER", { length: 20 }),
+  CREATED_BY: varchar("CREATED_BY", { length: 50 }),
+  CREATED_DATE: timestamp("CREATED_DATE", { mode: "date" }),
+  CREATED_IP_ADDRESS: varchar("CREATED_IP_ADDRESS", { length: 50 }),
+  MODIFIED_BY: varchar("MODIFIED_BY", { length: 50 }),
+  MODIFIED_DATE: timestamp("MODIFIED_DATE", { mode: "date" }),
+  MODIFIED_IP_ADDRESS: varchar("MODIFIED_IP_ADDRESS", { length: 50 }),
+});
+
+export const TBL_SALES_ORDER_FILES_UPLOAD = StoEntriesSchema.table("TBL_SALES_ORDER_FILES_UPLOAD", {
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
+  SALES_ORDER_REF_NO: varchar("SALES_ORDER_REF_NO", { length: 50 }).references(() => TBL_SALES_ORDER_HDR.SALES_ORDER_REF_NO),
+  DOCUMENT_TYPE: varchar("DOCUMENT_TYPE", { length: 50 }),
+  DESCRIPTION_DETAILS: varchar("DESCRIPTION_DETAILS", { length: 100 }),
+  FILE_NAME: varchar("FILE_NAME", { length: 150 }),
+  CONTENT_TYPE: varchar("CONTENT_TYPE", { length: 50 }),
+  CONTENT_DATA: bytea("CONTENT_DATA"),
+  REMARKS: varchar("REMARKS", { length: 1000 }),
+  STATUS_MASTER: varchar("STATUS_MASTER", { length: 20 }),
+  CREATED_BY: varchar("CREATED_BY", { length: 50 }),
+  CREATED_DATE: timestamp("CREATED_DATE", { mode: "date" }),
+  CREATED_IP_ADDRESS: varchar("CREATED_IP_ADDRESS", { length: 50 }),
+  MODIFIED_BY: varchar("MODIFIED_BY", { length: 50 }),
+  MODIFIED_DATE: timestamp("MODIFIED_DATE", { mode: "date" }),
+  MODIFIED_IP_ADDRESS: varchar("MODIFIED_IP_ADDRESS", { length: 50 }),
+});
+
+export const TBL_DELIVERY_FILES_UPLOAD = StoEntriesSchema.table("TBL_DELIVERY_FILES_UPLOAD", {
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
+  DELIVERY_NOTE_REF_NO: varchar("DELIVERY_NOTE_REF_NO", { length: 50 }).references(() => TBL_DELIVERY_NOTE_HDR.DELIVERY_NOTE_REF_NO),
+  DOCUMENT_TYPE: varchar("DOCUMENT_TYPE", { length: 50 }),
+  DESCRIPTION_DETAILS: varchar("DESCRIPTION_DETAILS", { length: 100 }),
+  FILE_NAME: varchar("FILE_NAME", { length: 150 }),
+  CONTENT_TYPE: varchar("CONTENT_TYPE", { length: 50 }),
+  CONTENT_DATA: bytea("CONTENT_DATA"),
+  REMARKS: varchar("REMARKS", { length: 1000 }),
+  STATUS_MASTER: varchar("STATUS_MASTER", { length: 20 }),
+  CREATED_BY: varchar("CREATED_BY", { length: 50 }),
+  CREATED_DATE: timestamp("CREATED_DATE", { mode: "date" }),
+  CREATED_IP_ADDRESS: varchar("CREATED_IP_ADDRESS", { length: 50 }),
+  MODIFIED_BY: varchar("MODIFIED_BY", { length: 50 }),
+  MODIFIED_DATE: timestamp("MODIFIED_DATE", { mode: "date" }),
+  MODIFIED_IP_ADDRESS: varchar("MODIFIED_IP_ADDRESS", { length: 50 }),
+});
+
+export const TBL_TAX_INVOICE_FILES_UPLOAD = StoEntriesSchema.table("TBL_TAX_INVOICE_FILES_UPLOAD", {
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
+  TAX_INVOICE_REF_NO: varchar("TAX_INVOICE_REF_NO", { length: 50 }).references(() => TBL_TAX_INVOICE_HDR.TAX_INVOICE_REF_NO),
+  DOCUMENT_TYPE: varchar("DOCUMENT_TYPE", { length: 50 }),
+  DESCRIPTION_DETAILS: varchar("DESCRIPTION_DETAILS", { length: 100 }),
+  FILE_NAME: varchar("FILE_NAME", { length: 150 }),
+  CONTENT_TYPE: varchar("CONTENT_TYPE", { length: 50 }),
+  CONTENT_DATA: bytea("CONTENT_DATA"),
+  REMARKS: varchar("REMARKS", { length: 1000 }),
+  STATUS_MASTER: varchar("STATUS_MASTER", { length: 20 }),
+  CREATED_BY: varchar("CREATED_BY", { length: 50 }),
+  CREATED_DATE: timestamp("CREATED_DATE", { mode: "date" }),
+  CREATED_IP_ADDRESS: varchar("CREATED_IP_ADDRESS", { length: 50 }),
+  MODIFIED_BY: varchar("MODIFIED_BY", { length: 50 }),
+  MODIFIED_DATE: timestamp("MODIFIED_DATE", { mode: "date" }),
+  MODIFIED_IP_ADDRESS: varchar("MODIFIED_IP_ADDRESS", { length: 50 }),
+});
+
+export const TBL_CUSTOMER_RECEIPT_FILES_UPLOAD = StoEntriesSchema.table("TBL_CUSTOMER_RECEIPT_FILES_UPLOAD", {
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
+  RECEIPT_REF_NO: varchar("RECEIPT_REF_NO", { length: 50 }).references(() => TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_REF_NO),
+  DOCUMENT_TYPE: varchar("DOCUMENT_TYPE", { length: 50 }),
+  DESCRIPTION_DETAILS: varchar("DESCRIPTION_DETAILS", { length: 100 }),
+  FILE_NAME: varchar("FILE_NAME", { length: 150 }),
+  CONTENT_TYPE: varchar("CONTENT_TYPE", { length: 50 }),
+  CONTENT_DATA: bytea("CONTENT_DATA"),
+  REMARKS: varchar("REMARKS", { length: 1000 }),
+  STATUS_MASTER: varchar("STATUS_MASTER", { length: 20 }),
+  CREATED_BY: varchar("CREATED_BY", { length: 50 }),
+  CREATED_DATE: timestamp("CREATED_DATE", { mode: "date" }),
+  CREATED_IP_ADDRESS: varchar("CREATED_IP_ADDRESS", { length: 50 }),
+  MODIFIED_BY: varchar("MODIFIED_BY", { length: 50 }),
+  MODIFIED_DATE: timestamp("MODIFIED_DATE", { mode: "date" }),
+  MODIFIED_IP_ADDRESS: varchar("MODIFIED_IP_ADDRESS", { length: 50 }),
+});
+
+export const TBL_GOODS_FILES_UPLOADRelations = relations(TBL_GOODS_FILES_UPLOAD, ({ one }) => ({
+  goods_inward_grn_hdr: one(TBL_GOODS_INWARD_GRN_HDR, { fields: [TBL_GOODS_FILES_UPLOAD.GRN_REF_NO], references: [TBL_GOODS_INWARD_GRN_HDR.GRN_REF_NO] }),
+}));
+
+export const TBL_EXPENSE_FILES_UPLOADRelations = relations(TBL_EXPENSE_FILES_UPLOAD, ({ one }) => ({
+  expense_hdr: one(TBL_EXPENSE_HDR, { fields: [TBL_EXPENSE_FILES_UPLOAD.EXPENSE_REF_NO], references: [TBL_EXPENSE_HDR.EXPENSE_REF_NO] }),
+}));
+
+export const TBL_SALES_ORDER_FILES_UPLOADRelations = relations(TBL_SALES_ORDER_FILES_UPLOAD, ({ one }) => ({
+  sales_order_hdr: one(TBL_SALES_ORDER_HDR, { fields: [TBL_SALES_ORDER_FILES_UPLOAD.SALES_ORDER_REF_NO], references: [TBL_SALES_ORDER_HDR.SALES_ORDER_REF_NO] }),
+}));
+
+export const TBL_DELIVERY_FILES_UPLOADRelations = relations(TBL_DELIVERY_FILES_UPLOAD, ({ one }) => ({
+  delivery_note_hdr: one(TBL_DELIVERY_NOTE_HDR, { fields: [TBL_DELIVERY_FILES_UPLOAD.DELIVERY_NOTE_REF_NO], references: [TBL_DELIVERY_NOTE_HDR.DELIVERY_NOTE_REF_NO] }),
+}));
+
+export const TBL_TAX_INVOICE_FILES_UPLOADRelations = relations(TBL_TAX_INVOICE_FILES_UPLOAD, ({ one }) => ({
+  tax_invoice_hdr: one(TBL_TAX_INVOICE_HDR, { fields: [TBL_TAX_INVOICE_FILES_UPLOAD.TAX_INVOICE_REF_NO], references: [TBL_TAX_INVOICE_HDR.TAX_INVOICE_REF_NO] }),
+}));
+
+export const TBL_CUSTOMER_RECEIPT_FILES_UPLOADRelations = relations(TBL_CUSTOMER_RECEIPT_FILES_UPLOAD, ({ one }) => ({
+  customer_receipt_hdr: one(TBL_CUSTOMER_RECEIPT_HDR, { fields: [TBL_CUSTOMER_RECEIPT_FILES_UPLOAD.RECEIPT_REF_NO], references: [TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_REF_NO] }),
 }));
 

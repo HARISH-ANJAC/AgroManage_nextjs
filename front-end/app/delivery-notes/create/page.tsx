@@ -35,6 +35,7 @@ import { useMasterData } from "@/hooks/useMasterData";
 import { getCurrentUser } from "@/lib/auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { SupportingDoc } from "@/components/ui/Supporting-Doc";
 
 function CreateDNContent() {
   const router = useRouter();
@@ -66,6 +67,7 @@ function CreateDNContent() {
   });
 
   const [items, setItems] = useState<any[]>([]);
+  const [files, setFiles] = useState<any[]>([]);
   const [isFetchingData, setIsFetchingData] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
@@ -107,6 +109,10 @@ function CreateDNContent() {
               amount: Number(it.amount) || 0,
               salesOrderDtlSno: it.salesOrderDtlSno
             })));
+          }
+
+          if (res.files) {
+            setFiles(res.files);
           }
         } else {
           toast.error("Delivery Note not found");
@@ -166,7 +172,7 @@ function CreateDNContent() {
     }));
   };
 
-  const handleCreateDN = async (status: string = "Submitted") => {
+  const handleCreateDN = async (statusValue: string = "Submitted") => {
     if (!header.deliverySourceRefNo) {
       toast.error("Please select a Sales Order Reference");
       return;
@@ -186,22 +192,30 @@ function CreateDNContent() {
         totalProductAmount,
         vatAmount,
         finalSalesAmount,
-        status: status === "Draft" ? "Draft" : (header.status || "Submitted")
+        status: statusValue === "Draft" ? "Draft" : (header.status || "Submitted")
       },
       items,
       audit: {
         user: getCurrentUser()?.username || "System",
         lastModified: new Date().toISOString()
-      }
+      },
+      files: files.map(f => ({
+        documentType: f.DOCUMENT_TYPE || f.documentType,
+        descriptionDetails: f.DESCRIPTION_DETAILS || f.descriptionDetails,
+        fileName: f.FILE_NAME || f.fileName,
+        contentType: f.CONTENT_TYPE || f.contentType,
+        contentData: f.CONTENT_DATA || f.contentData,
+        remarks: f.REMARKS || f.remarks,
+      }))
     };
 
     try {
       if (editId) {
-        await updateNote(editId, payload);
+        await updateNote(editId as string, payload);
         toast.success("Delivery Note Updated Successfully!");
       } else {
         await addNote(payload);
-        toast.success(`Delivery Note ${status === "Draft" ? "Saved as Draft" : "Created"} Successfully!`);
+        toast.success(`Delivery Note ${statusValue === "Draft" ? "Saved as Draft" : "Created"} Successfully!`);
       }
       router.push("/delivery-notes");
     } catch (e) {
@@ -477,6 +491,12 @@ function CreateDNContent() {
               </tbody>
             </table>
           </div>
+
+          {/* Supporting Documents Section */}
+          <SupportingDoc 
+            files={files} 
+            onFilesChange={setFiles} 
+          />
         </div>
       </div>
       

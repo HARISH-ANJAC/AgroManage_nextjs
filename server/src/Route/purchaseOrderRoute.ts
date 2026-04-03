@@ -5,7 +5,8 @@ import {
     createPurchaseOrder, 
     approvePurchaseOrder, 
     archivePurchaseOrder,
-    updatePurchaseOrder
+    updatePurchaseOrder,
+    updatePurchaseOrderPOD
 } from "../Controller/purchaseOrderController.js";
 
 export const purchaseOrderRoute = express.Router();
@@ -14,5 +15,6 @@ purchaseOrderRoute.get("/", getPurchaseOrders);
 purchaseOrderRoute.post("/", createPurchaseOrder);
 purchaseOrderRoute.post("/approve/:id", approvePurchaseOrder);
 purchaseOrderRoute.put("/archive/:id", archivePurchaseOrder);
+purchaseOrderRoute.put("/pod/:id", updatePurchaseOrderPOD);
 purchaseOrderRoute.get("/:id", getPurchaseOrderById);
 purchaseOrderRoute.put("/:id", updatePurchaseOrder);

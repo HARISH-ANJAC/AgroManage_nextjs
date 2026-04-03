@@ -29,6 +29,7 @@ import { useSalesInvoiceStore } from "@/hooks/useSalesInvoiceStore";
 import { useDeliveryNoteStore } from "@/hooks/useDeliveryNoteStore";
 import { useStores } from "@/hooks/useStoreData";
 import { getCurrentUser } from "@/lib/auth";
+import { SupportingDoc } from "@/components/ui/Supporting-Doc";
 
 function CreateInvoiceContent() {
   const router = useRouter();
@@ -56,6 +57,7 @@ function CreateInvoiceContent() {
   });
 
   const [items, setItems] = useState<any[]>([]);
+  const [files, setFiles] = useState<any[]>([]);
   const [isFetchingData, setIsFetchingData] = useState(false);
 
   // Initialize defaults
@@ -106,6 +108,10 @@ function CreateInvoiceContent() {
               finalAmount: Number(it.finalAmount) || 0,
               deliveryNoteDtlSno: it.deliveryNoteDtlSno
             })));
+          }
+
+          if (res.files) {
+            setFiles(res.files);
           }
         } else {
           toast.error("Invoice not found");
@@ -193,6 +199,14 @@ function CreateInvoiceContent() {
           invoiceDate: header.invoiceDate
         },
         items: items,
+        files: files.map(f => ({
+          documentType: f.DOCUMENT_TYPE || f.documentType,
+          descriptionDetails: f.DESCRIPTION_DETAILS || f.descriptionDetails,
+          fileName: f.FILE_NAME || f.fileName,
+          contentType: f.CONTENT_TYPE || f.contentType,
+          contentData: f.CONTENT_DATA || f.contentData,
+          remarks: f.REMARKS || f.remarks,
+        })),
         audit: { user: getCurrentUser()?.username || "System" }
       };
 
@@ -423,6 +437,12 @@ function CreateInvoiceContent() {
                 )}
               </div>
             </div>
+
+            {/* Supporting Documents Section */}
+            <SupportingDoc 
+              files={files} 
+              onFilesChange={setFiles} 
+            />
           </div>
 
           {/* Summaries & Sidebar */}

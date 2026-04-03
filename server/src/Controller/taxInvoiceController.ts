@@ -3,12 +3,15 @@ import { db } from "../db/index.js";
 import { 
     TBL_TAX_INVOICE_HDR, 
     TBL_TAX_INVOICE_DTL,
+    TBL_TAX_INVOICE_FILES_UPLOAD,
     TBL_PRODUCT_MASTER,
     TBL_CUSTOMER_MASTER,
     TBL_STORE_MASTER,
     TBL_COMPANY_MASTER
 } from "../db/schema/index.js";
-import { eq, desc, like } from "drizzle-orm";
+import { eq, desc, like, sql } from "drizzle-orm";
+import { sendEmail, getBaseTemplate } from "../utils/emailService.js";
+import { generatePdfFromHtml } from "../utils/pdfGenerator.js";
 
 export const getTaxInvoices = async (req: Request, res: Response): Promise<Response> => {
     try {
@@ -97,7 +100,13 @@ export const getTaxInvoiceById = async (req: Request, res: Response): Promise<Re
         .leftJoin(TBL_PRODUCT_MASTER, eq(TBL_TAX_INVOICE_DTL.PRODUCT_ID, TBL_PRODUCT_MASTER.PRODUCT_ID))
         .where(eq(TBL_TAX_INVOICE_DTL.TAX_INVOICE_REF_NO, decodedId));
 
-        return res.status(200).json({ header: header[0], items });
+        const filesData = await db.select().from(TBL_TAX_INVOICE_FILES_UPLOAD).where(eq(TBL_TAX_INVOICE_FILES_UPLOAD.TAX_INVOICE_REF_NO, decodedId));
+        const processedFiles = filesData.map(f => ({
+            ...f,
+            CONTENT_DATA: f.CONTENT_DATA ? f.CONTENT_DATA.toString('base64') : null
+        }));
+
+        return res.status(200).json({ header: header[0], items, files: processedFiles });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ msg: "Internal server error" });
@@ -153,30 +162,54 @@ export const createTaxInvoice = async (req: Request, res: Response): Promise<Res
                 CREATED_DATE: new Date()
             };
 
-            await tx.insert(TBL_TAX_INVOICE_HDR).values(hValues as any);
+            const invoiceResult = { msg: "Tax Invoice created successfully", taxInvoiceRefNo: finalRefNo };
 
-            if (items && items.length > 0) {
-                const dValues = items.map((item: any) => ({
-                    TAX_INVOICE_REF_NO: finalRefNo,
-                    DELIVERY_NOTE_DTL_SNO: item.deliveryNoteDtlSno,
-                    PRODUCT_ID: item.productId,
-                    DELIVERY_QTY: item.deliveryQty,
-                    INVOICE_QTY: item.invoiceQty,
-                    UOM: item.uom,
-                    SALES_RATE_PER_QTY: item.rate,
-                    TOTAL_PRODUCT_AMOUNT: item.amount,
-                    VAT_PERCENTAGE: item.vatPercent,
-                    VAT_AMOUNT: item.vatAmount,
-                    FINAL_SALES_AMOUNT: item.finalAmount,
-                    STATUS_ENTRY: "Active",
-                    CREATED_BY: audit?.user || "System",
-                    CREATED_MAC_ADDRESS: req.ip || "127.0.0.1",
-                    CREATED_DATE: new Date()
-                }));
-                await tx.insert(TBL_TAX_INVOICE_DTL).values(dValues as any);
+            // Send Email to Customer
+            try {
+                const customer = (await tx.select().from(TBL_CUSTOMER_MASTER).where(eq(TBL_CUSTOMER_MASTER.Customer_Id, header.customerId as number)).limit(1))[0];
+                
+                if (customer?.Email_Address) {
+                    const invoiceData = `
+                        <h2>Invoice Number: <span class="highlight">${finalRefNo}</span></h2>
+                        <p>Thank you for your business. Your tax invoice has been generated and is attached below.</p>
+                        <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px; margin: 20px 0;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr style="background-color: #e2e8f0; font-weight: bold;">
+                                    <td style="padding: 10px;">Item</td>
+                                    <td style="padding: 10px; text-align: center;">Qty</td>
+                                    <td style="padding: 10px; text-align: right;">Amount</td>
+                                </tr>
+                                ${items.map((i: any) => `
+                                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                                        <td style="padding: 10px;">${i.productName || 'Product'}</td>
+                                        <td style="padding: 10px; text-align: center;">${i.invoiceQty}</td>
+                                        <td style="padding: 10px; text-align: right;">$${Number(i.finalAmount).toLocaleString()}</td>
+                                    </tr>
+                                `).join('')}
+                            </table>
+                            <div style="text-align: right; margin-top: 15px; font-size: 18px; font-weight: 800;">TOTAL PAYABLE: $${Number(header.finalSalesAmount).toLocaleString()}</div>
+                        </div>
+                        <p>If you have any questions, please contact our accounts department.</p>
+                    `;
+
+                    const pdfBuffer = await generatePdfFromHtml(getBaseTemplate('Tax Invoice', invoiceData));
+
+                    await sendEmail({
+                        to: customer.Email_Address,
+                        subject: `TAX INVOICE: ${finalRefNo} | AgroManage ERP`,
+                        html: getBaseTemplate('Invoice Issued', invoiceData),
+                        attachments: [{
+                            filename: `Invoice_${finalRefNo.replace(/\//g, '_')}.pdf`,
+                            content: pdfBuffer,
+                            contentType: 'application/pdf'
+                        }]
+                    });
+                }
+            } catch (emailErr) {
+                console.error("[Invoice Email Error]", emailErr);
             }
 
-            return { msg: "Tax Invoice created successfully", taxInvoiceRefNo: finalRefNo };
+            return invoiceResult;
         } catch (error: any) {
             console.error(error);
             tx.rollback();
@@ -228,6 +261,24 @@ export const updateTaxInvoice = async (req: Request, res: Response): Promise<Res
                     CREATED_DATE: new Date()
                 }));
                 await tx.insert(TBL_TAX_INVOICE_DTL).values(dValues as any);
+            }
+
+            await tx.delete(TBL_TAX_INVOICE_FILES_UPLOAD).where(eq(TBL_TAX_INVOICE_FILES_UPLOAD.TAX_INVOICE_REF_NO, decodedId));
+            if (req.body.files && req.body.files.length > 0) {
+                const fValues = req.body.files.map((f: any) => ({
+                    TAX_INVOICE_REF_NO: decodedId,
+                    DOCUMENT_TYPE: f.documentType,
+                    DESCRIPTION_DETAILS: f.descriptionDetails,
+                    FILE_NAME: f.fileName,
+                    CONTENT_TYPE: f.contentType,
+                    CONTENT_DATA: f.contentData ? Buffer.from(f.contentData, 'base64') : null,
+                    REMARKS: f.remarks,
+                    STATUS_MASTER: "Active",
+                    CREATED_BY: audit?.user || "System",
+                    CREATED_MAC_ADDRESS: req.ip || "127.0.0.1",
+                    CREATED_DATE: new Date()
+                }));
+                await tx.insert(TBL_TAX_INVOICE_FILES_UPLOAD).values(fValues as any);
             }
 
             return { msg: "Tax Invoice updated successfully" };

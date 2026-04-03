@@ -47,7 +47,9 @@ import {
   Hash,
   ChevronDown,
   CheckSquare,
-  User
+  User,
+  History,
+  ClipboardList
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -129,10 +131,12 @@ export function Header() {
 }
 
 const navigation = [
-  {
+   {
     group: 'Overview',
     items: [
-      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { name: 'Management Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { name: 'Purchase Dashboard', href: '/dashboard/purchase', icon: ShoppingCart },
+      { name: 'Sales Dashboard', href: '/dashboard/sales', icon: DollarSign },
     ]
   },
   {
@@ -193,11 +197,12 @@ const navigation = [
   {
     group: 'Purchasing',
     items: [
-
       { name: 'Purchase Orders', href: '/purchase-orders', icon: ShoppingCart },
       { name: 'Purchase Approval', href: '/purchase-approvals', icon: CheckSquare },
       { name: 'Goods Receipts', href: '/goods-receipts', icon: ClipboardCheck },
       { name: 'Purchase Invoices', href: '/purchase-booking', icon: FileText },
+      { name: 'Purchases History', href: '/purchase-history', icon: History },
+      { name: 'Proof of Delivery', href: '/pod', icon: ClipboardList },
     ]
   },
   {

@@ -3,6 +3,7 @@ import { db } from "../db/index.js";
 import { 
     TBL_EXPENSE_HDR, 
     TBL_EXPENSE_DTL,
+    TBL_EXPENSE_FILES_UPLOAD,
     TBL_COMPANY_MASTER,
     TBL_SUPPLIER_MASTER,
     TBL_ACCOUNTS_HEAD_MASTER
@@ -73,8 +74,13 @@ export const getExpenseById = async (req: Request, res: Response): Promise<Respo
         if (!header.length) return res.status(404).json({ msg: "Expense not found" });
 
         const items = await db.select().from(TBL_EXPENSE_DTL).where(eq(TBL_EXPENSE_DTL.EXPENSE_REF_NO, id));
+        const filesData = await db.select().from(TBL_EXPENSE_FILES_UPLOAD).where(eq(TBL_EXPENSE_FILES_UPLOAD.EXPENSE_REF_NO, id));
+        const processedFiles = filesData.map(f => ({
+            ...f,
+            CONTENT_DATA: f.CONTENT_DATA ? f.CONTENT_DATA.toString('base64') : null
+        }));
 
-        return res.status(200).json({ header: header[0], items });
+        return res.status(200).json({ header: header[0], items, files: processedFiles });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ msg: "Internal server error" });
@@ -160,6 +166,23 @@ export const createExpense = async (req: Request, res: Response): Promise<Respon
                 await tx.insert(TBL_EXPENSE_DTL).values(dValues as any);
             }
 
+            if (req.body.files && req.body.files.length > 0) {
+                const fValues = req.body.files.map((f: any) => ({
+                    EXPENSE_REF_NO: expenseRefNo,
+                    DOCUMENT_TYPE: f.documentType,
+                    DESCRIPTION_DETAILS: f.descriptionDetails,
+                    FILE_NAME: f.fileName,
+                    CONTENT_TYPE: f.contentType,
+                    CONTENT_DATA: f.contentData ? Buffer.from(f.contentData, 'base64') : null,
+                    REMARKS: f.remarks,
+                    STATUS_MASTER: "Active",
+                    CREATED_BY: audit?.user || "System",
+                    CREATED_DATE: new Date(),
+                    CREATED_IP_ADDRESS: req.ip || "127.0.0.1"
+                }));
+                await tx.insert(TBL_EXPENSE_FILES_UPLOAD).values(fValues as any);
+            }
+
             return { msg: "Expense created successfully", expenseRefNo };
         });
 
@@ -224,6 +247,24 @@ export const updateExpense = async (req: Request, res: Response): Promise<Respon
                     CREATED_IP_ADDRESS: req.ip || "127.0.0.1"
                 }));
                 await tx.insert(TBL_EXPENSE_DTL).values(dValues as any);
+            }
+
+            await tx.delete(TBL_EXPENSE_FILES_UPLOAD).where(eq(TBL_EXPENSE_FILES_UPLOAD.EXPENSE_REF_NO, id as string));
+            if (req.body.files && req.body.files.length > 0) {
+                const fValues = req.body.files.map((f: any) => ({
+                    EXPENSE_REF_NO: id,
+                    DOCUMENT_TYPE: f.documentType,
+                    DESCRIPTION_DETAILS: f.descriptionDetails,
+                    FILE_NAME: f.fileName,
+                    CONTENT_TYPE: f.contentType,
+                    CONTENT_DATA: f.contentData ? Buffer.from(f.contentData, 'base64') : null,
+                    REMARKS: f.remarks,
+                    STATUS_MASTER: "Active",
+                    CREATED_BY: audit?.user || "System",
+                    CREATED_DATE: new Date(),
+                    CREATED_IP_ADDRESS: req.ip || "127.0.0.1"
+                }));
+                await tx.insert(TBL_EXPENSE_FILES_UPLOAD).values(fValues as any);
             }
 
             return { msg: "Expense updated successfully" };

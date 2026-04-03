@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { db } from "../db/index.js";
-import { TBL_CUSTOMER_RECEIPT_HDR, TBL_CUSTOMER_RECEIPT_INVOICE_DTL } from "../db/schema/StoEntries.js";
+import { TBL_CUSTOMER_RECEIPT_HDR, TBL_CUSTOMER_RECEIPT_INVOICE_DTL, TBL_CUSTOMER_RECEIPT_FILES_UPLOAD } from "../db/schema/StoEntries.js";
 import { TBL_CUSTOMER_MASTER, TBL_COMPANY_MASTER, TBL_CURRENCY_MASTER, TBL_CUSTOMER_PAYMENT_MODE_MASTER } from "../db/schema/StoMaster.js";
 import { eq, desc, sql } from "drizzle-orm";
 
@@ -83,7 +83,13 @@ export const getCustomerReceiptById = async (req: Request, res: Response) => {
         .from(TBL_CUSTOMER_RECEIPT_INVOICE_DTL)
         .where(eq(TBL_CUSTOMER_RECEIPT_INVOICE_DTL.RECEIPT_REF_NO, id));
 
-        res.json({ header: header[0], items });
+        const filesData = await db.select().from(TBL_CUSTOMER_RECEIPT_FILES_UPLOAD).where(eq(TBL_CUSTOMER_RECEIPT_FILES_UPLOAD.RECEIPT_REF_NO, id));
+        const processedFiles = filesData.map(f => ({
+            ...f,
+            CONTENT_DATA: f.CONTENT_DATA ? f.CONTENT_DATA.toString('base64') : null
+        }));
+
+        res.json({ header: header[0], items, files: processedFiles });
     } catch (error) {
         res.status(500).json({ error: "Failed to fetch receipt details" });
     }
@@ -154,6 +160,23 @@ export const addCustomerReceipt = async (req: Request, res: Response) => {
                     CREATED_DATE: new Date(),
                 }));
                 await tx.insert(TBL_CUSTOMER_RECEIPT_INVOICE_DTL).values(dtlValues as any);
+            }
+
+            if (req.body.files && req.body.files.length > 0) {
+                const fValues = req.body.files.map((f: any) => ({
+                    RECEIPT_REF_NO: receiptRefNo,
+                    DOCUMENT_TYPE: f.documentType,
+                    DESCRIPTION_DETAILS: f.descriptionDetails,
+                    FILE_NAME: f.fileName,
+                    CONTENT_TYPE: f.contentType,
+                    CONTENT_DATA: f.contentData ? Buffer.from(f.contentData, 'base64') : null,
+                    REMARKS: f.remarks,
+                    STATUS_MASTER: "Active",
+                    CREATED_BY: audit?.user || "System",
+                    CREATED_DATE: new Date(),
+                    CREATED_IP_ADDRESS: req.ip || "127.0.0.1"
+                }));
+                await tx.insert(TBL_CUSTOMER_RECEIPT_FILES_UPLOAD).values(fValues as any);
             }
         });
         res.status(201).json({ message: "Customer receipt created successfully" });

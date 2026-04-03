@@ -53,7 +53,7 @@ export default function PurchaseOrdersPage() {
   const handleExportPDF = async (orderHeader: any) => {
     toast.loading("Fetching PO details...", { id: "po-pdf" });
     const fullOrder = await getOrderById(orderHeader.PO_REF_NO || orderHeader.poRefNo);
-    
+
     if (!fullOrder) {
       toast.error("Failed to load PO details", { id: "po-pdf" });
       return;
@@ -104,7 +104,7 @@ export default function PurchaseOrdersPage() {
     doc.setTextColor(71, 85, 105);
     doc.text(`Supplier: ${h.SUPPLIER_ID}`, 14, 62);
     doc.text(`Store: ${h.PO_STORE_ID}`, 120, 62);
-    
+
     if (h.PURCHASE_TYPE) doc.text(`Type: ${h.PURCHASE_TYPE}`, 14, 67);
     if (h.PAYMENT_TERM_ID) doc.text(`Payment Term ID: ${h.PAYMENT_TERM_ID}`, 14, 72);
 
@@ -134,7 +134,7 @@ export default function PurchaseOrdersPage() {
     doc.setTextColor(100, 116, 139);
     doc.text("Subtotal:", marginX, finalY);
     doc.text("VAT Amount:", marginX, finalY + 7);
-    
+
     doc.setFontSize(12);
     doc.setTextColor(15, 23, 42);
     doc.text("Grand Total:", marginX, finalY + 16);
@@ -142,16 +142,16 @@ export default function PurchaseOrdersPage() {
     doc.setFontSize(10);
     doc.text(`${currency} ${(Number(h.PRODUCT_HDR_AMOUNT) || 0).toLocaleString()}`, 190, finalY, { align: 'right' });
     doc.text(`${currency} ${(Number(h.TOTAL_VAT_HDR_AMOUNT) || 0).toLocaleString()}`, 190, finalY + 7, { align: 'right' });
-    
+
     doc.setFontSize(14);
     doc.text(`${currency} ${(Number(h.FINAL_PURCHASE_HDR_AMOUNT) || 0).toLocaleString()}`, 190, finalY + 16, { align: 'right' });
 
     // Footer note
     if (h.SHIPMENT_REMARKS) {
-        doc.setFontSize(9);
-        doc.setTextColor(100, 116, 139);
-        doc.text("Remarks:", 14, finalY + 30);
-        doc.text(h.SHIPMENT_REMARKS, 14, finalY + 35, { maxWidth: 100 });
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.text("Remarks:", 14, finalY + 30);
+      doc.text(h.SHIPMENT_REMARKS, 14, finalY + 35, { maxWidth: 100 });
     }
 
     doc.save(`${h.PO_REF_NO || "Purchase_Order"}.pdf`);
@@ -242,7 +242,7 @@ export default function PurchaseOrdersPage() {
                   const h = o.header || o;
                   const itemsCount = o.items?.length || h.itemsCount || 0;
                   const currency = h.CURRENCY_ID === 2 ? "TZS" : "$";
-                  
+
                   // Approval summary
                   const headStatus = h.PURCHASE_HEAD_RESPONSE_STATUS || "Pending";
                   const finalStatus = h.STATUS_ENTRY || "Draft";

@@ -15,6 +15,7 @@ import { useGoodsReceiptStore } from "@/hooks/useGoodsReceiptStore";
 import { usePurchaseBookingStore } from "@/hooks/usePurchaseBookingStore";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SupportingDoc } from "@/components/ui/Supporting-Doc";
 
 interface InvoiceItem {
     id: number;
@@ -99,7 +100,7 @@ function CreatePurchaseBookingContent() {
 
     const [items, setItems] = useState<InvoiceItem[]>([]);
     const [additionalCosts, setAdditionalCosts] = useState<AdditionalCost[]>([]);
-    const [existingFiles, setExistingFiles] = useState<UploadedFile[]>([]);
+    const [files, setFiles] = useState<any[]>([]);
     const [uploading, setUploading] = useState(false);
     const [isFetchingData, setIsFetchingData] = useState(false);
 
@@ -162,36 +163,7 @@ function CreatePurchaseBookingContent() {
         }));
     };
 
-    // File Upload Handler
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files?.[0]) return;
-        if (!editId) { toast.warning("Please save the invoice header before uploading documents"); return; }
-        
-        setUploading(true);
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            try {
-                const base64 = (event.target?.result as string).split(',')[1];
-                await uploadFile(editId, {
-                    documentType: "Invoice Attachment",
-                    description: "Supplier Scan",
-                    fileName: file.name,
-                    contentType: file.type,
-                    contentData: base64,
-                    audit: { user: "Admin" }
-                });
-                toast.success("Document attached!");
-                const files = await getFiles(editId);
-                setExistingFiles(files);
-            } catch (err) {
-                toast.error("Upload failed");
-            } finally {
-                setUploading(false);
-            }
-        };
-        reader.readAsDataURL(file);
-    };
+    // Removed old handleFileUpload
 
     // Save
     const handleSave = async () => {
@@ -218,6 +190,14 @@ function CreatePurchaseBookingContent() {
                 },
                 items,
                 additionalCosts,
+                files: files.map(f => ({
+                  documentType: f.DOCUMENT_TYPE || f.documentType,
+                  descriptionDetails: f.DESCRIPTION_DETAILS || f.descriptionDetails,
+                  fileName: f.FILE_NAME || f.fileName,
+                  contentType: f.CONTENT_TYPE || f.contentType,
+                  contentData: f.CONTENT_DATA || f.contentData,
+                  remarks: f.REMARKS || f.remarks,
+                })),
                 audit: { user: "Admin" }
             };
 
@@ -269,8 +249,7 @@ function CreatePurchaseBookingContent() {
             });
             if (res.items) setItems(res.items.map((i: any, idx: number) => ({ ...i, id: idx, productId: i.PRODUCT_ID, productName: i.productName || "Product", qtyPerPacking: Number(i.QTY_PER_PACKING || 0), totalQty: Number(i.TOTAL_QTY || 0), uom: i.UOM || "KG", ratePerQty: Number(i.RATE_PER_QTY || 0), productAmount: Number(i.PRODUCT_AMOUNT || 0), discountPercentage: Number(i.DISCOUNT_PERCENTAGE || 0), discountAmount: Number(i.DISCOUNT_AMOUNT || 0), totalProductAmount: Number(i.TOTAL_PRODUCT_AMOUNT || 0), vatPercentage: Number(i.VAT_PERCENTAGE || 0), vatAmount: Number(i.VAT_AMOUNT || 0), finalProductAmount: Number(i.FINAL_PRODUCT_AMOUNT || 0), grnRefNo: i.GRN_REF_NO })));
             if (res.additionalCosts) setAdditionalCosts(res.additionalCosts.map((c: any, idx: number) => ({ id: idx, typeId: String(c.ADDITIONAL_COST_TYPE_ID), amount: Number(c.ADDITIONAL_COST_AMOUNT), remarks: c.REMARKS })));
-            const files = await getFiles(editId);
-            setExistingFiles(files);
+            if (res.files) setFiles(res.files);
             setIsFetchingData(false);
         };
         load();
@@ -632,32 +611,11 @@ function CreatePurchaseBookingContent() {
                         </TabsContent>
 
                         <TabsContent value="files">
-                             <div className="bg-white rounded-[32px] border border-slate-200 p-8 shadow-sm text-center">
-                                 <div className="max-w-md mx-auto py-10">
-                                     <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100"><FileUp className="w-8 h-8 text-emerald-500" /></div>
-                                     <h3 className="text-lg font-bold text-slate-800 mb-2">Invoice Documentation</h3>
-                                     <p className="text-sm text-slate-400 mb-8 px-10">Upload scanned copies of the supplier invoice, tax slips, or transport documents for audit compliance.</p>
-                                     <div className="relative group">
-                                         <Input type="file" onChange={handleFileUpload} className="hidden" id="file-up" />
-                                         <Label htmlFor="file-up" className="inline-flex cursor-pointer items-center px-8 py-3 bg-[#10B981] text-white rounded-2xl font-bold shadow-lg shadow-emerald-500/20 hover:bg-[#059669] transition-all active:scale-95">
-                                             {uploading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Upload className="w-5 h-5 mr-2" />}
-                                             Upload Document
-                                         </Label>
-                                     </div>
-                                 </div>
-                                 {existingFiles.length > 0 && (
-                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-10">
-                                         {existingFiles.map(f => (
-                                             <div key={f.id || f.fileName} className="p-4 bg-white border border-slate-200 rounded-2xl flex items-center justify-between text-left group hover:border-emerald-300 transition-colors shadow-sm">
-                                                 <div className="flex items-center gap-3 overflow-hidden">
-                                                     <div className="p-2 bg-emerald-50 rounded-lg"><FileText className="w-5 h-5 text-emerald-600" /></div>
-                                                     <div className="overflow-hidden"><div className="font-bold text-slate-800 text-xs truncate">{f.fileName}</div><div className="text-[10px] text-slate-400">{f.documentType}</div></div>
-                                                 </div>
-                                                 <Download className="w-4 h-4 text-slate-300 group-hover:text-emerald-500 cursor-pointer" />
-                                             </div>
-                                         ))}
-                                     </div>
-                                 )}
+                             <div className="bg-white rounded-[32px] border border-slate-200 p-8 shadow-sm">
+                                 <SupportingDoc 
+                                    files={files} 
+                                    onFilesChange={setFiles} 
+                                 />
                              </div>
                         </TabsContent>
 

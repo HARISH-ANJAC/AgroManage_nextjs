@@ -3,6 +3,7 @@ import { db } from "../db/index.js";
 import {
     TBL_SALES_ORDER_HDR,
     TBL_SALES_ORDER_DTL,
+    TBL_SALES_ORDER_FILES_UPLOAD,
     TBL_PRODUCT_MASTER,
     TBL_CUSTOMER_MASTER,
     TBL_STORE_MASTER,
@@ -146,9 +147,16 @@ export const getSalesOrderById = async (req: Request, res: Response): Promise<Re
             .leftJoin(TBL_PRODUCT_MASTER, eq(TBL_SALES_ORDER_DTL.PRODUCT_ID, TBL_PRODUCT_MASTER.PRODUCT_ID))
             .where(eq(TBL_SALES_ORDER_DTL.SALES_ORDER_REF_NO, decodedId));
 
+        const filesData = await db.select().from(TBL_SALES_ORDER_FILES_UPLOAD).where(eq(TBL_SALES_ORDER_FILES_UPLOAD.SALES_ORDER_REF_NO, decodedId));
+        const processedFiles = filesData.map(f => ({
+            ...f,
+            CONTENT_DATA: f.CONTENT_DATA ? f.CONTENT_DATA.toString('base64') : null
+        }));
+
         return res.status(200).json({
             header: headerResult[0],
-            items
+            items,
+            files: processedFiles
         });
     } catch (error) {
         console.error(error);
@@ -241,6 +249,23 @@ export const createSalesOrder = async (req: Request, res: Response): Promise<Res
                 await tx.insert(TBL_SALES_ORDER_DTL).values(dValues);
             }
 
+            if (req.body.files && req.body.files.length > 0) {
+                const fValues = req.body.files.map((f: any) => ({
+                    SALES_ORDER_REF_NO: finalRefNo,
+                    DOCUMENT_TYPE: f.documentType,
+                    DESCRIPTION_DETAILS: f.descriptionDetails,
+                    FILE_NAME: f.fileName,
+                    CONTENT_TYPE: f.contentType,
+                    CONTENT_DATA: f.contentData ? Buffer.from(f.contentData, 'base64') : null,
+                    REMARKS: f.remarks,
+                    STATUS_MASTER: "Active",
+                    CREATED_BY: audit?.user || "admin",
+                    CREATED_DATE: new Date(),
+                    CREATED_MAC_ADDRESS: req.ip || "127.0.0.1"
+                }));
+                await tx.insert(TBL_SALES_ORDER_FILES_UPLOAD).values(fValues as any);
+            }
+
             return { msg: "Sales Order created successfully", salesOrderRefNo: finalRefNo };
         } catch (error: any) {
             console.error(error);
@@ -311,6 +336,24 @@ export const updateSalesOrder = async (req: Request, res: Response): Promise<Res
                     CREATED_MAC_ADDRESS: req.ip || "127.0.0.1"
                 }));
                 await tx.insert(TBL_SALES_ORDER_DTL).values(dValues);
+            }
+
+            await tx.delete(TBL_SALES_ORDER_FILES_UPLOAD).where(eq(TBL_SALES_ORDER_FILES_UPLOAD.SALES_ORDER_REF_NO, decodedId));
+            if (req.body.files && req.body.files.length > 0) {
+                const fValues = req.body.files.map((f: any) => ({
+                    SALES_ORDER_REF_NO: decodedId,
+                    DOCUMENT_TYPE: f.documentType,
+                    DESCRIPTION_DETAILS: f.descriptionDetails,
+                    FILE_NAME: f.fileName,
+                    CONTENT_TYPE: f.contentType,
+                    CONTENT_DATA: f.contentData ? Buffer.from(f.contentData, 'base64') : null,
+                    REMARKS: f.remarks,
+                    STATUS_MASTER: "Active",
+                    CREATED_BY: audit?.user || "admin",
+                    CREATED_DATE: new Date(),
+                    CREATED_MAC_ADDRESS: req.ip || "127.0.0.1"
+                }));
+                await tx.insert(TBL_SALES_ORDER_FILES_UPLOAD).values(fValues as any);
             }
 
             return { msg: "Sales Order updated successfully" };

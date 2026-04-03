@@ -30,6 +30,7 @@ import { useMasterData } from "@/hooks/useMasterData";
 import { usePurchaseOrderStore } from "@/hooks/usePurchaseOrderStore";
 import { useExpenseStore } from "@/hooks/useExpenseStore";
 import { getCurrentUser } from "@/lib/auth";
+import { SupportingDoc } from "@/components/ui/Supporting-Doc";
 
 interface AllocationLine {
   id: string;
@@ -81,6 +82,7 @@ function CreateExpenseContent() {
   }, [poList, expenses, editId, header.poRefNo]);
 
   const [allocations, setAllocations] = useState<AllocationLine[]>([]);
+  const [files, setFiles] = useState<any[]>([]);
 
   // Initialize defaults
   useEffect(() => {
@@ -126,6 +128,9 @@ function CreateExpenseContent() {
               poDtlSno: it.PO_DTL_SNO
             })));
           }
+          if (data.files) {
+            setFiles(data.files);
+          }
         }
       };
       load();
@@ -165,6 +170,14 @@ function CreateExpenseContent() {
         poDtlSno: a.poDtlSno,
         expenseAmount: a.allocatedAmount,
         remarks: ""
+      })),
+      files: files.map(f => ({
+        documentType: f.DOCUMENT_TYPE || f.documentType,
+        descriptionDetails: f.DESCRIPTION_DETAILS || f.descriptionDetails,
+        fileName: f.FILE_NAME || f.fileName,
+        contentType: f.CONTENT_TYPE || f.contentType,
+        contentData: f.CONTENT_DATA || f.contentData,
+        remarks: f.REMARKS || f.remarks,
       })),
       audit: { user: getCurrentUser()?.username || "System" }
     };
@@ -316,6 +329,12 @@ function CreateExpenseContent() {
                 </table>
               </div>
             </div>
+
+            {/* Supporting Documents Section */}
+            <SupportingDoc 
+              files={files} 
+              onFilesChange={setFiles} 
+            />
           </div>
 
           <div className="col-span-12 lg:col-span-4 space-y-8">
