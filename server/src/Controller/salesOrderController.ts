@@ -13,7 +13,8 @@ import { eq, like, desc, getTableColumns } from "drizzle-orm";
 
 interface SalesOrderHeader {
     salesOrderRefNo?: string;
-    salesOrderDate?: string;
+    salesProformaRefNo: string;
+    salesOrderDate: string;
     companyId: number;
     storeId: number;
     customerId: number;
@@ -52,6 +53,7 @@ export const getSalesOrders = async (req: Request, res: Response): Promise<Respo
         const data = await db.select({
             id: TBL_SALES_ORDER_HDR.SNO,
             salesOrderRefNo: TBL_SALES_ORDER_HDR.SALES_ORDER_REF_NO,
+            salesProformaRefNo: TBL_SALES_ORDER_HDR.SALES_PROFORMA_REF_NO,
             salesOrderDate: TBL_SALES_ORDER_HDR.SALES_ORDER_DATE,
             companyId: TBL_SALES_ORDER_HDR.COMPANY_ID,
             storeId: TBL_SALES_ORDER_HDR.STORE_ID,
@@ -96,6 +98,7 @@ export const getSalesOrderById = async (req: Request, res: Response): Promise<Re
         const headerResult = await db.select({
             id: TBL_SALES_ORDER_HDR.SNO,
             salesOrderRefNo: TBL_SALES_ORDER_HDR.SALES_ORDER_REF_NO,
+            salesProformaRefNo: TBL_SALES_ORDER_HDR.SALES_PROFORMA_REF_NO,
             salesOrderDate: TBL_SALES_ORDER_HDR.SALES_ORDER_DATE,
             companyId: TBL_SALES_ORDER_HDR.COMPANY_ID,
             storeId: TBL_SALES_ORDER_HDR.STORE_ID,
@@ -195,7 +198,8 @@ export const createSalesOrder = async (req: Request, res: Response): Promise<Res
 
             const hValues: typeof TBL_SALES_ORDER_HDR.$inferInsert = {
                 SALES_ORDER_REF_NO: finalRefNo,
-                SALES_ORDER_DATE: header.salesOrderDate ? new Date(header.salesOrderDate) : new Date(),
+                SALES_PROFORMA_REF_NO: header.salesProformaRefNo,
+                SALES_ORDER_DATE: new Date(header.salesOrderDate),
                 COMPANY_ID: Number(header.companyId),
                 STORE_ID: Number(header.storeId),
                 CUSTOMER_ID: Number(header.customerId),
@@ -285,7 +289,8 @@ export const updateSalesOrder = async (req: Request, res: Response): Promise<Res
             const { header, items, audit } = req.body as { header: SalesOrderHeader, items: SalesOrderItem[], audit: any };
 
             const hUpdates: Partial<typeof TBL_SALES_ORDER_HDR.$inferInsert> = {
-                SALES_ORDER_DATE: header.salesOrderDate ? new Date(header.salesOrderDate) : undefined,
+                SALES_ORDER_DATE: new Date(header.salesOrderDate),
+                SALES_PROFORMA_REF_NO: header.salesProformaRefNo,
                 COMPANY_ID: Number(header.companyId),
                 STORE_ID: Number(header.storeId),
                 CUSTOMER_ID: Number(header.customerId),

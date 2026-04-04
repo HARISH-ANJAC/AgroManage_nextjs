@@ -365,7 +365,8 @@ export const TBL_EXPENSE_DTL = StoEntriesSchema.table("TBL_EXPENSE_DTL", {
 export const TBL_SALES_ORDER_HDR = StoEntriesSchema.table("TBL_SALES_ORDER_HDR", {
   SNO: serial("SNO"),
   SALES_ORDER_REF_NO: varchar("SALES_ORDER_REF_NO", { length: 50 }).primaryKey(),
-  SALES_ORDER_DATE: timestamp("SALES_ORDER_DATE", { mode: "date" }),
+  SALES_ORDER_DATE: timestamp("SALES_ORDER_DATE", { mode: "date" }).notNull(),
+  SALES_PROFORMA_REF_NO: varchar("SALES_PROFORMA_REF_NO", { length: 50 }).references(() => TBL_SALES_PROFORMA_HDR.SALES_PROFORMA_REF_NO).notNull(),
   COMPANY_ID: integer("COMPANY_ID").references(() => StoMasterSchema.TBL_COMPANY_MASTER.Company_Id),
   STORE_ID: integer("STORE_ID").references(() => StoMasterSchema.TBL_STORE_MASTER.Store_Id),
   CUSTOMER_ID: integer("CUSTOMER_ID").references(() => StoMasterSchema.TBL_CUSTOMER_MASTER.Customer_Id),
@@ -894,6 +895,87 @@ export const TBL_CUSTOMER_RECEIPT_FILES_UPLOAD = StoEntriesSchema.table("TBL_CUS
   MODIFIED_IP_ADDRESS: varchar("MODIFIED_IP_ADDRESS", { length: 50 }),
 });
 
+export const TBL_SALES_PROFORMA_HDR = StoEntriesSchema.table("TBL_SALES_PROFORMA_HDR", {
+  SNO: serial("SNO"),
+  SALES_PROFORMA_REF_NO: varchar("SALES_PROFORMA_REF_NO", { length: 50 }).primaryKey(),
+  SALES_PROFORMA_DATE: timestamp("SALES_PROFORMA_DATE", { mode: "date" }),
+  COMPANY_ID: integer("COMPANY_ID").references(() => StoMasterSchema.TBL_COMPANY_MASTER.Company_Id),
+  STORE_ID: integer("STORE_ID").references(() => StoMasterSchema.TBL_STORE_MASTER.Store_Id),
+  CUSTOMER_ID: integer("CUSTOMER_ID").references(() => StoMasterSchema.TBL_CUSTOMER_MASTER.Customer_Id),
+  BILLING_LOCATION_ID: integer("BILLING_LOCATION_ID").references(() => StoMasterSchema.TBL_BILLING_LOCATION_MASTER.Billing_Location_Id),
+  SALES_PERSON_EMP_ID: integer("SALES_PERSON_EMP_ID").references(() => StoMasterSchema.TBL_SALES_PERSON_MASTER.Sales_Person_ID),
+  CURRENCY_ID: integer("CURRENCY_ID").references(() => StoMasterSchema.TBL_CURRENCY_MASTER.CURRENCY_ID),
+  EXCHANGE_RATE: numeric("EXCHANGE_RATE", { precision: 15, scale: 2 }),
+  TOTAL_PRODUCT_AMOUNT: numeric("TOTAL_PRODUCT_AMOUNT", { precision: 15, scale: 4 }),
+  VAT_AMOUNT: numeric("VAT_AMOUNT", { precision: 15, scale: 4 }),
+  FINAL_SALES_AMOUNT: numeric("FINAL_SALES_AMOUNT", { precision: 15, scale: 4 }),
+  TOTAL_PRODUCT_AMOUNT_LC: numeric("TOTAL_PRODUCT_AMOUNT_LC", { precision: 15, scale: 4 }),
+  FINAL_SALES_AMOUNT_LC: numeric("FINAL_SALES_AMOUNT_LC", { precision: 15, scale: 4 }),
+  REMARKS: varchar("REMARKS", { length: 2000 }),
+  TEST_DESC: varchar("TEST_DESC", { length: 50 }),
+  STATUS_ENTRY: varchar("STATUS_ENTRY", { length: 20 }),
+  CREATED_BY: varchar("CREATED_BY", { length: 50 }),
+  CREATED_DATE: timestamp("CREATED_DATE", { mode: "date" }),
+  CREATED_MAC_ADDRESS: varchar("CREATED_MAC_ADDRESS", { length: 50 }),
+  MODIFIED_BY: varchar("MODIFIED_BY", { length: 50 }),
+  MODIFIED_DATE: timestamp("MODIFIED_DATE", { mode: "date" }),
+  MODIFIED_MAC_ADDRESS: varchar("MODIFIED_MAC_ADDRESS", { length: 50 }),
+  SUBMITTED_BY: varchar("SUBMITTED_BY", { length: 50 }),
+  SUBMITTED_DATE: timestamp("SUBMITTED_DATE", { mode: "date" }),
+});
+
+export const TBL_SALES_PROFORMA_DTL = StoEntriesSchema.table("TBL_SALES_PROFORMA_DTL", {
+  SNO: serial("SNO").primaryKey(),
+  SALES_PROFORMA_REF_NO: varchar("SALES_PROFORMA_REF_NO", { length: 50 }).references(() => TBL_SALES_PROFORMA_HDR.SALES_PROFORMA_REF_NO),
+  MAIN_CATEGORY_ID: integer("MAIN_CATEGORY_ID").references(() => StoMasterSchema.TBL_PRODUCT_MAIN_CATEGORY_MASTER.MAIN_CATEGORY_ID),
+  SUB_CATEGORY_ID: integer("SUB_CATEGORY_ID").references(() => StoMasterSchema.TBL_PRODUCT_SUB_CATEGORY_MASTER.SUB_CATEGORY_ID),
+  PRODUCT_ID: integer("PRODUCT_ID").references(() => StoMasterSchema.TBL_PRODUCT_MASTER.PRODUCT_ID),
+  STORE_STOCK_PCS: numeric("STORE_STOCK_PCS", { precision: 15, scale: 4 }),
+  PO_REF_NO: varchar("PO_REF_NO", { length: 50 }).references(() => TBL_PURCHASE_ORDER_HDR.PO_REF_NO),
+  PO_DTL_SNO: integer("PO_DTL_SNO").references(() => TBL_PURCHASE_ORDER_DTL.SNO),
+  PO_DTL_STOCK_QTY: numeric("PO_DTL_STOCK_QTY", { precision: 15, scale: 4 }),
+  PURCHASE_RATE_PER_QTY: numeric("PURCHASE_RATE_PER_QTY", { precision: 15, scale: 6 }),
+  PO_EXPENSE_AMOUNT: numeric("PO_EXPENSE_AMOUNT", { precision: 15, scale: 4 }),
+  SALES_RATE_PER_QTY: numeric("SALES_RATE_PER_QTY", { precision: 15, scale: 6 }),
+  QTY_PER_PACKING: numeric("QTY_PER_PACKING", { precision: 15, scale: 2 }),
+  TOTAL_QTY: numeric("TOTAL_QTY", { precision: 15, scale: 4 }),
+  UOM: varchar("UOM", { length: 50 }),
+  TOTAL_PACKING: numeric("TOTAL_PACKING", { precision: 15, scale: 4 }),
+  ALTERNATE_UOM: varchar("ALTERNATE_UOM", { length: 500 }),
+  TOTAL_PRODUCT_AMOUNT: numeric("TOTAL_PRODUCT_AMOUNT", { precision: 15, scale: 4 }),
+  VAT_PERCENTAGE: numeric("VAT_PERCENTAGE", { precision: 15, scale: 2 }),
+  VAT_AMOUNT: numeric("VAT_AMOUNT", { precision: 15, scale: 4 }),
+  FINAL_SALES_AMOUNT: numeric("FINAL_SALES_AMOUNT", { precision: 15, scale: 4 }),
+  TOTAL_PRODUCT_AMOUNT_LC: numeric("TOTAL_PRODUCT_AMOUNT_LC", { precision: 15, scale: 4 }),
+  FINAL_SALES_AMOUNT_LC: numeric("FINAL_SALES_AMOUNT_LC", { precision: 15, scale: 4 }),
+  REMARKS: varchar("REMARKS", { length: 2000 }),
+  STATUS_ENTRY: varchar("STATUS_ENTRY", { length: 20 }),
+  CREATED_BY: varchar("CREATED_BY", { length: 50 }),
+  CREATED_DATE: timestamp("CREATED_DATE", { mode: "date" }),
+  CREATED_MAC_ADDRESS: varchar("CREATED_MAC_ADDRESS", { length: 50 }),
+  MODIFIED_BY: varchar("MODIFIED_BY", { length: 50 }),
+  MODIFIED_DATE: timestamp("MODIFIED_DATE", { mode: "date" }),
+  MODIFIED_MAC_ADDRESS: varchar("MODIFIED_MAC_ADDRESS", { length: 50 }),
+});
+
+export const TBL_SALES_PROFORMA_FILES_UPLOAD = StoEntriesSchema.table("TBL_SALES_PROFORMA_FILES_UPLOAD", {
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
+  SALES_PROFORMA_REF_NO: varchar("SALES_PROFORMA_REF_NO", { length: 50 }).references(() => TBL_SALES_PROFORMA_HDR.SALES_PROFORMA_REF_NO),
+  DOCUMENT_TYPE: varchar("DOCUMENT_TYPE", { length: 50 }),
+  DESCRIPTION_DETAILS: varchar("DESCRIPTION_DETAILS", { length: 100 }),
+  FILE_NAME: varchar("FILE_NAME", { length: 150 }),
+  CONTENT_TYPE: varchar("CONTENT_TYPE", { length: 50 }),
+  CONTENT_DATA: bytea("CONTENT_DATA"),
+  REMARKS: varchar("REMARKS", { length: 1000 }),
+  STATUS_MASTER: varchar("STATUS_MASTER", { length: 20 }),
+  CREATED_BY: varchar("CREATED_BY", { length: 50 }),
+  CREATED_DATE: timestamp("CREATED_DATE", { mode: "date" }),
+  CREATED_IP_ADDRESS: varchar("CREATED_IP_ADDRESS", { length: 50 }),
+  MODIFIED_BY: varchar("MODIFIED_BY", { length: 50 }),
+  MODIFIED_DATE: timestamp("MODIFIED_DATE", { mode: "date" }),
+  MODIFIED_IP_ADDRESS: varchar("MODIFIED_IP_ADDRESS", { length: 50 }),
+});
+
 export const TBL_GOODS_FILES_UPLOADRelations = relations(TBL_GOODS_FILES_UPLOAD, ({ one }) => ({
   goods_inward_grn_hdr: one(TBL_GOODS_INWARD_GRN_HDR, { fields: [TBL_GOODS_FILES_UPLOAD.GRN_REF_NO], references: [TBL_GOODS_INWARD_GRN_HDR.GRN_REF_NO] }),
 }));
@@ -917,4 +999,29 @@ export const TBL_TAX_INVOICE_FILES_UPLOADRelations = relations(TBL_TAX_INVOICE_F
 export const TBL_CUSTOMER_RECEIPT_FILES_UPLOADRelations = relations(TBL_CUSTOMER_RECEIPT_FILES_UPLOAD, ({ one }) => ({
   customer_receipt_hdr: one(TBL_CUSTOMER_RECEIPT_HDR, { fields: [TBL_CUSTOMER_RECEIPT_FILES_UPLOAD.RECEIPT_REF_NO], references: [TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_REF_NO] }),
 }));
+
+
+
+export const TBL_SALES_PROFORMA_HDRRelations = relations(TBL_SALES_PROFORMA_HDR, ({ one }) => ({
+  company_master: one(StoMasterSchema.TBL_COMPANY_MASTER, { fields: [TBL_SALES_PROFORMA_HDR.COMPANY_ID], references: [StoMasterSchema.TBL_COMPANY_MASTER.Company_Id] }),
+  store_master: one(StoMasterSchema.TBL_STORE_MASTER, { fields: [TBL_SALES_PROFORMA_HDR.STORE_ID], references: [StoMasterSchema.TBL_STORE_MASTER.Store_Id] }),
+  customer_master: one(StoMasterSchema.TBL_CUSTOMER_MASTER, { fields: [TBL_SALES_PROFORMA_HDR.CUSTOMER_ID], references: [StoMasterSchema.TBL_CUSTOMER_MASTER.Customer_Id] }),
+  billing_location_master: one(StoMasterSchema.TBL_BILLING_LOCATION_MASTER, { fields: [TBL_SALES_PROFORMA_HDR.BILLING_LOCATION_ID], references: [StoMasterSchema.TBL_BILLING_LOCATION_MASTER.Billing_Location_Id] }),
+  sales_person_master: one(StoMasterSchema.TBL_SALES_PERSON_MASTER, { fields: [TBL_SALES_PROFORMA_HDR.SALES_PERSON_EMP_ID], references: [StoMasterSchema.TBL_SALES_PERSON_MASTER.Sales_Person_ID] }),
+  currency_master: one(StoMasterSchema.TBL_CURRENCY_MASTER, { fields: [TBL_SALES_PROFORMA_HDR.CURRENCY_ID], references: [StoMasterSchema.TBL_CURRENCY_MASTER.CURRENCY_ID] }),
+}));
+
+export const TBL_SALES_PROFORMA_DTLRelations = relations(TBL_SALES_PROFORMA_DTL, ({ one }) => ({
+  sales_proforma_hdr: one(TBL_SALES_PROFORMA_HDR, { fields: [TBL_SALES_PROFORMA_DTL.SALES_PROFORMA_REF_NO], references: [TBL_SALES_PROFORMA_HDR.SALES_PROFORMA_REF_NO] }),
+  product_main_category_master: one(StoMasterSchema.TBL_PRODUCT_MAIN_CATEGORY_MASTER, { fields: [TBL_SALES_PROFORMA_DTL.MAIN_CATEGORY_ID], references: [StoMasterSchema.TBL_PRODUCT_MAIN_CATEGORY_MASTER.MAIN_CATEGORY_ID] }),
+  product_sub_category_master: one(StoMasterSchema.TBL_PRODUCT_SUB_CATEGORY_MASTER, { fields: [TBL_SALES_PROFORMA_DTL.SUB_CATEGORY_ID], references: [StoMasterSchema.TBL_PRODUCT_SUB_CATEGORY_MASTER.SUB_CATEGORY_ID] }),
+  product_master: one(StoMasterSchema.TBL_PRODUCT_MASTER, { fields: [TBL_SALES_PROFORMA_DTL.PRODUCT_ID], references: [StoMasterSchema.TBL_PRODUCT_MASTER.PRODUCT_ID] }),
+  purchase_order_hdr: one(TBL_PURCHASE_ORDER_HDR, { fields: [TBL_SALES_PROFORMA_DTL.PO_REF_NO], references: [TBL_PURCHASE_ORDER_HDR.PO_REF_NO] }),
+  purchase_order_dtl: one(TBL_PURCHASE_ORDER_DTL, { fields: [TBL_SALES_PROFORMA_DTL.PO_DTL_SNO], references: [TBL_PURCHASE_ORDER_DTL.SNO] }),
+}));
+
+export const TBL_SALES_PROFORMA_FILES_UPLOADRelations = relations(TBL_SALES_PROFORMA_FILES_UPLOAD, ({ one }) => ({
+  sales_proforma_hdr: one(TBL_SALES_PROFORMA_HDR, { fields: [TBL_SALES_PROFORMA_FILES_UPLOAD.SALES_PROFORMA_REF_NO], references: [TBL_SALES_PROFORMA_HDR.SALES_PROFORMA_REF_NO] }),
+}));
+
 

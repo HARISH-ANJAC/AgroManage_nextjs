@@ -69,7 +69,7 @@ export default function CreateQuotationRFQPage() {
   ]);
 
   const [additionalCosts, setAdditionalCosts] = useState<AdditionalCost[]>([
-    { id: 1, type: "", currency: "$", amount: 0 },
+    { id: 1, type: "", currency: "TZS", amount: 0 },
   ]);
 
   const [files, setFiles] = useState<any[]>([]);
@@ -386,7 +386,7 @@ export default function CreateQuotationRFQPage() {
                     <td className="p-4 text-center"><Input type="number" className="w-20 mx-auto bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11 text-center font-medium" value={item.qtyPerPack} onChange={(e) => updateItem(item.id, "qtyPerPack", Number(e.target.value))} /></td>
                     <td className="p-4 text-center"><Input type="number" className="w-20 mx-auto bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11 text-center font-bold text-[#0F172A]" value={item.totalQty} onChange={(e) => updateItem(item.id, "totalQty", Number(e.target.value))} /></td>
                     <td className="p-4"><Input type="number" className="w-24 bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11 font-medium" value={item.rate} onChange={(e) => updateItem(item.id, "rate", Number(e.target.value))} /></td>
-                    <td className="p-4 font-bold text-[#0F172A]">${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    <td className="p-4 font-bold text-[#0F172A]">TZS {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                     <td className="p-4 text-center"><Input type="number" className="w-16 mx-auto bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11 text-center" value={item.discPercent} onChange={(e) => updateItem(item.id, "discPercent", Number(e.target.value))} /></td>
                     <td className="p-4 text-center"><Input type="number" className="w-16 mx-auto bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11 text-center" value={item.vatPercent} onChange={(e) => updateItem(item.id, "vatPercent", Number(e.target.value))} /></td>
                     <td className="p-4 text-right">
@@ -411,7 +411,7 @@ export default function CreateQuotationRFQPage() {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-base font-bold text-[#0F172A]">Additional Costs (Est.)</h2>
                 <button
-                    onClick={() => setAdditionalCosts((prev) => [...prev, { id: Date.now(), type: "", currency: "$", amount: 0 }])}
+                    onClick={() => setAdditionalCosts((prev) => [...prev, { id: Date.now(), type: "", currency: "TZS", amount: 0 }])}
                     className="text-xs text-[#059669] font-bold hover:underline"
                 >
                     + Add Cost Row
@@ -493,17 +493,17 @@ export default function CreateQuotationRFQPage() {
                 <div className="h-px flex-1 bg-white/10" />
             </h2>
             <div className="space-y-4 text-[13px]">
-              <div className="flex justify-between opacity-70"><span>Subtotal</span><span className="font-bold">${subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>
-              <div className="flex justify-between text-[#FBBF24]"><span>Total Discount</span><span className="font-bold">-${totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>
-              <div className="flex justify-between opacity-70"><span>Total VAT (15%)</span><span className="font-bold">${totalVat.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>
-              <div className="flex justify-between opacity-70"><span>Additional Costs</span><span className="font-bold">${totalAdditional.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>
+              <div className="flex justify-between opacity-70"><span>Subtotal</span><span className="font-bold">TZS {subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>
+              <div className="flex justify-between text-[#FBBF24]"><span>Total Discount</span><span className="font-bold">-TZS {totalDiscount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>
+              <div className="flex justify-between opacity-70"><span>Total VAT (15%)</span><span className="font-bold">TZS {totalVat.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>
+              <div className="flex justify-between opacity-70"><span>Additional Costs</span><span className="font-bold">TZS {totalAdditional.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>
             </div>
 
             <div className="mt-10 pt-8 border-t border-white/10">
               <div className="flex justify-between items-end mb-8">
                 <div>
-                  <p className="text-[10px] uppercase font-bold tracking-widest opacity-50 mb-2">Grand Total (USD)</p>
-                  <p className="text-4xl font-extrabold tracking-tight">${grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                  <p className="text-[10px] uppercase font-bold tracking-widest opacity-50 mb-2">Grand Total (TZS)</p>
+                  <p className="text-4xl font-extrabold tracking-tight">TZS {grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] uppercase font-bold tracking-widest opacity-50 mb-2">Items</p>

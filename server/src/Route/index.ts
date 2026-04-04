@@ -12,6 +12,7 @@ import { masterRoute } from "./masterRoute.js";
 import { goodsReceiptRoute } from "./goodsReceiptRoute.js";
 import { purchaseInvoiceRoute } from "./purchaseInvoiceRoute.js";
 import { salesOrderRoute } from "./salesOrderRoute.js";
+import { salesProformaRoute } from "./salesProformaRoute.js";
 import { deliveryNoteRoute } from "./deliveryNoteRoute.js";
 import { taxInvoiceRoute } from "./taxInvoiceRoute.js";
 import { customerReceiptRoute } from "./customerReceiptRoute.js";
@@ -45,6 +46,7 @@ Router.use("/goods-receipts", goodsReceiptRoute);
 Router.use("/purchase-invoices", purchaseInvoiceRoute);
 
 Router.use("/sales-orders", salesOrderRoute);
+Router.use("/sales-proformas", salesProformaRoute);
 Router.use("/delivery-notes", deliveryNoteRoute);
 Router.use("/sales-invoices", taxInvoiceRoute);
 Router.use("/customer-receipts", customerReceiptRoute);

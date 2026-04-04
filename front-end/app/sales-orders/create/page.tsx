@@ -42,9 +42,10 @@ import {
   usePaymentTerms,
   useProducts,
   useUoms,
-  useBillingLocations
+  useBillingLocations,
 } from "@/hooks/useStoreData";
 import { useSalesOrderStore } from "@/hooks/useSalesOrderStore";
+import { useSalesProformaStore } from "@/hooks/useSalesProformaStore";
 import { SupportingDoc } from "@/components/ui/Supporting-Doc";
 
 interface LineItem {
@@ -68,7 +69,9 @@ function CreateSalesOrderContent(): JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get("id");
+  const proformaRef = searchParams.get("proformaRef");
   const { addOrder, updateOrder, getOrderById } = useSalesOrderStore();
+  const { getProformaById, proformas, isLoading: proformasLoading } = useSalesProformaStore();
   const today = new Date().toISOString().split("T")[0];
 
   // Master Data Hooks
@@ -97,7 +100,8 @@ function CreateSalesOrderContent(): JSX.Element {
     outstandingAmt: 0,
     status: "Draft",
     remarks: "",
-    salesOrderRefNo: ""
+    salesOrderRefNo: "",
+    salesProformaRefNo: ""
   });
 
   const [items, setItems] = useState<LineItem[]>([
@@ -132,7 +136,8 @@ function CreateSalesOrderContent(): JSX.Element {
             outstandingAmt: Number(h.outstandingAmt) || 0,
             status: h.status || "Draft",
             remarks: h.remarks || "",
-            salesOrderRefNo: h.salesOrderRefNo || ""
+            salesOrderRefNo: h.salesOrderRefNo || "",
+            salesProformaRefNo: h.salesProformaRefNo || ""
           });
 
           if (res.items) {
@@ -151,6 +156,54 @@ function CreateSalesOrderContent(): JSX.Element {
               poRefNo: it.poRefNo || "",
               poDtlSno: it.poDtlSno,
               amount: Number(it.amount) || 0
+            })));
+          }
+
+          if (res.files) {
+            setFiles(res.files);
+          }
+        }
+        setIsFetchingData(false);
+      } else if (proformaRef) {
+        setIsFetchingData(true);
+        const res = await getProformaById(proformaRef);
+        if (res && res.header) {
+          const h = res.header;
+          setHeader({
+            salesOrderDate: today,
+            companyId: h.companyId || 0,
+            customerId: h.customerId || 0,
+            storeId: h.storeId || 0,
+            billingLocationId: h.billingLocationId || 0,
+            salesPersonId: h.salesPersonEmpId || 0,
+            currencyId: h.currencyId || 0,
+            paymentTermId: 0,
+            exchangeRate: Number(h.exchangeRate) || 1,
+            creditLimitAmt: 0,
+            creditLimitDays: 0,
+            outstandingAmt: 0,
+            status: "Draft",
+            remarks: h.remarks || "",
+            salesOrderRefNo: "",
+            salesProformaRefNo: h.salesProformaRefNo || proformaRef
+          });
+
+          if (res.items) {
+            setItems(res.items.map((it: any) => ({
+              id: it.id || Date.now() + Math.random(),
+              productId: it.productId,
+              productName: it.productName || "",
+              mainCategoryId: it.mainCategoryId,
+              subCategoryId: it.subCategoryId,
+              qtyPerPack: Number(it.qtyPerPacking) || 1,
+              totalQty: Number(it.totalQty) || 0,
+              uom: it.uom || "KG",
+              rate: Number(it.salesRatePerQty) || 0,
+              discPercent: 0,
+              vatPercent: Number(it.vatPercentage) || 0,
+              poRefNo: it.poRefNo || "",
+              poDtlSno: it.poDtlSno,
+              amount: Number(it.totalProductAmount) || 0
             })));
           }
 
@@ -192,6 +245,56 @@ function CreateSalesOrderContent(): JSX.Element {
     }
   }, [header.customerId, customers]);
 
+  const handleProformaSelect = async (proformaRefNo: string) => {
+    if (!proformaRefNo || proformaRefNo === "none") {
+      setHeader(prev => ({ ...prev, salesProformaRefNo: "" }));
+      return;
+    }
+    
+    setIsFetchingData(true);
+    try {
+      const res = await getProformaById(proformaRefNo);
+      if (res && res.header) {
+        const h = res.header;
+        setHeader(prev => ({
+          ...prev,
+          salesProformaRefNo: h.salesProformaRefNo || proformaRefNo,
+          companyId: h.companyId || prev.companyId,
+          customerId: h.customerId || prev.customerId,
+          storeId: h.storeId || prev.storeId,
+          billingLocationId: h.billingLocationId || prev.billingLocationId,
+          salesPersonId: h.salesPersonEmpId || prev.salesPersonId,
+          currencyId: h.currencyId || prev.currencyId,
+          exchangeRate: Number(h.exchangeRate) || prev.exchangeRate,
+          remarks: h.remarks || prev.remarks
+        }));
+
+        if (res.items) {
+          setItems(res.items.map((it: any) => ({
+            id: it.id || Date.now() + Math.random(),
+            productId: it.productId,
+            productName: it.productName || "",
+            mainCategoryId: it.mainCategoryId,
+            subCategoryId: it.subCategoryId,
+            qtyPerPack: Number(it.qtyPerPacking) || 1,
+            totalQty: Number(it.totalQty) || 0,
+            uom: it.uom || "KG",
+            rate: Number(it.salesRatePerQty) || 0,
+            discPercent: 0,
+            vatPercent: Number(it.vatPercentage) || 0,
+            poRefNo: it.poRefNo || "",
+            poDtlSno: it.poDtlSno,
+            amount: Number(it.totalProductAmount) || 0
+          })));
+        }
+      }
+    } catch (e) {
+      toast.error("Failed to load Proforma details");
+    } finally {
+      setIsFetchingData(false);
+    }
+  };
+
   const removeItem = (id: string | number) => setItems(items.filter(i => i.id !== id));
 
   const addItem = () => {
@@ -229,8 +332,8 @@ function CreateSalesOrderContent(): JSX.Element {
   const grandTotal = subtotal + totalVat;
 
   const handleSubmit = async (status: string = "Pending") => {
-    if (!header.customerId || !header.companyId || !header.storeId) {
-      toast.error("Please fill all required fields");
+    if (!header.salesOrderDate || !header.customerId || !header.companyId || !header.storeId || !header.salesProformaRefNo) {
+      toast.error("Please fill all required fields (Date, Company, Customer, Store, Proforma)");
       return;
     }
 
@@ -348,7 +451,28 @@ function CreateSalesOrderContent(): JSX.Element {
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="space-y-2">
-                <Label>Order Date</Label>
+                <Label>Proforma Reference <span className="text-red-500">*</span></Label>
+                {proformasLoading ? (
+                  <Skeleton className="h-11 w-full rounded-xl" />
+                ) : (
+                  <div className="relative">
+                    <FileText className="absolute left-3 top-3.5 w-4 h-4 text-muted-foreground z-10" />
+                    <Select value={String(header.salesProformaRefNo || "")} onValueChange={handleProformaSelect}>
+                      <SelectTrigger className="rounded-xl h-11 pl-9"><SelectValue placeholder="Select Proforma" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        {proformas.map((p: any) => (
+                          <SelectItem key={p.salesProformaRefNo || p.id} value={p.salesProformaRefNo}>
+                            {p.salesProformaRefNo}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label>Order Date <span className="text-red-500">*</span></Label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
                   <Input type="date" value={header.salesOrderDate} onChange={e => setHeader({ ...header, salesOrderDate: e.target.value })} className="rounded-xl h-11 pl-9" />
@@ -543,10 +667,10 @@ function CreateSalesOrderContent(): JSX.Element {
           </div>
 
           {/* Supporting Documents Section */}
-          <SupportingDoc 
+          {/* <SupportingDoc 
             files={files} 
             onFilesChange={setFiles} 
-          />
+          /> */}
         </div>
 
         {/* Financial Sidebar */}

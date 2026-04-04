@@ -1,13 +1,15 @@
 import { transporter } from '../utils/mailer.js';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
-
 
 export interface EmailAttachment {
   filename: string;
   content?: any;
   path?: string;
+  cid?: string;
   contentType?: string;
 }
 
@@ -22,7 +24,7 @@ export interface SendEmailOptions {
 export const sendEmail = async (options: SendEmailOptions) => {
   try {
     const info = await transporter.sendMail({
-      from: process.env.EMAIL_FROM || '"Prime Harvest" <[EMAIL_ADDRESS]>',
+      from: process.env.EMAIL_FROM || '"Prime Harvest" <noreply@primeharvest.co.tz>',
       to: typeof options.to === 'string' ? options.to : options.to.join(','),
       subject: options.subject,
       text: options.text,
@@ -53,6 +55,7 @@ export const getBaseTemplate = (title: string, content: string) => `
         .footer { background-color: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; }
         .button { background-color: #0f172a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 20px; font-weight: bold; }
         .highlight { color: #0d9488; font-weight: bold; }
+        .logo { max-height: 48px; margin-bottom: 12px; }
     </style>
 </head>
 <body>
@@ -76,3 +79,4 @@ export const getBaseTemplate = (title: string, content: string) => `
 </body>
 </html>
 `;
+

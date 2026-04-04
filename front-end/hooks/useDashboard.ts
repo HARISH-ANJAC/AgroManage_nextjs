@@ -15,10 +15,10 @@ export function useDashboard() {
     
     return {
       stats: [
-        { label: "TOTAL PURCHASES", value: `$${Number(data.stats.totalPurchases).toLocaleString()}`, change: "+12%", icon: "ShoppingCart", color: "text-primary" },
-        { label: "TOTAL SALES", value: `$${Number(data.stats.totalSales).toLocaleString()}`, change: "+18%", icon: "DollarSign", color: "text-green-500" },
+        { label: "TOTAL PURCHASES", value: `TZS ${Number(data.stats.totalPurchases).toLocaleString()}`, change: "+12%", icon: "ShoppingCart", color: "text-primary" },
+        { label: "TOTAL SALES", value: `TZS ${Number(data.stats.totalSales).toLocaleString()}`, change: "+18%", icon: "DollarSign", color: "text-green-500" },
         { label: "PRODUCTS", value: data.stats.products.toString(), change: "Check Stock", icon: "Package", color: "text-blue-500" },
-        { label: "REVENUE", value: `$${Number(data.stats.revenue).toLocaleString()}`, change: "+23%", icon: "TrendingUp", color: "text-amber-500" },
+        { label: "REVENUE", value: `TZS ${Number(data.stats.revenue).toLocaleString()}`, change: "+23%", icon: "TrendingUp", color: "text-amber-500" },
         { label: "PENDING DELIVERIES", value: data.stats.pendingDeliveries.toString(), change: "Due today", icon: "Truck", color: "text-primary" },
         { label: "LOW STOCK", value: data.stats.lowStockAlerts.toString(), change: "Urgent", icon: "AlertTriangle", color: "text-destructive" },
       ],
@@ -45,7 +45,7 @@ export function usePurchaseDashboard() {
         { label: "TOTAL POs", value: data.stats.totalPOs, icon: "Package", color: "text-primary" },
         { label: "APPROVED", value: data.stats.approvedPOs, icon: "CheckCircle2", color: "text-green-500" },
         { label: "PENDING", value: data.stats.pendingPOs, icon: "Clock", color: "text-amber-500" },
-        { label: "TOTAL SPENT", value: `$${Number(data.stats.totalSpent).toLocaleString()}`, icon: "DollarSign", color: "text-emerald-600" },
+        { label: "TOTAL SPENT", value: `TZS ${Number(data.stats.totalSpent).toLocaleString()}`, icon: "DollarSign", color: "text-emerald-600" },
         { label: "ACTIVE SUPPLIERS", value: data.stats.activeSuppliers, icon: "Users", color: "text-blue-600" },
       ],
       recentActivity: mapActivity(data.recentActivity)
@@ -67,7 +67,7 @@ export function useSalesDashboard() {
       stats: [
         { label: "TOTAL ORDERS", value: data.stats.totalOrders, icon: "ShoppingCart", color: "text-primary" },
         { label: "TAX INVOICES", value: data.stats.totalInvoices, icon: "FileText", color: "text-blue-500" },
-        { label: "REVENUE", value: `$${Number(data.stats.revenue).toLocaleString()}`, icon: "TrendingUp", color: "text-green-600" },
+        { label: "REVENUE", value: `TZS ${Number(data.stats.revenue).toLocaleString()}`, icon: "TrendingUp", color: "text-green-600" },
         { label: "CUSTOMERS", value: data.stats.activeCustomers, icon: "Users", color: "text-amber-600" },
       ],
       recentActivity: mapActivity(data.recentActivity)
@@ -84,7 +84,7 @@ function mapActivity(items: any[]) {
     if (a.status === "Draft") statusColor = "bg-slate-300";
     return {
       ...a,
-      amount: `$${Number(a.amount).toLocaleString()}`,
+      amount: `TZS ${Number(a.amount).toLocaleString()}`,
       statusColor
     };
   });

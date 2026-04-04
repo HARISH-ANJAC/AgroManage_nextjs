@@ -1,4 +1,5 @@
 import puppeteer from 'puppeteer';
+import { PremiumInvoice, PremiumInvoiceParams } from './invoiceTemplates/premiumInvoiceTemplate.js';
 
 export const generatePdfFromHtml = async (html: string) => {
     const browser = await puppeteer.launch({
@@ -15,3 +16,12 @@ export const generatePdfFromHtml = async (html: string) => {
     await browser.close();
     return pdf;
 };
+
+/**
+ * Generates a PDF buffer using the Premium Invoice template
+ */
+export const generateInvoicePdf = async (params: PremiumInvoiceParams) => {
+    const html = PremiumInvoice(params);
+    return await generatePdfFromHtml(html);
+};
+

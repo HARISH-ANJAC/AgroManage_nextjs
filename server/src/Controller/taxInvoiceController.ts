@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { db } from "../db/index.js";
-import { 
-    TBL_TAX_INVOICE_HDR, 
+import {
+    TBL_TAX_INVOICE_HDR,
     TBL_TAX_INVOICE_DTL,
     TBL_TAX_INVOICE_FILES_UPLOAD,
     TBL_PRODUCT_MASTER,
@@ -35,11 +35,11 @@ export const getTaxInvoices = async (req: Request, res: Response): Promise<Respo
             status: TBL_TAX_INVOICE_HDR.STATUS_ENTRY,
             remarks: TBL_TAX_INVOICE_HDR.REMARKS
         })
-        .from(TBL_TAX_INVOICE_HDR)
-        .leftJoin(TBL_COMPANY_MASTER, eq(TBL_TAX_INVOICE_HDR.COMPANY_ID, TBL_COMPANY_MASTER.Company_Id))
-        .leftJoin(TBL_STORE_MASTER, eq(TBL_TAX_INVOICE_HDR.FROM_STORE_ID, TBL_STORE_MASTER.Store_Id))
-        .leftJoin(TBL_CUSTOMER_MASTER, eq(TBL_TAX_INVOICE_HDR.CUSTOMER_ID, TBL_CUSTOMER_MASTER.Customer_Id))
-        .orderBy(desc(TBL_TAX_INVOICE_HDR.CREATED_DATE));
+            .from(TBL_TAX_INVOICE_HDR)
+            .leftJoin(TBL_COMPANY_MASTER, eq(TBL_TAX_INVOICE_HDR.COMPANY_ID, TBL_COMPANY_MASTER.Company_Id))
+            .leftJoin(TBL_STORE_MASTER, eq(TBL_TAX_INVOICE_HDR.FROM_STORE_ID, TBL_STORE_MASTER.Store_Id))
+            .leftJoin(TBL_CUSTOMER_MASTER, eq(TBL_TAX_INVOICE_HDR.CUSTOMER_ID, TBL_CUSTOMER_MASTER.Customer_Id))
+            .orderBy(desc(TBL_TAX_INVOICE_HDR.CREATED_DATE));
 
         return res.status(200).json(data);
     } catch (error) {
@@ -73,12 +73,12 @@ export const getTaxInvoiceById = async (req: Request, res: Response): Promise<Re
             status: TBL_TAX_INVOICE_HDR.STATUS_ENTRY,
             remarks: TBL_TAX_INVOICE_HDR.REMARKS
         })
-        .from(TBL_TAX_INVOICE_HDR)
-        .leftJoin(TBL_COMPANY_MASTER, eq(TBL_TAX_INVOICE_HDR.COMPANY_ID, TBL_COMPANY_MASTER.Company_Id))
-        .leftJoin(TBL_STORE_MASTER, eq(TBL_TAX_INVOICE_HDR.FROM_STORE_ID, TBL_STORE_MASTER.Store_Id))
-        .leftJoin(TBL_CUSTOMER_MASTER, eq(TBL_TAX_INVOICE_HDR.CUSTOMER_ID, TBL_CUSTOMER_MASTER.Customer_Id))
-        .where(eq(TBL_TAX_INVOICE_HDR.TAX_INVOICE_REF_NO, decodedId))
-        .limit(1);
+            .from(TBL_TAX_INVOICE_HDR)
+            .leftJoin(TBL_COMPANY_MASTER, eq(TBL_TAX_INVOICE_HDR.COMPANY_ID, TBL_COMPANY_MASTER.Company_Id))
+            .leftJoin(TBL_STORE_MASTER, eq(TBL_TAX_INVOICE_HDR.FROM_STORE_ID, TBL_STORE_MASTER.Store_Id))
+            .leftJoin(TBL_CUSTOMER_MASTER, eq(TBL_TAX_INVOICE_HDR.CUSTOMER_ID, TBL_CUSTOMER_MASTER.Customer_Id))
+            .where(eq(TBL_TAX_INVOICE_HDR.TAX_INVOICE_REF_NO, decodedId))
+            .limit(1);
 
         if (!header.length) return res.status(404).json({ msg: "Tax Invoice not found" });
 
@@ -96,9 +96,9 @@ export const getTaxInvoiceById = async (req: Request, res: Response): Promise<Re
             finalAmount: TBL_TAX_INVOICE_DTL.FINAL_SALES_AMOUNT,
             deliveryNoteDtlSno: TBL_TAX_INVOICE_DTL.DELIVERY_NOTE_DTL_SNO
         })
-        .from(TBL_TAX_INVOICE_DTL)
-        .leftJoin(TBL_PRODUCT_MASTER, eq(TBL_TAX_INVOICE_DTL.PRODUCT_ID, TBL_PRODUCT_MASTER.PRODUCT_ID))
-        .where(eq(TBL_TAX_INVOICE_DTL.TAX_INVOICE_REF_NO, decodedId));
+            .from(TBL_TAX_INVOICE_DTL)
+            .leftJoin(TBL_PRODUCT_MASTER, eq(TBL_TAX_INVOICE_DTL.PRODUCT_ID, TBL_PRODUCT_MASTER.PRODUCT_ID))
+            .where(eq(TBL_TAX_INVOICE_DTL.TAX_INVOICE_REF_NO, decodedId));
 
         const filesData = await db.select().from(TBL_TAX_INVOICE_FILES_UPLOAD).where(eq(TBL_TAX_INVOICE_FILES_UPLOAD.TAX_INVOICE_REF_NO, decodedId));
         const processedFiles = filesData.map(f => ({
@@ -167,7 +167,7 @@ export const createTaxInvoice = async (req: Request, res: Response): Promise<Res
             // Send Email to Customer
             try {
                 const customer = (await tx.select().from(TBL_CUSTOMER_MASTER).where(eq(TBL_CUSTOMER_MASTER.Customer_Id, header.customerId as number)).limit(1))[0];
-                
+
                 if (customer?.Email_Address) {
                     const invoiceData = `
                         <h2>Invoice Number: <span class="highlight">${finalRefNo}</span></h2>
@@ -196,7 +196,7 @@ export const createTaxInvoice = async (req: Request, res: Response): Promise<Res
 
                     await sendEmail({
                         to: customer.Email_Address,
-                        subject: `TAX INVOICE: ${finalRefNo} | AgroManage ERP`,
+                        subject: `TAX INVOICE: ${finalRefNo} | Prime Harvest`,
                         html: getBaseTemplate('Invoice Issued', invoiceData),
                         attachments: [{
                             filename: `Invoice_${finalRefNo.replace(/\//g, '_')}.pdf`,
@@ -226,7 +226,7 @@ export const updateTaxInvoice = async (req: Request, res: Response): Promise<Res
     const transaction = await db.transaction(async (tx) => {
         try {
             const { header, items, audit } = req.body;
-            
+
             const hUpdates = {
                 INVOICE_DATE: header.invoiceDate ? new Date(header.invoiceDate) : undefined,
                 TOTAL_PRODUCT_AMOUNT: header.totalProductAmount,

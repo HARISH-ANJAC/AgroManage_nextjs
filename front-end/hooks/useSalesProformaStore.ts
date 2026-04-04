@@ -1,0 +1,102 @@
+"use client";
+
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+export function useSalesProformaStore() {
+  const queryClient = useQueryClient();
+
+  const getAuthToken = () => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("accessToken");
+  };
+
+  // Fetch all proformas
+  const { data: proformas = [], isLoading, refetch: refetchProformas } = useQuery({
+    queryKey: ["sales-proformas"],
+    queryFn: async () => {
+      const response = await fetch(`${API_URL}/sales-proformas`, {
+        headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+      });
+      if (!response.ok) throw new Error("Failed to fetch Sales Proformas");
+      return response.json();
+    }
+  });
+
+  // Fetch single proforma
+  const getProformaById = useCallback(async (id: string) => {
+    const encodedId = encodeURIComponent(encodeURIComponent(id));
+    const response = await fetch(`${API_URL}/sales-proformas/${encodedId}`, {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+    if (!response.ok) return null;
+    return response.json();
+  }, []);
+
+  // Add proforma
+  const addMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const response = await fetch(`${API_URL}/sales-proformas`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${getAuthToken()}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error("Failed to create Sales Proforma");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sales-proformas"] });
+    }
+  });
+
+  // Update proforma
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, payload }: { id: string, payload: any }) => {
+      const encodedId = encodeURIComponent(encodeURIComponent(id));
+      const response = await fetch(`${API_URL}/sales-proformas/${encodedId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${getAuthToken()}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error("Failed to update Sales Proforma");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sales-proformas"] });
+    }
+  });
+
+  // Download PDF
+  const downloadPdf = useCallback(async (id: string) => {
+    const encodedId = encodeURIComponent(encodeURIComponent(id));
+    const response = await fetch(`${API_URL}/sales-proformas/${encodedId}/pdf`, {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+    if (!response.ok) throw new Error("Failed to generate PDF");
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Proforma_${id}.pdf`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }, []);
+
+  return {
+    proformas,
+    isLoading,
+    refetchProformas,
+    addProforma: addMutation.mutateAsync,
+    updateProforma: (id: string, payload: any) => updateMutation.mutateAsync({ id, payload }),
+    getProformaById,
+    downloadPdf,
+  };
+}

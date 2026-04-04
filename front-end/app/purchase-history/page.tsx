@@ -170,7 +170,7 @@ export default function PurchaseHistoryPage() {
                       <td className="p-6 text-right">
                         <div className="flex flex-col items-end">
                            <span className="font-bold text-slate-900 text-sm">{(Number(h.FINAL_PURCHASE_HDR_AMOUNT) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                           <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">USD equivalent</span>
+                           <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">TZS equivalent</span>
                         </div>
                       </td>
                       <td className="p-6 text-center">

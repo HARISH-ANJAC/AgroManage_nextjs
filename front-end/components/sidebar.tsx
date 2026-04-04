@@ -131,7 +131,7 @@ export function Header() {
 }
 
 const navigation = [
-   {
+  {
     group: 'Overview',
     items: [
       { name: 'Management Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -208,6 +208,7 @@ const navigation = [
   {
     group: 'Sales',
     items: [
+      { name: 'Sales Proformas', href: '/sales-proformas', icon: FileText },
       { name: 'Sales Orders', href: '/sales-orders', icon: DollarSign },
       { name: 'Delivery Notes', href: '/delivery-notes', icon: Truck },
       { name: 'Sales Invoices', href: '/sales-invoices', icon: Receipt },
@@ -378,7 +379,7 @@ export function Sidebar() {
                 {(!collapsedSections[group.group] || isCollapsed) && (
                   <div className="space-y-0.5">
                     {group.items.map((item) => {
-                      const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+                      const isActive = pathname === item.href || (item.href !== '/' && item.href !== '/dashboard' && pathname.startsWith(item.href + '/'));
                       return (
                         <Link
                           key={item.href}
