@@ -9,10 +9,12 @@ import { useRouter } from 'next/navigation';
 import { useSalesProformaStore } from "@/hooks/useSalesProformaStore";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const statusColors: Record<string, string> = {
   Confirmed: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  Draft:     "bg-slate-100 text-slate-500 border-slate-200",
+  Draft: "bg-slate-100 text-slate-500 border-slate-200",
   Submitted: "bg-amber-50 text-amber-700 border-amber-200",
   Cancelled: "bg-red-50 text-red-500 border-red-200",
 };
@@ -25,7 +27,7 @@ const formatDate = (dateStr: string | null) => {
 };
 
 export default function SalesProformasPage() {
-  const { proformas, isLoading, downloadPdf } = useSalesProformaStore();
+  const { proformas, isLoading, getProformaById } = useSalesProformaStore();
   const [search, setSearch] = useState("");
   const router = useRouter();
 
@@ -38,10 +40,109 @@ export default function SalesProformasPage() {
   const handleDownloadPdf = async (refNo: string) => {
     try {
       toast.loading("Generating PDF...", { id: "pf-pdf" });
-      await downloadPdf(refNo);
-      toast.success("PDF downloaded!", { id: "pf-pdf" });
-    } catch {
-      toast.error("Failed to generate PDF", { id: "pf-pdf" });
+      const data = await getProformaById(refNo);
+      if (!data) throw new Error("Proforma data not found");
+
+      const h = data.header || data;
+      const items = data.items || [];
+      const doc = new jsPDF();
+      const currency = h.currencyName || "TZS";
+
+      try {
+        const logoImg = new Image();
+        logoImg.src = "/assets/logo.png";
+        await new Promise((resolve) => {
+          logoImg.onload = resolve;
+          logoImg.onerror = resolve; // Continue even if logo fails
+        });
+
+        if (logoImg.complete && logoImg.naturalWidth) {
+          const imgWidth = 40;
+          const imgHeight = (logoImg.naturalHeight * imgWidth) / logoImg.naturalWidth;
+          doc.addImage(logoImg, "PNG", 14, 8, imgWidth, imgHeight);
+        }
+      } catch (e) {
+        console.warn("Logo failed to load", e);
+      }
+
+      doc.setFontSize(22);
+      doc.setTextColor(15, 23, 42);
+      doc.text("SALES PROFORMA", 196, 22, { align: "right" });
+
+      const dDate = h.salesProformaDate ? new Date(h.salesProformaDate) : new Date();
+      const fmtDate = !isNaN(dDate.getTime()) ? new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(dDate) : h.salesProformaDate;
+
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Proforma Ref: ${h.salesProformaRefNo || h.SALES_PROFORMA_REF_NO || refNo}`, 196, 30, { align: "right" });
+      doc.text(`Date: ${fmtDate}`, 196, 35, { align: "right" });
+
+      doc.setFontSize(12);
+      doc.setTextColor(15, 23, 42);
+      doc.text("Billing Details", 14, 55);
+
+      doc.setFontSize(10);
+      doc.setTextColor(71, 85, 105);
+      doc.text(`Customer: ${h.customerName || h.CUSTOMER_NAME || "N/A"}`, 14, 62);
+      doc.text(`Store: ${h.storeName || h.STORE_NAME || "-"}`, 14, 67);
+      doc.text(`Currency: ${currency}`, 120, 67);
+
+      const tableData = items.map((item: any, idx: number) => {
+        const product = item.productName || item.PRODUCT_NAME || `Product #${item.productId || item.PRODUCT_ID}`;
+        return [
+          idx + 1,
+          product,
+          item.totalQty || item.TOTAL_QTY,
+          item.uom || item.UOM,
+          `${currency} ${Number(item.salesRatePerQty || item.SALES_RATE_PER_QTY).toLocaleString()}`,
+          `${currency} ${Number(item.totalProductAmount || item.TOTAL_PRODUCT_AMOUNT).toLocaleString()}`,
+          `${item.vatPercentage || item.VAT_PERCENTAGE}%`,
+          `${currency} ${Number(item.vatAmount || item.VAT_AMOUNT).toLocaleString()}`
+        ];
+      });
+
+      autoTable(doc, {
+        startY: 80,
+        head: [['#', 'Description', 'Qty', 'UOM', 'Rate', 'Amount', 'VAT%', 'VAT Total']],
+        body: tableData,
+        styles: { fontSize: 8, cellPadding: 3 },
+        headStyles: { fillColor: [16, 185, 129], textColor: [255, 255, 255] },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+      });
+
+      const finalY = (doc as any).lastAutoTable.finalY + 10;
+      const marginX = 130;
+
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text("Subtotal:", marginX, finalY);
+      doc.text("VAT Total:", marginX, finalY + 7);
+
+      doc.setFontSize(12);
+      doc.setTextColor(15, 23, 42);
+      doc.text("Net Payable:", marginX, finalY + 16);
+
+      const subtotal = Number(h.totalProductAmount || h.TOTAL_PRODUCT_AMOUNT || 0);
+
+      doc.setFontSize(10);
+      doc.text(`${currency} ${subtotal.toLocaleString()}`, 190, finalY, { align: 'right' });
+      doc.text(`${currency} ${Number(h.vatAmount || h.VAT_AMOUNT || 0).toLocaleString()}`, 190, finalY + 7, { align: 'right' });
+
+      doc.setFontSize(14);
+      doc.setTextColor(16, 185, 129);
+      doc.text(`${currency} ${Number(h.finalSalesAmount || h.FINAL_SALES_AMOUNT || 0).toLocaleString()}`, 190, finalY + 16, { align: 'right' });
+
+      if (h.remarks || h.REMARKS) {
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139);
+        doc.text("Remarks:", 14, finalY + 30);
+        doc.text(h.remarks || h.REMARKS, 14, finalY + 35, { maxWidth: 100 });
+      }
+
+      doc.save(`Proforma_${h.salesProformaRefNo || h.SALES_PROFORMA_REF_NO || refNo}.pdf`);
+      toast.success("PDF generated", { id: "pf-pdf" });
+    } catch (e: any) {
+      toast.error(e.message || "Failed to generate PDF", { id: "pf-pdf" });
     }
   };
 
@@ -67,15 +168,6 @@ export default function SalesProformasPage() {
         </Button>
       </div>
 
-      {/* Pipeline Banner */}
-      <div className="flex items-center gap-2 mb-6 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs font-semibold text-slate-500 overflow-x-auto">
-        {["Sales Proforma", "Sales Order", "Delivery Note", "Sales Invoice"].map((step, i, arr) => (
-          <div key={step} className="flex items-center gap-2 shrink-0">
-            <span className={i === 0 ? "text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200" : "px-3 py-1 rounded-full bg-white border"}>{step}</span>
-            {i < arr.length - 1 && <ArrowRight className="w-3 h-3 text-slate-300" />}
-          </div>
-        ))}
-      </div>
 
       {/* Table Card */}
       <div className="bg-card rounded-xl border p-6">

@@ -21,7 +21,10 @@ import {
   useCurrencies, useProducts, useUoms, useBillingLocations
 } from "@/hooks/useStoreData";
 import { useSalesProformaStore } from "@/hooks/useSalesProformaStore";
-import { SupportingDoc } from "@/components/ui/Supporting-Doc";
+import { usePurchaseBookingStore } from "@/hooks/usePurchaseBookingStore";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { SupportingDoc } from '@/components/ui/Supporting-Doc';
 
 interface LineItem {
   id: string | number;
@@ -69,7 +72,7 @@ function CreateProformaContent(): JSX.Element {
   const editId = searchParams.get("id");
   const today = new Date().toISOString().split("T")[0];
 
-  const { addProforma, updateProforma, getProformaById, downloadPdf } = useSalesProformaStore();
+  const { addProforma, updateProforma, getProformaById } = useSalesProformaStore();
 
   // Master Data
   const { data: companies = [], isLoading: companiesLoading } = useCompanies();
@@ -80,6 +83,7 @@ function CreateProformaContent(): JSX.Element {
   const { data: productsData = [] } = useProducts();
   const { data: uoms = [] } = useUoms();
   const { data: billingLocations = [], isLoading: billingLocationsLoading } = useBillingLocations();
+  const { bookings: purchaseInvoices, isLoading: invoicesLoading } = usePurchaseBookingStore();
 
   const [header, setHeader] = useState({
     salesProformaDate: today,
@@ -99,6 +103,7 @@ function CreateProformaContent(): JSX.Element {
   const [items, setItems] = useState<LineItem[]>([emptyItem()]);
   const [files, setFiles] = useState<any[]>([]);
   const [isFetchingData, setIsFetchingData] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Load for edit
@@ -243,6 +248,7 @@ function CreateProformaContent(): JSX.Element {
       audit: { user: userInfo.loginName }
     };
 
+    setIsSaving(true);
     try {
       if (editId) {
         await updateProforma(editId, payload);
@@ -254,6 +260,8 @@ function CreateProformaContent(): JSX.Element {
       router.push('/sales-proformas');
     } catch {
       toast.error("Failed to save Sales Proforma");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -261,10 +269,109 @@ function CreateProformaContent(): JSX.Element {
     if (!editId) return;
     try {
       toast.loading("Generating PDF...", { id: "pf-pdf" });
-      await downloadPdf(editId);
-      toast.success("PDF downloaded!", { id: "pf-pdf" });
-    } catch {
-      toast.error("Failed to generate PDF", { id: "pf-pdf" });
+      const data = await getProformaById(editId);
+      if (!data) throw new Error("Proforma data not found");
+
+      const h = data.header || data;
+      const items = data.items || [];
+      const doc = new jsPDF();
+      const currency = h.currencyName || "TZS";
+
+      try {
+        const logoImg = new Image();
+        logoImg.src = "/assets/logo.png";
+        await new Promise((resolve) => {
+          logoImg.onload = resolve;
+          logoImg.onerror = resolve; // Continue even if logo fails
+        });
+
+        if (logoImg.complete && logoImg.naturalWidth) {
+          const imgWidth = 40;
+          const imgHeight = (logoImg.naturalHeight * imgWidth) / logoImg.naturalWidth;
+          doc.addImage(logoImg, "PNG", 14, 8, imgWidth, imgHeight);
+        }
+      } catch (e) {
+        console.warn("Logo failed to load", e);
+      }
+
+      doc.setFontSize(22);
+      doc.setTextColor(15, 23, 42);
+      doc.text("SALES PROFORMA", 196, 22, { align: "right" });
+
+      const dDate = h.salesProformaDate ? new Date(h.salesProformaDate) : new Date();
+      const fmtDate = !isNaN(dDate.getTime()) ? new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(dDate) : h.salesProformaDate;
+
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Proforma Ref: ${h.salesProformaRefNo || h.SALES_PROFORMA_REF_NO || editId}`, 196, 30, { align: "right" });
+      doc.text(`Date: ${fmtDate}`, 196, 35, { align: "right" });
+
+      doc.setFontSize(12);
+      doc.setTextColor(15, 23, 42);
+      doc.text("Billing Details", 14, 55);
+
+      doc.setFontSize(10);
+      doc.setTextColor(71, 85, 105);
+      doc.text(`Customer: ${h.customerName || h.CUSTOMER_NAME || "N/A"}`, 14, 62);
+      doc.text(`Store: ${h.storeName || h.STORE_NAME || "-"}`, 14, 67);
+      doc.text(`Currency: ${currency}`, 120, 67);
+
+      const tableData = items.map((item: any, idx: number) => {
+        const product = item.productName || item.PRODUCT_NAME || `Product #${item.productId || item.PRODUCT_ID}`;
+        return [
+          idx + 1,
+          product,
+          item.totalQty || item.TOTAL_QTY,
+          item.uom || item.UOM,
+          `${currency} ${Number(item.salesRatePerQty || item.SALES_RATE_PER_QTY).toLocaleString()}`,
+          `${currency} ${Number(item.totalProductAmount || item.TOTAL_PRODUCT_AMOUNT).toLocaleString()}`,
+          `${item.vatPercentage || item.VAT_PERCENTAGE}%`,
+          `${currency} ${Number(item.vatAmount || item.VAT_AMOUNT).toLocaleString()}`
+        ];
+      });
+
+      autoTable(doc, {
+        startY: 80,
+        head: [['#', 'Description', 'Qty', 'UOM', 'Rate', 'Amount', 'VAT%', 'VAT Total']],
+        body: tableData,
+        styles: { fontSize: 8, cellPadding: 3 },
+        headStyles: { fillColor: [16, 185, 129], textColor: [255, 255, 255] },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+      });
+
+      const finalY = (doc as any).lastAutoTable.finalY + 10;
+      const marginX = 130;
+
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text("Subtotal:", marginX, finalY);
+      doc.text("VAT Total:", marginX, finalY + 7);
+
+      doc.setFontSize(12);
+      doc.setTextColor(15, 23, 42);
+      doc.text("Net Payable:", marginX, finalY + 16);
+
+      const subtotal = Number(h.totalProductAmount || h.TOTAL_PRODUCT_AMOUNT || 0);
+
+      doc.setFontSize(10);
+      doc.text(`${currency} ${subtotal.toLocaleString()}`, 190, finalY, { align: 'right' });
+      doc.text(`${currency} ${Number(h.vatAmount || h.VAT_AMOUNT || 0).toLocaleString()}`, 190, finalY + 7, { align: 'right' });
+
+      doc.setFontSize(14);
+      doc.setTextColor(16, 185, 129);
+      doc.text(`${currency} ${Number(h.finalSalesAmount || h.FINAL_SALES_AMOUNT || 0).toLocaleString()}`, 190, finalY + 16, { align: 'right' });
+
+      if (h.remarks || h.REMARKS) {
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139);
+        doc.text("Remarks:", 14, finalY + 30);
+        doc.text(h.remarks || h.REMARKS, 14, finalY + 35, { maxWidth: 100 });
+      }
+
+      doc.save(`Proforma_${h.salesProformaRefNo || h.SALES_PROFORMA_REF_NO || editId}.pdf`);
+      toast.success("PDF generated", { id: "pf-pdf" });
+    } catch (e: any) {
+      toast.error(e.message || "Failed to generate PDF", { id: "pf-pdf" });
     }
   };
 
@@ -341,26 +448,15 @@ function CreateProformaContent(): JSX.Element {
               )}
             </>
           )}
-          <Button variant="outline" onClick={() => handleSubmit("Draft")}>
+          <Button variant="outline" onClick={() => handleSubmit("Draft")} disabled={isSaving}>
             <Save className="w-4 h-4 mr-2" /> Save Draft
           </Button>
-          <Button onClick={() => handleSubmit("Confirmed")} className="bg-[#1A2E28]">
+          <Button onClick={() => handleSubmit("Confirmed")} className="bg-[#1A2E28]" disabled={isSaving}>
             <Send className="w-4 h-4 mr-2" /> Confirm Proforma
           </Button>
         </div>
       </div>
 
-      {/* Flow Breadcrumb */}
-      <div className="flex items-center gap-2 mb-6 p-3 bg-slate-50 rounded-xl border text-xs font-semibold text-slate-400 overflow-x-auto">
-        {["Sales Proforma", "Sales Order", "Delivery Note", "Sales Invoice"].map((step, i, arr) => (
-          <div key={step} className="flex items-center gap-2 shrink-0">
-            <span className={i === 0 ? "text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full" : "px-3 py-1 rounded-full bg-white border"}>
-              {step}
-            </span>
-            {i < arr.length - 1 && <ArrowRight className="w-3 h-3 text-slate-300" />}
-          </div>
-        ))}
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <div className="lg:col-span-3 space-y-8">
@@ -393,7 +489,7 @@ function CreateProformaContent(): JSX.Element {
               <div className="space-y-2">
                 <Label>Company</Label>
                 {companiesLoading ? <Skeleton className="h-11 w-full rounded-xl" /> : (
-                  <Select value={String(header.companyId)} onValueChange={v => setHeader({ ...header, companyId: Number(v) })}>
+                  <Select value={header.companyId ? String(header.companyId) : undefined} onValueChange={v => setHeader({ ...header, companyId: Number(v) })}>
                     <SelectTrigger className="rounded-xl h-11 font-bold"><SelectValue placeholder="Select Company" /></SelectTrigger>
                     <SelectContent>{companies.map((c: any, i: number) => <SelectItem key={c.companyId || c.id || i} value={String(c.companyId || c.id)}>{c.companyName}</SelectItem>)}</SelectContent>
                   </Select>
@@ -406,7 +502,7 @@ function CreateProformaContent(): JSX.Element {
                 {customersLoading ? <Skeleton className="h-11 w-full rounded-xl" /> : (
                   <div className="relative">
                     <User className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground z-10" />
-                    <Select value={String(header.customerId)} onValueChange={v => setHeader({ ...header, customerId: Number(v) })}>
+                    <Select value={header.customerId ? String(header.customerId) : undefined} onValueChange={v => setHeader({ ...header, customerId: Number(v) })}>
                       <SelectTrigger className="rounded-xl h-11 pl-9 font-bold text-slate-700">
                         <SelectValue placeholder="Select Customer" />
                       </SelectTrigger>
@@ -420,7 +516,7 @@ function CreateProformaContent(): JSX.Element {
               <div className="space-y-2">
                 <Label>Store <span className="text-red-500">*</span></Label>
                 {storesLoading ? <Skeleton className="h-11 w-full rounded-xl" /> : (
-                  <Select value={String(header.storeId)} onValueChange={v => setHeader({ ...header, storeId: Number(v) })}>
+                  <Select value={header.storeId ? String(header.storeId) : undefined} onValueChange={v => setHeader({ ...header, storeId: Number(v) })}>
                     <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select Store" /></SelectTrigger>
                     <SelectContent>{stores.map((s: any, i: number) => <SelectItem key={s.id || s.storeIdUserToRole || i} value={String(s.storeIdUserToRole || s.id)}>{s.storeName}</SelectItem>)}</SelectContent>
                   </Select>
@@ -433,7 +529,7 @@ function CreateProformaContent(): JSX.Element {
                 {billingLocationsLoading ? <Skeleton className="h-11 w-full rounded-xl" /> : (
                   <div className="relative">
                     <MapPin className="absolute left-3 top-3 w-4 h-4 text-muted-foreground z-10" />
-                    <Select value={String(header.billingLocationId)} onValueChange={v => setHeader({ ...header, billingLocationId: Number(v) })}>
+                    <Select value={header.billingLocationId ? String(header.billingLocationId) : undefined} onValueChange={v => setHeader({ ...header, billingLocationId: Number(v) })}>
                       <SelectTrigger className="rounded-xl h-11 pl-9"><SelectValue placeholder="Select Location" /></SelectTrigger>
                       <SelectContent>{billingLocations.map((l: any, i: number) => <SelectItem key={l.id || i} value={String(l.id)}>{l.billingLocationName || l.locationName}</SelectItem>)}</SelectContent>
                     </Select>
@@ -445,7 +541,7 @@ function CreateProformaContent(): JSX.Element {
               <div className="space-y-2">
                 <Label>Sales Person</Label>
                 {salesPersonsLoading ? <Skeleton className="h-11 w-full rounded-xl" /> : (
-                  <Select value={String(header.salesPersonEmpId)} onValueChange={v => setHeader({ ...header, salesPersonEmpId: Number(v) })}>
+                  <Select value={header.salesPersonEmpId ? String(header.salesPersonEmpId) : undefined} onValueChange={v => setHeader({ ...header, salesPersonEmpId: Number(v) })}>
                     <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select Sales Person" /></SelectTrigger>
                     <SelectContent>{salesPersons.map((p: any, i: number) => <SelectItem key={p.id || i} value={String(p.id)}>{p.salesPersonName}</SelectItem>)}</SelectContent>
                   </Select>
@@ -456,7 +552,7 @@ function CreateProformaContent(): JSX.Element {
               <div className="space-y-2">
                 <Label>Currency</Label>
                 {currenciesLoading ? <Skeleton className="h-11 w-full rounded-xl" /> : (
-                  <Select value={String(header.currencyId)} onValueChange={v => setHeader({ ...header, currencyId: Number(v) })}>
+                  <Select value={header.currencyId ? String(header.currencyId) : undefined} onValueChange={v => setHeader({ ...header, currencyId: Number(v) })}>
                     <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Currency" /></SelectTrigger>
                     <SelectContent>{currencies.map((c: any, i: number) => <SelectItem key={c.id || i} value={String(c.id)}>{c.CURRENCY_NAME || c.currencyName}</SelectItem>)}</SelectContent>
                   </Select>
@@ -550,12 +646,19 @@ function CreateProformaContent(): JSX.Element {
                       </td>
                       {/* PO Link */}
                       <td className="p-4">
-                        <Input
-                          placeholder="PO Ref..."
-                          value={item.poRefNo}
-                          onChange={e => updateItem(item.id, "poRefNo", e.target.value)}
-                          className="w-24 mx-auto text-center border-dashed font-bold text-xs h-9"
-                        />
+                        <Select value={item.poRefNo || ""} onValueChange={v => updateItem(item.id, "poRefNo", v === "none" ? "" : v)}>
+                          <SelectTrigger className="w-24 mx-auto text-center border-dashed font-bold text-xs h-9 shadow-sm">
+                            <SelectValue placeholder="PO Ref..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">None</SelectItem>
+                            {purchaseInvoices?.map((inv: any) => (
+                              <SelectItem key={inv.PURCHASE_INVOICE_REF_NO || inv.id} value={inv.PURCHASE_INVOICE_REF_NO || String(inv.id)}>
+                                {inv.PURCHASE_INVOICE_REF_NO || String(inv.id)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </td>
                       {/* Store Stock */}
                       <td className="p-4">
@@ -665,6 +768,7 @@ function CreateProformaContent(): JSX.Element {
 
               <Button
                 onClick={() => handleSubmit("Confirmed")}
+                disabled={isSaving}
                 className="w-full mt-10 h-14 bg-emerald-500 hover:bg-emerald-600 rounded-2xl font-black text-lg shadow-xl transition-all active:scale-95"
               >
                 {editId ? "Update Proforma" : "Confirm Proforma"}

@@ -67,6 +67,7 @@ function CreateDNContent() {
   });
 
   const [items, setItems] = useState<any[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
   const [files, setFiles] = useState<any[]>([]);
   const [isFetchingData, setIsFetchingData] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -208,6 +209,8 @@ function CreateDNContent() {
         remarks: f.REMARKS || f.remarks,
       }))
     };
+
+    setIsSaving(true);
 
     try {
       if (editId) {

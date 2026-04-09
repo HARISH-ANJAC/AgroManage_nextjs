@@ -100,6 +100,7 @@ function CreateGRNContent() {
   });
 
   const [items, setItems] = useState<GRNItem[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
   const [files, setFiles] = useState<any[]>([]);
 
   // Update GRN ref no once grns load (only for new GRN)
@@ -119,6 +120,7 @@ function CreateGRNContent() {
 
     const load = async () => {
       setPoLoading(true);
+      setIsSaving(true);
       try {
         // Try full fetch for items
         const full = await getOrderById(header.poRefNo);
@@ -238,6 +240,7 @@ function CreateGRNContent() {
     }
 
     setSubmitting(true);
+    setIsSaving(true);
     try {
       const payload = {
         header: {

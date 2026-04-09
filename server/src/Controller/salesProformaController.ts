@@ -483,7 +483,7 @@ export const getSalesProformaPdf = async (req: Request, res: Response): Promise<
             : new Date().toLocaleDateString('en-GB');
 
         const pdfBuffer = await generateInvoicePdf({
-            companyName: hdr.companyName ?? "AgroManage",
+            companyName: hdr.companyName ?? "Prime Harvest",
             customerName: hdr.customerName ?? "Customer",
             customerAddress: hdr.customerAddress ?? "",
             date: invoiceDate,

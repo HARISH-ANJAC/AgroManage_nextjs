@@ -99,6 +99,7 @@ function CreatePurchaseBookingContent() {
     });
 
     const [items, setItems] = useState<InvoiceItem[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
     const [additionalCosts, setAdditionalCosts] = useState<AdditionalCost[]>([]);
     const [files, setFiles] = useState<any[]>([]);
     const [uploading, setUploading] = useState(false);
@@ -178,6 +179,7 @@ function CreatePurchaseBookingContent() {
         }
 
         setSubmitting(true);
+        setIsSaving(true);
         try {
             const payload = {
                 header: {

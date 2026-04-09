@@ -49,7 +49,8 @@ import {
   CheckSquare,
   User,
   History,
-  ClipboardList
+  ClipboardList,
+  Clock
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -227,6 +228,7 @@ const navigation = [
       { name: 'Roles', href: '/roles', icon: Shield },
       { name: 'Users', href: '/users', icon: UserCircle },
       { name: 'User-Store Map', href: '/user-store-mapping', icon: Link2 },
+      { name: 'Scheduler Settings', href: '/scheduler', icon: Clock },
     ]
   }
 ];

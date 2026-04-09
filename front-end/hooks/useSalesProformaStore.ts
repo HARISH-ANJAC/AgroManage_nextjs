@@ -74,21 +74,6 @@ export function useSalesProformaStore() {
     }
   });
 
-  // Download PDF
-  const downloadPdf = useCallback(async (id: string) => {
-    const encodedId = encodeURIComponent(encodeURIComponent(id));
-    const response = await fetch(`${API_URL}/sales-proformas/${encodedId}/pdf`, {
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
-    });
-    if (!response.ok) throw new Error("Failed to generate PDF");
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Proforma_${id}.pdf`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-  }, []);
 
   return {
     proformas,
@@ -97,6 +82,5 @@ export function useSalesProformaStore() {
     addProforma: addMutation.mutateAsync,
     updateProforma: (id: string, payload: any) => updateMutation.mutateAsync({ id, payload }),
     getProformaById,
-    downloadPdf,
   };
 }

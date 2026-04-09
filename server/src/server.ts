@@ -6,6 +6,7 @@ import cors from 'cors';
 import os from "os";
 import path from 'path';
 import morgan from 'morgan';
+import { initScheduler } from './utils/scheduler.js';
 
 const app = express();
 
@@ -37,48 +38,51 @@ const getLocalIP = (): string => {
 const LOCAL_IP = getLocalIP();
 
 app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'ok', timestamp: new Date() });
+  res.status(200).json({ status: 'ok', timestamp: new Date() });
 });
 
 app.get('/', (req, res) => {
-    res.json({ msg: 'Agro Business API Server Running!' });
+  res.json({ msg: 'Agro Business API Server Running!' });
 });
 
 const startServer = async () => {
-    try {
-        console.log('📦 Loading routes...');
-        const apiRouter = (await import('./Route/index.js')).default;
-        app.use("/api", apiRouter);
+  try {
+    console.log('📦 Loading routes...');
+    const apiRouter = (await import('./Route/index.js')).default;
+    app.use("/api", apiRouter);
 
-        // Final fallback: 404 handler
-        app.use((req: Request, res: Response) => {
-            res.status(404).json({ success: false, msg: `Route ${req.originalUrl} not found` });
-        });
+    // Final fallback: 404 handler
+    app.use((req: Request, res: Response) => {
+      res.status(404).json({ success: false, msg: `Route ${req.originalUrl} not found` });
+    });
 
-        // Centralized error handling middleware
-        app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-            const status = err.status || 500;
-            console.error(`[Error] ${req.method} ${req.url}:`, err.stack);
-            res.status(status).json({
-                success: false,
-                msg: err.message || 'Internal Server Error',
-                ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-            });
-        });
+    // Centralized error handling middleware
+    app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+      const status = err.status || 500;
+      console.error(`[Error] ${req.method} ${req.url}:`, err.stack);
+      res.status(status).json({
+        success: false,
+        msg: err.message || 'Internal Server Error',
+        ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+      });
+    });
 
-        const PORT = process.env.PORT || 8000;
+    const PORT = process.env.PORT || 8000;
 
-        app.listen(Number(PORT), "0.0.0.0", () => {
-            console.log(`🚀 Server is running on port ${PORT}`);
-            console.log(`   ➜ Local:   http://localhost:${PORT}`); 
-            if (LOCAL_IP !== "localhost") {
-                console.log(`   ➜ Network: http://${LOCAL_IP}:${PORT}`);
-            }
-        });
-    } catch (error) {
-        console.error('Failed to start server:', error);
-        process.exit(1);
-    }
+    app.listen(Number(PORT), "0.0.0.0", async () => {
+      console.log(`🚀 Server is running on port ${PORT}`);
+      console.log(`   ➜ Local:   http://localhost:${PORT}`);
+      if (LOCAL_IP !== "localhost") {
+        console.log(`   ➜ Network: http://${LOCAL_IP}:${PORT}`);
+      }
+
+      // Start automated jobs
+      await initScheduler();
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
 };
 
 startServer();

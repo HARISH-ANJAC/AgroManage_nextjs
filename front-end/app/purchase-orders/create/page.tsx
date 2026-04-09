@@ -83,6 +83,7 @@ function CreatePurchaseOrderContent() {
   const [rawDbCosts, setRawDbCosts] = useState<any[]>([]); // raw costs from DB
   const [approvalRemarks, setApprovalRemarks] = useState("");
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Step 1: Fetch PO data from DB (only depends on editId)
   useEffect(() => {
@@ -181,6 +182,7 @@ function CreatePurchaseOrderContent() {
 
   const handleApprove = async (level: string, status: string) => {
     if (!editId) return;
+    setIsSaving(true);
     const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
     try {
       await approveOrder({
@@ -198,6 +200,8 @@ function CreatePurchaseOrderContent() {
       setConversations(res.conversations || []);
     } catch (e) {
       toast.error("Approval action failed");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -255,6 +259,7 @@ function CreatePurchaseOrderContent() {
       return;
     }
 
+    setIsSaving(true);
     const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
 
     const payload = {
@@ -276,6 +281,8 @@ function CreatePurchaseOrderContent() {
       navigate.push("/purchase-orders");
     } catch (e) {
       toast.error("Process Failed");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -326,8 +333,8 @@ function CreatePurchaseOrderContent() {
           </div>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" onClick={() => handleSave(false)}><Save className="w-4 h-4 mr-2" /> Save Draft</Button>
-          <Button onClick={() => handleSave(true)} className="bg-[#1A2E28]"><Send className="w-4 h-4 mr-2" /> Submit Order</Button>
+          <Button variant="outline" onClick={() => handleSave(false)} disabled={isSaving}><Save className="w-4 h-4 mr-2" /> Save Draft</Button>
+          <Button onClick={() => handleSave(true)} className="bg-[#1A2E28]" disabled={isSaving}><Send className="w-4 h-4 mr-2" /> Submit Order</Button>
         </div>
       </div>
 
@@ -607,7 +614,7 @@ function CreatePurchaseOrderContent() {
             <div className="mt-10 pt-8 border-t border-white/10">
               <p className="text-[10px] uppercase font-bold tracking-widest opacity-50 mb-1">Grand Total</p>
               <p className="text-4xl font-extrabold">{selectedCurrency} {grandTotal.toFixed(2)}</p>
-              <Button onClick={() => handleSave(true)} className="w-full mt-10 bg-[#059669] hover:bg-[#059669]/90 h-14 rounded-2xl font-bold">Confirm and Submit</Button>
+              <Button onClick={() => handleSave(true)} disabled={isSaving} className="w-full mt-10 bg-[#059669] hover:bg-[#059669]/90 h-14 rounded-2xl font-bold">Confirm and Submit</Button>
             </div>
           </div>
 
@@ -650,12 +657,14 @@ function CreatePurchaseOrderContent() {
                   <div className="grid grid-cols-2 gap-2">
                     <Button
                       onClick={() => handleApprove("head", "Approved")}
+                      disabled={isSaving}
                       className="bg-emerald-600 h-10 text-xs font-bold"
                     >
                       Approve (Head)
                     </Button>
                     <Button
                       onClick={() => handleApprove("final", "Approved")}
+                      disabled={isSaving}
                       className="bg-indigo-600 h-10 text-xs font-bold"
                     >
                       Final Approve
@@ -664,6 +673,7 @@ function CreatePurchaseOrderContent() {
                   <Button
                     variant="outline"
                     onClick={() => handleApprove("head", "Rejected")}
+                    disabled={isSaving}
                     className="w-full h-10 border-destructive text-destructive text-xs hover:bg-destructive/5"
                   >
                     Reject PO

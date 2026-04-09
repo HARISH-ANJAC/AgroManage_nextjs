@@ -57,6 +57,7 @@ function CreateInvoiceContent() {
   });
 
   const [items, setItems] = useState<any[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
   const [files, setFiles] = useState<any[]>([]);
   const [isFetchingData, setIsFetchingData] = useState(false);
 
@@ -189,6 +190,8 @@ function CreateInvoiceContent() {
       return;
     }
 
+    setIsSaving(true);
+
     try {
       const payload = {
         header: {
@@ -220,6 +223,8 @@ function CreateInvoiceContent() {
       router.push("/sales-invoices");
     } catch (e: any) {
       toast.error(e.message || "Error saving invoice");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -277,7 +282,7 @@ function CreateInvoiceContent() {
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outline" onClick={() => router.back()} className="rounded-xl border-[#E2E8F0] font-semibold text-[#64748B] hover:bg-[#F8FAFC]">Cancel</Button>
-            <Button onClick={handleSave} className="bg-[#1A2E28] hover:bg-[#254139] text-white rounded-xl px-6 flex items-center gap-2 shadow-lg shadow-[#1A2E28]/10">
+            <Button onClick={handleSave} className="bg-[#1A2E28] hover:bg-[#254139] text-white rounded-xl px-6 flex items-center gap-2 shadow-lg shadow-[#1A2E28]/10" disabled={isSaving}>
               <Save className="w-4 h-4" />
               <span>{editId ? "Update Invoice" : "Generate Invoice"}</span>
             </Button>

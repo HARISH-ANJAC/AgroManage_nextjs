@@ -83,6 +83,7 @@ function CreateExpenseContent() {
 
   const [allocations, setAllocations] = useState<AllocationLine[]>([]);
   const [files, setFiles] = useState<any[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Initialize defaults
   useEffect(() => {
@@ -140,6 +141,7 @@ function CreateExpenseContent() {
   const handlePOChange = async (ref: string) => {
     setHeader(prev => ({ ...prev, poRefNo: ref }));
     
+    setIsSaving(true);
     try {
       const fullPO = await getOrderById(ref);
       if (fullPO && fullPO.items) {
@@ -154,6 +156,8 @@ function CreateExpenseContent() {
       }
     } catch (err) {
       toast.error("Failed to load PO details");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -182,6 +186,7 @@ function CreateExpenseContent() {
       audit: { user: getCurrentUser()?.username || "System" }
     };
 
+    setIsSaving(true);
     try {
       if (editId) {
         await updateExpense(editId, payload);
@@ -193,6 +198,8 @@ function CreateExpenseContent() {
       router.push("/expenses");
     } catch (error: any) {
       toast.error(error.message || "Process failed");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -212,7 +219,7 @@ function CreateExpenseContent() {
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outline" onClick={() => router.back()} className="rounded-xl border-[#E2E8F0] font-semibold text-[#64748B] hover:bg-[#F8FAFC]">Cancel</Button>
-            <Button onClick={() => handleSave("Submitted")} className="bg-[#1A2E28] hover:bg-[#254139] text-white rounded-xl px-6 flex items-center gap-2 shadow-lg">
+            <Button onClick={() => handleSave("Submitted")} disabled={isSaving} className="bg-[#1A2E28] hover:bg-[#254139] text-white rounded-xl px-6 flex items-center gap-2 shadow-lg">
               <Save className="w-4 h-4" />
               <span>{editId ? "Update Record" : "Save Record"}</span>
             </Button>

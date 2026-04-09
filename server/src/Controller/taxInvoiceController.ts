@@ -162,6 +162,46 @@ export const createTaxInvoice = async (req: Request, res: Response): Promise<Res
                 CREATED_DATE: new Date()
             };
 
+            await tx.insert(TBL_TAX_INVOICE_HDR).values(hValues as any);
+
+            if (items && items.length > 0) {
+                const dValues = items.map((item: any) => ({
+                    TAX_INVOICE_REF_NO: finalRefNo,
+                    DELIVERY_NOTE_DTL_SNO: item.deliveryNoteDtlSno,
+                    PRODUCT_ID: item.productId,
+                    DELIVERY_QTY: item.deliveryQty,
+                    INVOICE_QTY: item.invoiceQty,
+                    UOM: item.uom,
+                    SALES_RATE_PER_QTY: item.rate,
+                    TOTAL_PRODUCT_AMOUNT: item.amount,
+                    VAT_PERCENTAGE: item.vatPercent,
+                    VAT_AMOUNT: item.vatAmount,
+                    FINAL_SALES_AMOUNT: item.finalAmount,
+                    STATUS_ENTRY: "Active",
+                    CREATED_BY: audit?.user || "System",
+                    CREATED_MAC_ADDRESS: req.ip || "127.0.0.1",
+                    CREATED_DATE: new Date()
+                }));
+                await tx.insert(TBL_TAX_INVOICE_DTL).values(dValues as any);
+            }
+
+            if (req.body.files && req.body.files.length > 0) {
+                const fValues = req.body.files.map((f: any) => ({
+                    TAX_INVOICE_REF_NO: finalRefNo,
+                    DOCUMENT_TYPE: f.documentType,
+                    DESCRIPTION_DETAILS: f.descriptionDetails,
+                    FILE_NAME: f.fileName,
+                    CONTENT_TYPE: f.contentType,
+                    CONTENT_DATA: f.contentData ? Buffer.from(f.contentData, 'base64') : null,
+                    REMARKS: f.remarks,
+                    STATUS_MASTER: "Active",
+                    CREATED_BY: audit?.user || "System",
+                    CREATED_MAC_ADDRESS: req.ip || "127.0.0.1",
+                    CREATED_DATE: new Date()
+                }));
+                await tx.insert(TBL_TAX_INVOICE_FILES_UPLOAD).values(fValues as any);
+            }
+
             const invoiceResult = { msg: "Tax Invoice created successfully", taxInvoiceRefNo: finalRefNo };
 
             // Send Email to Customer

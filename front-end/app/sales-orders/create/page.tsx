@@ -47,6 +47,7 @@ import {
 import { useSalesOrderStore } from "@/hooks/useSalesOrderStore";
 import { useSalesProformaStore } from "@/hooks/useSalesProformaStore";
 import { SupportingDoc } from "@/components/ui/Supporting-Doc";
+import { usePurchaseBookingStore } from "@/hooks/usePurchaseBookingStore";
 
 interface LineItem {
   id: string | number;
@@ -84,6 +85,7 @@ function CreateSalesOrderContent(): JSX.Element {
   const { data: productsData = [], isLoading: productsDataLoading } = useProducts();
   const { data: uoms = [], isLoading: uomsLoading } = useUoms();
   const { data: billingLocations = [], isLoading: billingLocationsLoading } = useBillingLocations();
+  const { bookings: purchaseInvoices, isLoading: invoicesLoading } = usePurchaseBookingStore();
 
   const [header, setHeader] = useState({
     salesOrderDate: today,
@@ -111,6 +113,7 @@ function CreateSalesOrderContent(): JSX.Element {
   const [files, setFiles] = useState<any[]>([]);
   const [conversations, setConversations] = useState<any[]>([]);
   const [isFetchingData, setIsFetchingData] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Load existing data if editing
@@ -371,6 +374,7 @@ function CreateSalesOrderContent(): JSX.Element {
       audit: { user: userInfo.loginName }
     };
 
+    setIsSaving(true);
     try {
       if (editId) {
         await updateOrder(editId, payload);
@@ -383,6 +387,8 @@ function CreateSalesOrderContent(): JSX.Element {
     } catch (e) {
       console.error(e);
       toast.error("Failed to save Sales Order");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -433,8 +439,8 @@ function CreateSalesOrderContent(): JSX.Element {
           </div>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" onClick={() => handleSubmit("Draft")}><Save className="w-4 h-4 mr-2" /> Save Draft</Button>
-          <Button onClick={() => handleSubmit("Confirmed")} className="bg-[#1A2E28]"><Send className="w-4 h-4 mr-2" /> Confirm & Send</Button>
+          <Button variant="outline" onClick={() => handleSubmit("Draft")} disabled={isSaving}><Save className="w-4 h-4 mr-2" /> Save Draft</Button>
+          <Button onClick={() => handleSubmit("Confirmed")} className="bg-[#1A2E28]" disabled={isSaving}><Send className="w-4 h-4 mr-2" /> Confirm & Send</Button>
         </div>
       </div>
 
@@ -483,7 +489,7 @@ function CreateSalesOrderContent(): JSX.Element {
                 {companiesLoading ? (
                   <Skeleton className="h-11 w-full rounded-xl" />
                 ) : (
-                  <Select value={String(header.companyId)} onValueChange={v => setHeader({ ...header, companyId: Number(v) })}>
+                  <Select value={header.companyId ? String(header.companyId) : undefined} onValueChange={v => setHeader({ ...header, companyId: Number(v) })}>
                     <SelectTrigger className="rounded-xl h-11 font-bold"><SelectValue placeholder="Select Company" /></SelectTrigger>
                     <SelectContent>{companies.map((c: any) => <SelectItem key={c.id} value={String(c.companyId)}>{c.companyName} (@{c.categoryName})</SelectItem>)}</SelectContent>
                   </Select>
@@ -496,7 +502,7 @@ function CreateSalesOrderContent(): JSX.Element {
                 ) : (
                   <div className="relative">
                     <User className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground z-10" />
-                    <Select value={String(header.customerId)} onValueChange={v => setHeader({ ...header, customerId: Number(v) })}>
+                    <Select value={header.customerId ? String(header.customerId) : undefined} onValueChange={v => setHeader({ ...header, customerId: Number(v) })}>
                       <SelectTrigger className="rounded-xl h-11 pl-9 font-bold text-slate-700 shadow-sm transition-all focus:ring-emerald-500"><SelectValue placeholder="Select Customer" /></SelectTrigger>
                       <SelectContent>{customers.map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.CUSTOMER_NAME || c.customerName}</SelectItem>)}</SelectContent>
                     </Select>
@@ -508,7 +514,7 @@ function CreateSalesOrderContent(): JSX.Element {
                 {storesLoading ? (
                   <Skeleton className="h-11 w-full rounded-xl" />
                 ) : (
-                  <Select value={String(header.storeId)} onValueChange={v => setHeader({ ...header, storeId: Number(v) })}>
+                  <Select value={header.storeId ? String(header.storeId) : undefined} onValueChange={v => setHeader({ ...header, storeId: Number(v) })}>
                     <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select Store" /></SelectTrigger>
                     <SelectContent>{stores.map((s: any) => <SelectItem key={s.id} value={String(s.storeIdUserToRole)}>{s.storeName} (@{s.userName})</SelectItem>)}</SelectContent>
                   </Select>
@@ -518,7 +524,7 @@ function CreateSalesOrderContent(): JSX.Element {
                 <Label>Billing Location</Label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-3 w-4 h-4 text-muted-foreground z-10" />
-                  <Select value={String(header.billingLocationId)} onValueChange={v => setHeader({ ...header, billingLocationId: Number(v) })}>
+                  <Select value={header.billingLocationId ? String(header.billingLocationId) : undefined} onValueChange={v => setHeader({ ...header, billingLocationId: Number(v) })}>
                     <SelectTrigger className="rounded-xl h-11 pl-9"><SelectValue placeholder="Select Location" /></SelectTrigger>
                     <SelectContent>{billingLocations.map((l: any) => <SelectItem key={l.id} value={String(l.id)}>{l.billingLocationName || l.locationName}</SelectItem>)}</SelectContent>
                   </Select>
@@ -526,14 +532,14 @@ function CreateSalesOrderContent(): JSX.Element {
               </div>
               <div className="space-y-2">
                 <Label>Sales Person</Label>
-                <Select value={String(header.salesPersonId)} onValueChange={v => setHeader({ ...header, salesPersonId: Number(v) })}>
+                <Select value={header.salesPersonId ? String(header.salesPersonId) : undefined} onValueChange={v => setHeader({ ...header, salesPersonId: Number(v) })}>
                   <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select Sales Person" /></SelectTrigger>
                   <SelectContent>{salesPersons.map((p: any) => <SelectItem key={p.id} value={String(p.id)}>{p.salesPersonName}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Currency</Label>
-                <Select value={String(header.currencyId)} onValueChange={v => setHeader({ ...header, currencyId: Number(v) })}>
+                <Select value={header.currencyId ? String(header.currencyId) : undefined} onValueChange={v => setHeader({ ...header, currencyId: Number(v) })}>
                   <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select Currency" /></SelectTrigger>
                   <SelectContent>{currencies.map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.CURRENCY_NAME || c.currencyName}</SelectItem>)}</SelectContent>
                 </Select>
@@ -544,7 +550,7 @@ function CreateSalesOrderContent(): JSX.Element {
               </div>
               <div className="space-y-2">
                 <Label>Payment Term</Label>
-                <Select value={String(header.paymentTermId)} onValueChange={v => setHeader({ ...header, paymentTermId: Number(v) })}>
+                <Select value={header.paymentTermId ? String(header.paymentTermId) : undefined} onValueChange={v => setHeader({ ...header, paymentTermId: Number(v) })}>
                   <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select Term" /></SelectTrigger>
                   <SelectContent>{paymentTerms.map((pt: any) => <SelectItem key={pt.id} value={String(pt.id)}>{pt.paymentTermName}</SelectItem>)}</SelectContent>
                 </Select>
@@ -617,12 +623,19 @@ function CreateSalesOrderContent(): JSX.Element {
                       </div>
                     </td>
                     <td className="p-4">
-                      <Input
-                        placeholder="Link PO..."
-                        value={item.poRefNo}
-                        onChange={e => updateItem(item.id, 'poRefNo', e.target.value)}
-                        className="w-24 mx-auto text-center border-dashed font-bold text-xs h-9"
-                      />
+                      <Select value={item.poRefNo || ""} onValueChange={v => updateItem(item.id, 'poRefNo', v === "none" ? "" : v)}>
+                        <SelectTrigger className="w-24 mx-auto text-center border-dashed font-bold text-xs h-9 shadow-sm">
+                          <SelectValue placeholder="Link PO..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          {purchaseInvoices?.map((inv: any) => (
+                            <SelectItem key={inv.PURCHASE_INVOICE_REF_NO || inv.id} value={inv.PURCHASE_INVOICE_REF_NO || String(inv.id)}>
+                              {inv.PURCHASE_INVOICE_REF_NO || String(inv.id)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </td>
                     <td className="p-4">
                       <Input
@@ -701,7 +714,7 @@ function CreateSalesOrderContent(): JSX.Element {
               <p className="text-5xl font-black tracking-tighter tabular-nums mb-1">{grandTotal.toLocaleString()}</p>
               <p className="text-[10px] text-white/40 font-medium italic">Amount in {selectedCurrency}</p>
 
-              <Button onClick={() => handleSubmit("Confirmed")} className="w-full mt-10 h-14 bg-emerald-500 hover:bg-emerald-600 rounded-2xl font-black text-lg shadow-xl transition-all active:scale-95">
+              <Button onClick={() => handleSubmit("Confirmed")} disabled={isSaving} className="w-full mt-10 h-14 bg-emerald-500 hover:bg-emerald-600 rounded-2xl font-black text-lg shadow-xl transition-all active:scale-95">
                 {editId ? "Update Order" : "Confirm & Send"}
               </Button>
             </div>

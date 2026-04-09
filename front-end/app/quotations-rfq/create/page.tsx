@@ -67,6 +67,7 @@ export default function CreateQuotationRFQPage() {
   const [items, setItems] = useState<LineItem[]>([
     { id: 1, category: "", subCategory: "", product: "", qtyPerPack: 0, totalQty: 0, uom: "KG", rate: 0, amount: 0, discPercent: 0, vatPercent: 15 },
   ]);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [additionalCosts, setAdditionalCosts] = useState<AdditionalCost[]>([
     { id: 1, type: "", currency: "TZS", amount: 0 },
@@ -211,6 +212,8 @@ export default function CreateQuotationRFQPage() {
       })),
       audit
     };
+
+    setIsSaving(true);
 
     try {
       if (editId) {

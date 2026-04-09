@@ -764,6 +764,17 @@ export const TBL_SALES_PERSON_MASTER = StoMasterSchema.table("TBL_SALES_PERSON_M
   MODIFIED_MAC_ADDRESS: varchar("MODIFIED_MAC_ADDRESS", { length: 50 }),
 });
 
+export const TBL_SCHEDULER_SETTINGS = StoMasterSchema.table("TBL_SCHEDULER_SETTINGS", {
+  SNO: serial("SNO").primaryKey(),
+  JOB_NAME: varchar("JOB_NAME", { length: 100 }).unique(),
+  CRON_EXPRESSION: varchar("CRON_EXPRESSION", { length: 50 }),
+  IS_ENABLED: varchar("IS_ENABLED", { length: 20 }).default("True"),
+  LAST_RUN: timestamp("LAST_RUN", { mode: "date" }),
+  REMARKS: varchar("REMARKS", { length: 1000 }),
+  MODIFIED_BY: varchar("MODIFIED_BY", { length: 50 }),
+  MODIFIED_DATE: timestamp("MODIFIED_DATE", { mode: "date" }),
+});
+
 
 
 export const TBL_COMPANY_MASTERRelations = relations(TBL_COMPANY_MASTER, ({ one }) => ({
