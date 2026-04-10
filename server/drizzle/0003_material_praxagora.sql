@@ -1,0 +1,11 @@
+CREATE TABLE "stomaster"."TBL_SCHEDULER_SETTINGS" (
+	"SNO" serial PRIMARY KEY NOT NULL,
+	"JOB_NAME" varchar(100),
+	"CRON_EXPRESSION" varchar(50),
+	"IS_ENABLED" varchar(20) DEFAULT 'True',
+	"LAST_RUN" timestamp,
+	"REMARKS" varchar(1000),
+	"MODIFIED_BY" varchar(50),
+	"MODIFIED_DATE" timestamp,
+	CONSTRAINT "TBL_SCHEDULER_SETTINGS_JOB_NAME_unique" UNIQUE("JOB_NAME")
+);

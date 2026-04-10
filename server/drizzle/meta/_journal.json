@@ -22,6 +22,13 @@
       "when": 1775306112103,
       "tag": "0002_bent_magik",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1775736464681,
+      "tag": "0003_material_praxagora",
+      "breakpoints": true
     }
   ]
 }

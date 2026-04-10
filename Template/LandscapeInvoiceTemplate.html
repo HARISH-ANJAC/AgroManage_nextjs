@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proforma Invoice - Gupta Auto Spares</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 10mm;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f3f4f6;
+            padding: 20px;
+        }
+
+        .invoice-container {
+            background-color: white;
+            width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            border: 1px solid #e5e7eb;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th {
+            background-color: #7a97c2;
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            padding: 8px;
+            border: 1px solid #4a5568;
+        }
+
+        td {
+            border: 1px solid #4a5568;
+            padding: 8px;
+            font-size: 0.85rem;
+            vertical-align: middle;
+        }
+
+        .bg-custom-blue {
+            background-color: #7a97c2;
+        }
+
+        .text-red-strong {
+            color: #e53e3e;
+        }
+
+        @media print {
+            body {
+                background: none;
+                padding: 0;
+            }
+
+            .invoice-container {
+                box-shadow: none;
+                border: none;
+                width: 100%;
+            }
+
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="no-print flex justify-center mb-4">
+        <button onclick="window.print()"
+            class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+            Print / Export PDF (Landscape)
+        </button>
+    </div>
+
+    <div class="invoice-container">
+        <!-- Header Info -->
+        <div class="flex justify-between items-start mb-4 text-xs font-semibold">
+            <div>
+                <p>Email: accounts@azpfl.com, nelson@atoz.co.tz, shahil@atoz.co.tz</p>
+                <p>VAT Reg No.: 11005966H | Tax No.: 100168065</p>
+            </div>
+            <div class="text-right">
+                <p>Reference No. : _________________</p>
+            </div>
+        </div>
+
+        <!-- Main Items Table -->
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 5%;">Sr. No</th>
+                    <th style="width: 40%;">Description</th>
+                    <th style="width: 10%;">REF#</th>
+                    <th style="width: 7%;">Qty.</th>
+                    <th style="width: 7%;">UoM</th>
+                    <th style="width: 10%;">Unit Price</th>
+                    <th style="width: 7%;">DISC (%)</th>
+                    <th style="width: 10%;">Net Unit Price</th>
+                    <th style="width: 10%;">AMOUNT</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="height: 120px;">
+                    <td class="text-center">1</td>
+                    <td class="relative">
+                        <div class="flex items-center justify-between">
+                            <span class="max-w-[70%]">
+                                TYRE 275/50 R20, ULTRAC VORTI, INDIA - ULTRAC VORTI - NA - APOLLO/VREDESTEIN -
+                            </span>
+                            <!-- Placeholder for Tire Image -->
+                            <div
+                                class="w-20 h-20 bg-gray-100 flex items-center justify-center border border-gray-300 rounded">
+                                <svg viewBox="0 0 24 24" class="w-12 h-12 text-gray-400" fill="currentColor">
+                                    <path
+                                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-12c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z" />
+                                </svg>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-center">TIB.01538</td>
+                    <td class="text-center font-bold">4.00</td>
+                    <td class="text-center">PCS</td>
+                    <td class="text-right">381,355.93</td>
+                    <td class="text-center">10.00</td>
+                    <td class="text-right">343,220.34</td>
+                    <td class="text-right font-bold">1,372,881.35</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Terms and Totals Section -->
+        <div class="flex border-x border-b border-black">
+            <!-- Left: Terms & Conditions -->
+            <div class="w-3/5 p-3 border-r border-black">
+                <h3 class="font-bold text-sm underline mb-2">Terms & Conditions:</h3>
+                <ol class="text-xs space-y-1">
+                    <li>1. All goods are subject to our standard conditions of sale</li>
+                    <li class="text-red-strong font-bold italic">2. Prices are valid for 7 days</li>
+                    <li>3. Subject to availability of stock at the time of order</li>
+                    <li>*Highlighted items are "Special Net" products</li>
+                </ol>
+            </div>
+
+            <!-- Right: Calculation Summary -->
+            <div class="w-2/5">
+                <div class="flex border-b border-black">
+                    <div class="w-1/2 p-1 font-bold bg-gray-50 text-right pr-4">Sub Total</div>
+                    <div class="w-1/2 p-1 text-right pr-4 font-bold">1,372,881.35</div>
+                </div>
+                <div class="flex border-b border-black">
+                    <div class="w-1/2 p-1 font-bold bg-gray-50 text-right pr-4">Ex.Discount</div>
+                    <div class="w-1/2 p-1 text-right pr-4 font-bold">5.00 % / 68,644.07</div>
+                </div>
+                <div class="flex border-b border-black">
+                    <div class="w-1/2 p-1 font-bold bg-gray-50 text-right pr-4">VAT @ 18.00%</div>
+                    <div class="w-1/2 p-1 text-right pr-4 font-bold">234,762.71</div>
+                </div>
+                <div class="flex bg-gray-100">
+                    <div class="w-1/2 p-1 font-bold text-right pr-4 text-sm uppercase">Total</div>
+                    <div class="w-1/2 p-1 text-right pr-4 font-extrabold text-sm border-l border-black">1,538,999.99
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Issuance & Signature -->
+        <div class="grid grid-cols-2">
+            <div
+                class="border-l border-b border-r border-black bg-custom-blue p-2 text-xs font-bold text-white flex items-center h-12">
+                Proforma Issued By Name : SHARAN
+            </div>
+            <div class="border-b border-r border-black bg-custom-blue p-2 text-xs font-bold text-white h-12">
+                Signature :
+            </div>
+            <div
+                class="border-l border-b border-r border-black bg-[#9ab5db] p-2 text-xs font-bold h-12 flex items-center">
+                Received By Name :
+            </div>
+            <div class="border-b border-r border-black bg-[#9ab5db] p-2 text-xs font-bold h-12">
+                Signature :
+            </div>
+        </div>
+
+        <!-- Payment Options Footer -->
+        <div class="mt-4 border border-black p-3 rounded-sm">
+            <h3 class="font-bold text-xs underline mb-1">Payment Options</h3>
+            <p class="text-xs font-bold mb-1">Bank Transfer: Name: Gupta Auto Spares & Hardware Limited</p>
+            <p class="text-[10px] leading-tight">
+                CRDB TZS A/c No: 0150269464200, Arusha, SWIFT: CORUTZTZ | DTB TZS A/c No: 0000407471, Arusha, SWIFT:
+                DTKETZTZ
+            </p>
+            <p class="text-[10px] font-bold mt-1">
+                LIPA: Gupta Auto Spares & Hardware Limited, Short Code: 7051601
+            </p>
+        </div>
+    </div>
+
+</body>
+
+</html>

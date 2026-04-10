@@ -12,6 +12,8 @@ import {
 import { eq, desc, like, sql } from "drizzle-orm";
 import { sendEmail, getBaseTemplate } from "../utils/emailService.js";
 import { generatePdfFromHtml } from "../utils/pdfGenerator.js";
+import { LandscapeInvoice } from "../utils/invoiceTemplates/LandscapeInvoiceTemplate.js";
+import { TBL_COMPANY_BANK_ACCOUNT_MASTER, TBL_BANK_MASTER } from "../db/schema/StoMaster.js";
 
 export const getTaxInvoices = async (req: Request, res: Response): Promise<Response> => {
     try {
@@ -207,37 +209,52 @@ export const createTaxInvoice = async (req: Request, res: Response): Promise<Res
             // Send Email to Customer
             try {
                 const customer = (await tx.select().from(TBL_CUSTOMER_MASTER).where(eq(TBL_CUSTOMER_MASTER.Customer_Id, header.customerId as number)).limit(1))[0];
+                const company = (await tx.select().from(TBL_COMPANY_MASTER).where(eq(TBL_COMPANY_MASTER.Company_Id, header.companyId as number)).limit(1))[0];
+                const bankAccounts = await tx.select({
+                    label: TBL_BANK_MASTER.BANK_NAME,
+                    details: sql`CONCAT(${TBL_COMPANY_BANK_ACCOUNT_MASTER.Account_Number}, ', ', ${TBL_COMPANY_BANK_ACCOUNT_MASTER.Bank_Branch_Name})`,
+                    swift: TBL_COMPANY_BANK_ACCOUNT_MASTER.Swift_Code
+                })
+                    .from(TBL_COMPANY_BANK_ACCOUNT_MASTER)
+                    .leftJoin(TBL_BANK_MASTER, eq(TBL_COMPANY_BANK_ACCOUNT_MASTER.Bank_Id, TBL_BANK_MASTER.BANK_ID))
+                    .where(eq(TBL_COMPANY_BANK_ACCOUNT_MASTER.Company_id, header.companyId as number));
 
                 if (customer?.Email_Address) {
-                    const invoiceData = `
-                        <h2>Invoice Number: <span class="highlight">${finalRefNo}</span></h2>
-                        <p>Thank you for your business. Your tax invoice has been generated and is attached below.</p>
-                        <div style="background-color: #f8fafc; padding: 25px; border-radius: 8px; margin: 20px 0;">
-                            <table style="width: 100%; border-collapse: collapse;">
-                                <tr style="background-color: #e2e8f0; font-weight: bold;">
-                                    <td style="padding: 10px;">Item</td>
-                                    <td style="padding: 10px; text-align: center;">Qty</td>
-                                    <td style="padding: 10px; text-align: right;">Amount</td>
-                                </tr>
-                                ${items.map((i: any) => `
-                                    <tr style="border-bottom: 1px solid #f1f5f9;">
-                                        <td style="padding: 10px;">${i.productName || 'Product'}</td>
-                                        <td style="padding: 10px; text-align: center;">${i.invoiceQty}</td>
-                                        <td style="padding: 10px; text-align: right;">$${Number(i.finalAmount).toLocaleString()}</td>
-                                    </tr>
-                                `).join('')}
-                            </table>
-                            <div style="text-align: right; margin-top: 15px; font-size: 18px; font-weight: 800;">TOTAL PAYABLE: $${Number(header.finalSalesAmount).toLocaleString()}</div>
-                        </div>
-                        <p>If you have any questions, please contact our accounts department.</p>
-                    `;
+                    const invoiceHtml = LandscapeInvoice({
+                        email: company?.Email || 'accounts@azpfl.com',
+                        vatRegNo: company?.TIN_Number || '',
+                        taxNo: company?.TIN_Number || '',
+                        referenceNo: finalRefNo,
+                        issuedByName: audit?.user || "System",
+                        items: items.map((i: any) => ({
+                            description: i.productName || 'Product',
+                            refNo: i.productId?.toString() || '',
+                            quantity: Number(i.invoiceQty),
+                            uom: i.uom || 'PCS',
+                            unitPrice: Number(i.rate),
+                            discountPercent: 0, // Default to 0 if not provided
+                        })),
+                        vatPercent: items[0]?.vatPercent || 18,
+                        bankDetails: {
+                            name: company?.Company_Name || 'Company Name',
+                            accounts: bankAccounts.map(acc => ({
+                                label: acc.label || 'Bank',
+                                details: acc.details?.toString() || '',
+                                swift: acc.swift || undefined
+                            })) as any
+                        }
+                    });
 
-                    const pdfBuffer = await generatePdfFromHtml(getBaseTemplate('Tax Invoice', invoiceData));
+                    const pdfBuffer = await generatePdfFromHtml(invoiceHtml);
 
                     await sendEmail({
                         to: customer.Email_Address,
-                        subject: `TAX INVOICE: ${finalRefNo} | Prime Harvest`,
-                        html: getBaseTemplate('Invoice Issued', invoiceData),
+                        subject: `TAX INVOICE: ${finalRefNo} | ${company?.Company_Name || 'Prime Harvest'}`,
+                        html: getBaseTemplate('Invoice Issued', `
+                            <h2>Invoice Number: <span class="highlight">${finalRefNo}</span></h2>
+                            <p>Thank you for your business. Your tax invoice has been generated and is attached below.</p>
+                            <p>Total Payable: <strong>${Number(header.finalSalesAmount).toLocaleString()}</strong></p>
+                        `),
                         attachments: [{
                             filename: `Invoice_${finalRefNo.replace(/\//g, '_')}.pdf`,
                             content: pdfBuffer,
