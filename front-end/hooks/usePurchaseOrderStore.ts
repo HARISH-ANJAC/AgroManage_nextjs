@@ -94,14 +94,14 @@ export function usePurchaseOrderStore() {
     }
   });
 
-  // Archive (Delete)
+  // Delete
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`${API_URL}/purchase-orders/archive/${encodeURIComponent(id)}`, {
-        method: "PUT",
+      const response = await fetch(`${API_URL}/purchase-orders/${encodeURIComponent(id)}`, {
+        method: "DELETE",
         headers: { 'Authorization': `Bearer ${getAuthToken()}` }
       });
-      if (!response.ok) throw new Error("Failed to archive PO");
+      if (!response.ok) throw new Error("Failed to delete PO");
       return id;
     },
     onSuccess: () => {

@@ -6,9 +6,23 @@ import {
     TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS,
     TBL_PURCHASE_ORDER_FILES_UPLOAD,
     TBL_PURCHASE_ORDER_CONVERSATION_DTL,
-    TBL_PRODUCT_MASTER
+    TBL_PRODUCT_MASTER,
+    TBL_GOODS_INWARD_GRN_HDR,
+    TBL_GOODS_INWARD_GRN_DTL,
+    TBL_GOODS_FILES_UPLOAD,
+    TBL_PURCHASE_INVOICE_HDR,
+    TBL_PURCHASE_INVOICE_DTL,
+    TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS,
+    TBL_PURCHASE_INVOICE_FILES_UPLOAD,
+    TBL_EXPENSE_HDR,
+    TBL_EXPENSE_DTL,
+    TBL_EXPENSE_FILES_UPLOAD,
+    TBL_SALES_ORDER_DTL,
+    TBL_DELIVERY_NOTE_DTL,
+    TBL_TAX_INVOICE_DTL,
+    TBL_SALES_PROFORMA_DTL
 } from "../db/schema/index.js";
-import { eq, and, sql, like, desc, getTableColumns } from "drizzle-orm";
+import { eq, and, sql, like, desc, getTableColumns, inArray } from "drizzle-orm";
 import { sendEmail, getBaseTemplate } from "../utils/emailService.js";
 import { TBL_SUPPLIER_MASTER } from "../db/schema/StoMaster.js";
 import { generatePdfFromHtml } from "../utils/pdfGenerator.js";
@@ -401,20 +415,82 @@ export const updatePurchaseOrder = async (req: Request, res: Response): Promise<
     return res.status(200).json(transaction);
 };
 
-export const archivePurchaseOrder = async (req: Request, res: Response): Promise<Response> => {
+export const deletePurchaseOrder = async (req: Request, res: Response): Promise<Response> => {
     try {
         let idRaw = (req.query.id || req.params.id || req.params[0]) as string;
         if (Array.isArray(idRaw)) idRaw = idRaw.join('/');
         const id = decodeURIComponent(idRaw);
-        await db.update(TBL_PURCHASE_ORDER_HDR)
-            .set({ STATUS_ENTRY: "Archived" })
-            .where(eq(TBL_PURCHASE_ORDER_HDR.PO_REF_NO, id as string));
-        return res.status(200).json({ msg: "PO archived" });
-    } catch (error) {
-        console.error(error);
+        const poRef = id as string;
+
+        await db.transaction(async (tx) => {
+            // 1. Gather all linked IDs for cascading delete
+            const detailSNOs = (await tx.select({ sno: TBL_PURCHASE_ORDER_DTL.SNO }).from(TBL_PURCHASE_ORDER_DTL).where(eq(TBL_PURCHASE_ORDER_DTL.PO_REF_NO, poRef))).map(d => d.sno);
+            const grnRefs = (await tx.select({ ref: TBL_GOODS_INWARD_GRN_HDR.GRN_REF_NO }).from(TBL_GOODS_INWARD_GRN_HDR).where(eq(TBL_GOODS_INWARD_GRN_HDR.PO_REF_NO, poRef))).map(g => g.ref);
+            const piRefs = (await tx.select({ ref: TBL_PURCHASE_INVOICE_HDR.PURCHASE_INVOICE_REF_NO }).from(TBL_PURCHASE_INVOICE_HDR).where(eq(TBL_PURCHASE_INVOICE_HDR.PO_REF_NO, poRef))).map(p => p.ref);
+            const expenseRefs = (await tx.select({ ref: TBL_EXPENSE_HDR.EXPENSE_REF_NO }).from(TBL_EXPENSE_HDR).where(eq(TBL_EXPENSE_HDR.PO_REF_NO, poRef))).map(e => e.ref);
+
+            // 2. Delete linked Purchase Invoice data
+            if (piRefs.length > 0) {
+                await tx.delete(TBL_PURCHASE_INVOICE_FILES_UPLOAD).where(inArray(TBL_PURCHASE_INVOICE_FILES_UPLOAD.PURCHASE_INVOICE_REF_NO, piRefs));
+                await tx.delete(TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS).where(inArray(TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS.PURCHASE_INVOICE_NO, piRefs));
+                await tx.delete(TBL_PURCHASE_INVOICE_DTL).where(inArray(TBL_PURCHASE_INVOICE_DTL.PURCHASE_INVOICE_REF_NO, piRefs));
+                await tx.delete(TBL_PURCHASE_INVOICE_HDR).where(inArray(TBL_PURCHASE_INVOICE_HDR.PURCHASE_INVOICE_REF_NO, piRefs));
+            }
+
+            // 3. Delete linked Goods Receipt data
+            if (grnRefs.length > 0) {
+                await tx.delete(TBL_GOODS_FILES_UPLOAD).where(inArray(TBL_GOODS_FILES_UPLOAD.GRN_REF_NO, grnRefs));
+                await tx.delete(TBL_GOODS_INWARD_GRN_DTL).where(inArray(TBL_GOODS_INWARD_GRN_DTL.GRN_REF_NO, grnRefs));
+                await tx.delete(TBL_GOODS_INWARD_GRN_HDR).where(inArray(TBL_GOODS_INWARD_GRN_HDR.GRN_REF_NO, grnRefs));
+            }
+
+            // 4. Delete linked Expenses
+            if (expenseRefs.length > 0) {
+                await tx.delete(TBL_EXPENSE_FILES_UPLOAD).where(inArray(TBL_EXPENSE_FILES_UPLOAD.EXPENSE_REF_NO, expenseRefs));
+                await tx.delete(TBL_EXPENSE_DTL).where(inArray(TBL_EXPENSE_DTL.EXPENSE_REF_NO, expenseRefs));
+                await tx.delete(TBL_EXPENSE_HDR).where(inArray(TBL_EXPENSE_HDR.EXPENSE_REF_NO, expenseRefs));
+            }
+
+            // 5. Clean up other detail tables referencing the PO or its lines
+            if (detailSNOs.length > 0) {
+                await tx.delete(TBL_TAX_INVOICE_DTL).where(inArray(TBL_TAX_INVOICE_DTL.PO_DTL_SNO, detailSNOs));
+                await tx.delete(TBL_DELIVERY_NOTE_DTL).where(inArray(TBL_DELIVERY_NOTE_DTL.PO_DTL_SNO, detailSNOs));
+                await tx.delete(TBL_SALES_ORDER_DTL).where(inArray(TBL_SALES_ORDER_DTL.PO_DTL_SNO, detailSNOs));
+                await tx.delete(TBL_SALES_PROFORMA_DTL).where(inArray(TBL_SALES_PROFORMA_DTL.PO_DTL_SNO, detailSNOs));
+                
+                // Extra cleaning for any records directly referencing the PO Ref in detail tables
+                await tx.delete(TBL_GOODS_INWARD_GRN_DTL).where(inArray(TBL_GOODS_INWARD_GRN_DTL.PO_DTL_SNO, detailSNOs));
+                await tx.delete(TBL_EXPENSE_DTL).where(inArray(TBL_EXPENSE_DTL.PO_DTL_SNO, detailSNOs));
+            }
+
+            // Also clean by PO_REF directly in detail tables just in case
+            await tx.delete(TBL_TAX_INVOICE_DTL).where(eq(TBL_TAX_INVOICE_DTL.PO_REF_NO, poRef));
+            await tx.delete(TBL_DELIVERY_NOTE_DTL).where(eq(TBL_DELIVERY_NOTE_DTL.PO_REF_NO, poRef));
+            await tx.delete(TBL_SALES_ORDER_DTL).where(eq(TBL_SALES_ORDER_DTL.PO_REF_NO, poRef));
+            await tx.delete(TBL_SALES_PROFORMA_DTL).where(eq(TBL_SALES_PROFORMA_DTL.PO_REF_NO, poRef));
+
+            // 6. Delete PO specific data
+            await tx.delete(TBL_PURCHASE_ORDER_DTL).where(eq(TBL_PURCHASE_ORDER_DTL.PO_REF_NO, poRef));
+            await tx.delete(TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS).where(eq(TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS.PO_REF_NO, poRef));
+            await tx.delete(TBL_PURCHASE_ORDER_FILES_UPLOAD).where(eq(TBL_PURCHASE_ORDER_FILES_UPLOAD.PO_REF_NO, poRef));
+            await tx.delete(TBL_PURCHASE_ORDER_CONVERSATION_DTL).where(eq(TBL_PURCHASE_ORDER_CONVERSATION_DTL.PO_REF_NO, poRef));
+            await tx.delete(TBL_PURCHASE_ORDER_HDR).where(eq(TBL_PURCHASE_ORDER_HDR.PO_REF_NO, poRef));
+        });
+
+        return res.status(200).json({ msg: "Purchase Order and all associated data (GRNs, Invoices, Expenses) removed successfully" });
+    } catch (error: any) {
+        console.error("Delete PO Error:", error);
+        const errorCode = error.code || error.cause?.code;
+        if (errorCode === '23503') {
+            return res.status(400).json({ 
+                msg: "Cannot delete Purchase Order because it is still referenced in other records. Please ensure all dependent records are removed first." 
+            });
+        }
         return res.status(500).json({ msg: "Internal server error" });
     }
 };
+
+
 
 export const updatePurchaseOrderPOD = async (req: Request, res: Response): Promise<Response> => {
     try {

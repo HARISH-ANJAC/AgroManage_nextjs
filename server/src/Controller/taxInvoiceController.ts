@@ -7,9 +7,10 @@ import {
     TBL_PRODUCT_MASTER,
     TBL_CUSTOMER_MASTER,
     TBL_STORE_MASTER,
-    TBL_COMPANY_MASTER
+    TBL_COMPANY_MASTER,
+    TBL_CUSTOMER_RECEIPT_INVOICE_DTL
 } from "../db/schema/index.js";
-import { eq, desc, like, sql } from "drizzle-orm";
+import { eq, desc, like, sql, inArray } from "drizzle-orm";
 import { sendEmail, getBaseTemplate } from "../utils/emailService.js";
 import { generatePdfFromHtml } from "../utils/pdfGenerator.js";
 import { LandscapeInvoice } from "../utils/invoiceTemplates/LandscapeInvoiceTemplate.js";
@@ -219,6 +220,26 @@ export const createTaxInvoice = async (req: Request, res: Response): Promise<Res
                     .leftJoin(TBL_BANK_MASTER, eq(TBL_COMPANY_BANK_ACCOUNT_MASTER.Bank_Id, TBL_BANK_MASTER.BANK_ID))
                     .where(eq(TBL_COMPANY_BANK_ACCOUNT_MASTER.Company_id, header.companyId as number));
 
+                // Fetch Product Images for Invoice
+                const productIds = items.map((i: any) => i.productId).filter((id: any) => id != null);
+                const fetchedProducts = productIds.length > 0 
+                    ? await tx.select({
+                        id: TBL_PRODUCT_MASTER.PRODUCT_ID,
+                        image: TBL_PRODUCT_MASTER.CONTENT_DATA,
+                        mimeType: TBL_PRODUCT_MASTER.CONTENT_TYPE
+                    })
+                    .from(TBL_PRODUCT_MASTER)
+                    .where(inArray(TBL_PRODUCT_MASTER.PRODUCT_ID, productIds))
+                    : [];
+                
+                const imageMap = new Map();
+                fetchedProducts.forEach(p => {
+                    if (p.image) {
+                        const base64 = p.image.toString('base64');
+                        imageMap.set(p.id, `data:${p.mimeType || 'image/png'};base64,${base64}`);
+                    }
+                });
+
                 if (customer?.Email_Address) {
                     const invoiceHtml = LandscapeInvoice({
                         email: company?.Email || 'accounts@azpfl.com',
@@ -232,9 +253,11 @@ export const createTaxInvoice = async (req: Request, res: Response): Promise<Res
                             quantity: Number(i.invoiceQty),
                             uom: i.uom || 'PCS',
                             unitPrice: Number(i.rate),
-                            discountPercent: 0, // Default to 0 if not provided
+                            discountPercent: 0,
+                            imageUrl: imageMap.get(i.productId)
                         })),
                         vatPercent: items[0]?.vatPercent || 18,
+
                         bankDetails: {
                             name: company?.Company_Name || 'Company Name',
                             accounts: bankAccounts.map(acc => ({
@@ -247,7 +270,7 @@ export const createTaxInvoice = async (req: Request, res: Response): Promise<Res
 
                     const pdfBuffer = await generatePdfFromHtml(invoiceHtml);
 
-                    await sendEmail({
+                    sendEmail({
                         to: customer.Email_Address,
                         subject: `TAX INVOICE: ${finalRefNo} | ${company?.Company_Name || 'Prime Harvest'}`,
                         html: getBaseTemplate('Invoice Issued', `
@@ -355,13 +378,26 @@ export const deleteTaxInvoice = async (req: Request, res: Response): Promise<Res
         const decodedId = decodeURIComponent(id as string);
 
         await db.transaction(async (tx) => {
+            // 1. Delete references in customer receipts bridge table
+            await tx.delete(TBL_CUSTOMER_RECEIPT_INVOICE_DTL).where(eq(TBL_CUSTOMER_RECEIPT_INVOICE_DTL.TAX_INVOICE_REF_NO, decodedId));
+
+            // 2. Delete related files
+            await tx.delete(TBL_TAX_INVOICE_FILES_UPLOAD).where(eq(TBL_TAX_INVOICE_FILES_UPLOAD.TAX_INVOICE_REF_NO, decodedId));
+
+            // 3. Delete items and header
             await tx.delete(TBL_TAX_INVOICE_DTL).where(eq(TBL_TAX_INVOICE_DTL.TAX_INVOICE_REF_NO, decodedId));
             await tx.delete(TBL_TAX_INVOICE_HDR).where(eq(TBL_TAX_INVOICE_HDR.TAX_INVOICE_REF_NO, decodedId));
         });
 
-        return res.status(200).json({ msg: "Tax Invoice deleted successfully" });
-    } catch (error) {
-        console.error(error);
+        return res.status(200).json({ msg: "Tax Invoice and all related data removed successfully" });
+    } catch (error: any) {
+        console.error("Delete Invoice Error:", error);
+        const errorCode = error.code || error.cause?.code;
+        if (errorCode === '23503') {
+            return res.status(400).json({ 
+                msg: "Cannot delete Tax Invoice because it is still referenced in other records (e.g., Payments or Receipts). Please ensure dependent records are removed first." 
+            });
+        }
         return res.status(500).json({ msg: "Internal server error" });
     }
 };
