@@ -326,16 +326,16 @@ export function Sidebar() {
       >
         {/* Branding Section */}
         <div className={`flex items-center gap-3 px-5 py-6 group cursor-pointer ${isCollapsed && !isMobile ? 'justify-center' : ''}`}>
-          <div className="w-11 h-11 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-black/10 shrink-0 transition-all duration-500 group-hover:scale-105 active:scale-95 ring-4 ring-white/5">
+          <div className="w-11 h-11 rounded-xl  flex items-center justify-center shadow-lg shadow-black/10 shrink-0 transition-all duration-500 group-hover:scale-105 active:scale-95 ring-4 ring-white/5">
             <img
-              src="/Prime-Harvest-L-PNG.png"
+              src="/assets/tbgs-logo.jpg"
               alt="Prime Harvest Logo"
-              className="w-24 h-24 object-contain transition-transform duration-500"
+              className="w-24 h-22 object-contain transition-transform duration-500"
             />
           </div>
           {(!isCollapsed || isMobile) && (
             <div className="animate-in fade-in slide-in-from-left-2 duration-300 overflow-hidden">
-              <h1 className="font-bold text-lg text-white leading-none whitespace-nowrap transition-all duration-500 group-hover:translate-x-0.5">Prime Harvest</h1>
+              <h1 className="font-bold text-lg text-white leading-none whitespace-nowrap transition-all duration-500 group-hover:translate-x-0.5">TBGS</h1>
               <p className="text-[10px] uppercase tracking-widest text-white/50 mt-1 whitespace-nowrap transition-all duration-500 group-hover:translate-x-0.5 group-hover:text-white/80">ERP v1.0</p>
             </div>
           )}
