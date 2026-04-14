@@ -50,7 +50,7 @@ export default function SalesProformasPage() {
 
       try {
         const logoImg = new Image();
-        logoImg.src = "/assets/logo.png";
+        logoImg.src = "/assets/tbgs-logo.jpg";
         await new Promise((resolve) => {
           logoImg.onload = resolve;
           logoImg.onerror = resolve; // Continue even if logo fails

@@ -12,7 +12,7 @@ export default function SalesOrdersPage() {
   const handleExportPDF = async (order: any) => {
     toast.loading("Generating Sales Order PDF...", { id: "so-pdf" });
     const fullOrder = await getOrderById(order.salesOrderRefNo || order.id);
-    
+
     if (!fullOrder) {
       toast.error("Failed to load order details", { id: "so-pdf" });
       return;
@@ -26,7 +26,7 @@ export default function SalesOrdersPage() {
     // Header & Logo — Logo LEFT, Title RIGHT
     try {
       const logoImg = new Image();
-      logoImg.src = "/assets/logo.png";
+      logoImg.src = "/assets/tbgs-logo.jpg";
       await new Promise((resolve) => {
         logoImg.onload = resolve;
         logoImg.onerror = resolve;
