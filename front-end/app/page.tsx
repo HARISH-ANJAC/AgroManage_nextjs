@@ -30,7 +30,7 @@ export default function Home() {
           <div className="absolute top-0 h-16 w-16 rounded-full border-t-4 border-primary animate-spin"></div>
         </div>
         <div className="flex flex-col items-center animate-pulse">
-          <span className="text-xl font-display font-bold text-primary tracking-tight">AgroManage</span>
+          <span className="text-xl font-display font-bold text-primary tracking-tight">TBGS</span>
           <p className="text-xs text-muted-foreground font-medium uppercase tracking-[0.2em] mt-1">Initializing Ecosystem...</p>
         </div>
       </div>

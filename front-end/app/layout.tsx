@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AgroManage | Enterprise Agriculture Ecosystem",
+  title: "TBGS",
   description: "Advanced management system for agricultural business operations.",
 };
 
