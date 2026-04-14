@@ -204,7 +204,7 @@ export default function LoginPage() {
           <div className="relative">
             <div className="bg-white/90 flex items-center justify-center backdrop-blur-xl p-4 rounded-3xl shadow-[0_15px_40px_rgba(0,0,0,0.06)] border border-white transform transition-all duration-1000 group-hover:scale-[1.02]">
               <img
-                src="/Prime-Harvest-Lo.png"
+                src="/assets/tbgs-logo.jpg"
                 alt="Prime Harvest Logo"
                 className="w-40 h-auto max-h-20 object-contain transition-transform duration-700"
               />
