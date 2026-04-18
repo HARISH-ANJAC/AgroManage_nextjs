@@ -146,6 +146,11 @@ function CreateReceiptContent() {
       return;
     }
 
+    if (totalAllocated > header.receiptAmount) {
+      toast.error("Total Allocated cannot exceed Receipt Amount");
+      return;
+    }
+
     setIsSaving(true);
 
     try {
@@ -178,10 +183,37 @@ function CreateReceiptContent() {
   };
 
   const allocateAmount = (id: string, value: number) => {
-    setItems(items.map(it => it.id === id ? { ...it, receiptInvoiceAdjustAmount: value } : it));
+    setItems(items.map(it => {
+      if (it.id === id) {
+        // Allow typing but maybe cap or warn? Hard cap at outstanding is usually best for "Proper" fix
+        const cappedValue = Math.min(Math.max(0, value), Number(it.outstandingInvoiceAmount) || 0);
+        return { ...it, receiptInvoiceAdjustAmount: cappedValue };
+      }
+      return it;
+    }));
   };
 
+  // Auto-allocate logic when Receipt Amount changes
+  useEffect(() => {
+    if (header.receiptAmount > 0 && items.length > 0) {
+      // Only auto-allocate if totalAllocated is currently 0 (initial entry)
+      const currentAllocated = items.reduce((acc, it) => acc + (Number(it.receiptInvoiceAdjustAmount) || 0), 0);
+      if (currentAllocated === 0) {
+        let remaining = header.receiptAmount;
+        const newItems = items.map(it => {
+          const outstanding = Number(it.outstandingInvoiceAmount) || 0;
+          const allocation = Math.min(remaining, outstanding);
+          remaining -= allocation;
+          return { ...it, receiptInvoiceAdjustAmount: allocation };
+        });
+        setItems(newItems);
+      }
+    }
+  }, [header.receiptAmount]);
+
   const totalAllocated = items.reduce((acc, it) => acc + (Number(it.receiptInvoiceAdjustAmount) || 0), 0);
+  const unallocatedBalance = header.receiptAmount - totalAllocated;
+  const isOverAllocated = unallocatedBalance < 0;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -295,7 +327,9 @@ function CreateReceiptContent() {
                             type="number"
                             value={item.receiptInvoiceAdjustAmount}
                             onChange={(e) => allocateAmount(item.id, Number(e.target.value))}
-                            className="text-right font-black rounded-lg h-9 border-blue-100 bg-blue-50/30"
+                            className={`text-right font-black rounded-lg h-9 transition-all ${item.receiptInvoiceAdjustAmount > 0 ? 'border-emerald-200 bg-emerald-50/30' : 'border-blue-100 bg-blue-50/30'}`}
+                            max={item.outstandingInvoiceAmount}
+                            min={0}
                           />
                         </td>
                       </tr>
@@ -319,21 +353,23 @@ function CreateReceiptContent() {
           </div>
 
           <div className="col-span-12 lg:col-span-4 space-y-8">
-            <div className="bg-[#1A2E28] text-white rounded-2xl shadow-xl p-8">
+            <div className={`rounded-2xl shadow-xl p-8 transition-colors duration-300 ${isOverAllocated ? 'bg-red-600 text-white animate-pulse' : 'bg-[#1A2E28] text-white'}`}>
               <h3 className="text-sm font-bold opacity-70 uppercase tracking-widest mb-6">Allocation Summary</h3>
               <div className="space-y-4">
-                <div className="flex justify-between items-center text-[#A7B4B1]">
+                <div className="flex justify-between items-center opacity-80">
                   <span className="text-xs font-bold uppercase tracking-tight">Receipt Total</span>
                   <span className="font-mono font-medium">{(header.receiptAmount).toLocaleString()} TZS</span>
                 </div>
-                <div className="flex justify-between items-center text-[#A7B4B1]">
+                <div className="flex justify-between items-center opacity-80">
                   <span className="text-xs font-bold uppercase tracking-tight">Allocated to Inv</span>
                   <span className="font-mono font-medium">{(totalAllocated).toLocaleString()} TZS</span>
                 </div>
                 <div className="h-px bg-white/10 my-4" />
                 <div className="space-y-1">
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">Unallocated Balance</span>
-                  <div className="text-3xl font-black font-sans leading-none">{(header.receiptAmount - totalAllocated).toLocaleString()}</div>
+                  <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${isOverAllocated ? 'text-white' : 'text-blue-400'}`}>
+                    {isOverAllocated ? "❗ OVER ALLOCATED" : "Unallocated Balance"}
+                  </span>
+                  <div className="text-3xl font-black font-sans leading-none">{(unallocatedBalance).toLocaleString()}</div>
                 </div>
               </div>
             </div>

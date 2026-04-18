@@ -10,9 +10,10 @@ import {
     TBL_COMPANY_MASTER,
     TBL_SALES_PERSON_MASTER,
     TBL_BILLING_LOCATION_MASTER,
-    TBL_CURRENCY_MASTER
+    TBL_CURRENCY_MASTER,
+    TBL_SALES_ORDER_HDR
 } from "../db/schema/index.js";
-import { eq, like, desc } from "drizzle-orm";
+import { eq, like, desc, inArray } from "drizzle-orm";
 import { generateInvoicePdf } from "../utils/pdfGenerator.js";
 
 
@@ -508,5 +509,97 @@ export const getSalesProformaPdf = async (req: Request, res: Response): Promise<
     } catch (error) {
         console.error(error);
         res.status(500).json({ msg: "Failed to generate proforma PDF" });
+    }
+};
+
+export const deleteSalesProforma = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        let idRaw = (req.params.id || req.query.id || req.params[0]) as string;
+        if (Array.isArray(idRaw)) idRaw = idRaw.join('/');
+        const id = decodeURIComponent(idRaw);
+        
+        console.log("Deleting Sales Proforma:", id);
+
+        // Check for referencing Sales Orders
+        const existingOrders = await db.select({ ref: TBL_SALES_ORDER_HDR.SALES_ORDER_REF_NO })
+            .from(TBL_SALES_ORDER_HDR)
+            .where(eq(TBL_SALES_ORDER_HDR.SALES_PROFORMA_REF_NO, id))
+            .limit(1);
+
+        if (existingOrders.length > 0) {
+            return res.status(400).json({ 
+                msg: `Cannot delete Sales Proforma ${id}. It is already referenced in Sales Order: ${existingOrders[0].ref}. Please delete the Sales Order first.` 
+            });
+        }
+
+        const transaction = await db.transaction(async (tx) => {
+            try {
+                // 1. Delete Files
+                await tx.delete(TBL_SALES_PROFORMA_FILES_UPLOAD).where(eq(TBL_SALES_PROFORMA_FILES_UPLOAD.SALES_PROFORMA_REF_NO, id));
+                
+                // 2. Delete Details
+                await tx.delete(TBL_SALES_PROFORMA_DTL).where(eq(TBL_SALES_PROFORMA_DTL.SALES_PROFORMA_REF_NO, id));
+                
+                // 3. Delete Header
+                await tx.delete(TBL_SALES_PROFORMA_HDR).where(eq(TBL_SALES_PROFORMA_HDR.SALES_PROFORMA_REF_NO, id));
+
+                return { msg: "Sales Proforma deleted successfully" };
+            } catch (error) {
+                console.error("Delete Sub-error:", error);
+                tx.rollback();
+                throw error;
+            }
+        });
+
+        return res.status(200).json(transaction);
+    } catch (error) {
+        console.error("Delete Sales Proforma Error:", error);
+        return res.status(500).json({ msg: "Internal server error" });
+    }
+};
+
+export const bulkDeleteSalesProformas = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const { ids } = req.body;
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ msg: "Invalid or empty IDs array" });
+        }
+
+        console.log("Bulk Deleting Sales Proformas:", ids);
+
+        // Check for referencing Sales Orders for any of the IDs
+        const existingOrders = await db.select({ 
+            orderRef: TBL_SALES_ORDER_HDR.SALES_ORDER_REF_NO,
+            proformaRef: TBL_SALES_ORDER_HDR.SALES_PROFORMA_REF_NO 
+        })
+            .from(TBL_SALES_ORDER_HDR)
+            .where(inArray(TBL_SALES_ORDER_HDR.SALES_PROFORMA_REF_NO, ids));
+
+        if (existingOrders.length > 0) {
+            const conflicting = existingOrders.map(o => `${o.proformaRef} (referenced by ${o.orderRef})`).join(", ");
+            return res.status(400).json({ 
+                msg: `Cannot delete Sales Proformas. Some are already referenced in Sales Orders: ${conflicting}. Please delete the Sales Orders first.` 
+            });
+        }
+
+        const transaction = await db.transaction(async (tx) => {
+            try {
+                for (const id of ids) {
+                    await tx.delete(TBL_SALES_PROFORMA_FILES_UPLOAD).where(eq(TBL_SALES_PROFORMA_FILES_UPLOAD.SALES_PROFORMA_REF_NO, id));
+                    await tx.delete(TBL_SALES_PROFORMA_DTL).where(eq(TBL_SALES_PROFORMA_DTL.SALES_PROFORMA_REF_NO, id));
+                    await tx.delete(TBL_SALES_PROFORMA_HDR).where(eq(TBL_SALES_PROFORMA_HDR.SALES_PROFORMA_REF_NO, id));
+                }
+                return { msg: `${ids.length} Sales Proformas deleted successfully` };
+            } catch (error) {
+                console.error("Bulk Delete Sub-error:", error);
+                tx.rollback();
+                throw error;
+            }
+        });
+
+        return res.status(200).json(transaction);
+    } catch (error) {
+        console.error("Bulk Delete Sales Proformas Error:", error);
+        return res.status(500).json({ msg: "Internal server error" });
     }
 };

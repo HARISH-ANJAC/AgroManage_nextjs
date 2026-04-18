@@ -12,7 +12,7 @@ export default function SalesInvoicesPage() {
   const handleExportPDF = async (invoice: any) => {
     toast.loading("Generating Sales Invoice PDF...", { id: "inv-pdf" });
     const fullInv = await getInvoiceById(invoice.taxInvoiceRefNo || invoice.id);
-
+    
     if (!fullInv) {
       toast.error("Failed to load invoice details", { id: "inv-pdf" });
       return;
@@ -26,7 +26,7 @@ export default function SalesInvoicesPage() {
     // Header & Logo — Logo LEFT, Title RIGHT
     try {
       const logoImg = new Image();
-      logoImg.src = "/assets/tbgs-logo.jpg";
+      logoImg.src = "/assets/logo.png";
       await new Promise((resolve) => {
         logoImg.onload = resolve;
         logoImg.onerror = resolve;
@@ -70,7 +70,7 @@ export default function SalesInvoicesPage() {
     doc.setTextColor(71, 85, 105);
     doc.text(h.customerName || "N/A", 14, 67);
     doc.text(h.fromStoreName || "Main Warehouse", 120, 67);
-
+    
     // Item Table
     autoTable(doc, {
       startY: 85,
@@ -91,7 +91,7 @@ export default function SalesInvoicesPage() {
     });
 
     const finalY = ((doc as any).lastAutoTable?.finalY || 100) + 15;
-
+    
     // Summary
     doc.setFontSize(10);
     doc.setTextColor(100, 116, 139);

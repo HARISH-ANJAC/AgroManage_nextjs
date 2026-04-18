@@ -122,7 +122,12 @@ export function useMasterData(domain: string, initialData: any[] = [], idPrefix:
       });
       if (!response.ok) {
         handleAuthError(response.status);
-        throw new Error('Failed to create');
+        let errMsg = 'Failed to create';
+        try {
+          const errBody = await response.json();
+          errMsg = errBody?.msg || errBody?.message || errMsg;
+        } catch {}
+        throw new Error(errMsg);
       }
       return response.json();
     },
@@ -146,7 +151,12 @@ export function useMasterData(domain: string, initialData: any[] = [], idPrefix:
       });
       if (!response.ok) {
         handleAuthError(response.status);
-        throw new Error('Failed to update');
+        let errMsg = 'Failed to update';
+        try {
+          const errBody = await response.json();
+          errMsg = errBody?.msg || errBody?.message || errMsg;
+        } catch {}
+        throw new Error(errMsg);
       }
       return response.json();
     },

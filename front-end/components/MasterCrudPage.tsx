@@ -31,8 +31,12 @@ export interface MasterField {
   label: string;
   type: "text" | "number" | "select" | "textarea" | "date" | "password" | "image";
   required?: boolean;
-  options?: (string | { value: string | number; label: string })[];
+  options?: (string | { value: string | number; label: string })[] | ((form: Record<string, any>) => (string | { value: string | number; label: string })[]);
   placeholder?: string;
+  maxLength?: number;
+  formatter?: (val: any) => any;
+  defaultValue?: any;
+  dependsOn?: string; // key of another field this select depends on (cascade reset)
 }
 
 import { useRouter } from "next/navigation";
@@ -44,7 +48,7 @@ interface MasterPageProps {
   domain: string;
   fields: MasterField[];
   initialData: Record<string, any>[];
-  columns: { key: string; label: string }[];
+  columns: { key: string; label: string; render?: (val: any, item: Record<string, any>) => React.ReactNode }[];
   customAddUrl?: string;
   customEditUrl?: (id: string) => string;
   customStoreOverrides?: {
@@ -163,8 +167,8 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
       setSelectedIds(new Set());
       setIsBulkDeleting(false);
       toast.success(`${title} deleted successfully!`);
-    } catch (e) {
-      toast.error(`Failed to delete items!`);
+    } catch (e: any) {
+      toast.error(e.message || `Failed to delete items!`);
     }
   };
 
@@ -174,19 +178,37 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
       await remove(deleteId);
       setDeleteId(null);
       toast.success(`${title.replace(/s$/, "")} deleted successfully!`);
-    } catch (e) {
-      toast.error(`Failed to delete ${title.replace(/s$/, "")}!`);
+    } catch (e: any) {
+      toast.error(e.message || `Failed to delete ${title.replace(/s$/, "")}!`);
     }
   };
 
   const emptyForm = () => {
     const f: Record<string, any> = {};
-    fields.forEach((field) => { f[field.key] = field.type === "number" ? 0 : ""; });
+    fields.forEach((field) => {
+      f[field.key] = field.defaultValue !== undefined ? field.defaultValue : (field.type === "number" ? 0 : "");
+    });
     return f;
   };
 
   const openAdd = () => { if (customAddUrl) router.push(customAddUrl); else { setEditing(null); setForm(emptyForm()); setDialogOpen(true); } };
-  const openEdit = (item: Record<string, any>) => { if (customEditUrl) router.push(customEditUrl(item.id)); else { setEditing(item); setForm({ ...item }); setDialogOpen(true); } };
+  const openEdit = (item: Record<string, any>) => {
+    if (customEditUrl) {
+      router.push(customEditUrl(item.id));
+    } else {
+      setEditing(item);
+      // Apply formatters to loaded values so fields like phone numbers display correctly
+      const formData = { ...item };
+      fields.forEach((field) => {
+        if (field.formatter && formData[field.key] !== undefined && formData[field.key] !== null) {
+          formData[field.key] = field.formatter(String(formData[field.key]));
+        }
+      });
+      setForm(formData);
+      setDialogOpen(true);
+    }
+  };
+
 
   const handleSave = async () => {
     const requiredMissing = fields.some((f) => f.required && !form[f.key]);
@@ -203,10 +225,12 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
         toast.success(`${title.replace(/s$/, "")} created successfully!`);
       }
       setDialogOpen(false);
-    } catch (e) {
-      toast.error(`Error saving ${title.toLowerCase()}!`);
+    } catch (e: any) {
+      const msg = e?.message || `Error saving ${title.toLowerCase()}!`;
+      toast.error(msg);
     }
   };
+
 
   const handlePageSizeChange = (val: string) => {
     if (val === "ALL") { setPageSize("ALL"); setCurrentPage(1); }
@@ -221,7 +245,7 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
     // Handle logo with proper aspect ratio (placed on the left)
     try {
       const logoImg = new Image();
-      logoImg.src = "/assets/tbgs-logo.jpg";
+      logoImg.src = "/assets/logo.png";
       await new Promise((resolve) => {
         logoImg.onload = resolve;
         logoImg.onerror = resolve; // Continue even if logo fails
@@ -396,18 +420,24 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
                     {columns.map((c) => (
                       <td key={c.key} className="p-3">
                         {c.key.includes("status") ? (
-                          <Badge variant="outline" className={`
-                            ${String(getNestedValue(item, c.key)).toLowerCase().includes("active") || String(getNestedValue(item, c.key)).toLowerCase().includes("approved") || String(getNestedValue(item, c.key)).toLowerCase().includes("received") || String(getNestedValue(item, c.key)).toLowerCase().includes("delivered") || String(getNestedValue(item, c.key)).toLowerCase().includes("success") || String(getNestedValue(item, c.key)).toLowerCase().includes("confirmed") || String(getNestedValue(item, c.key)).toLowerCase().includes("paid")
+                          (() => {
+                            const sv = String(getNestedValue(item, c.key) ?? "").toLowerCase().trim();
+                            const isGreen = sv === "active" || sv === "approved" || sv === "received" || sv === "delivered" || sv === "success" || sv === "confirmed" || sv === "paid";
+                            const isAmber = sv === "draft" || sv === "pending" || sv === "in transit" || sv === "transit";
+                            const isRed = sv === "inactive" || sv === "rejected" || sv === "cancelled" || sv === "canceled";
+                            const colorClass = isGreen
                               ? "bg-green-500/10 text-green-600 border-green-200"
-                              : String(getNestedValue(item, c.key)).toLowerCase().includes("draft") || String(getNestedValue(item, c.key)).toLowerCase().includes("pending") || String(getNestedValue(item, c.key)).toLowerCase().includes("transit")
+                              : isAmber
                                 ? "bg-amber-500/10 text-amber-600 border-amber-200"
-                                : String(getNestedValue(item, c.key)).toLowerCase().includes("rejected") || String(getNestedValue(item, c.key)).toLowerCase().includes("cancelled") || String(getNestedValue(item, c.key)).toLowerCase().includes("inactive")
+                                : isRed
                                   ? "bg-red-500/10 text-red-600 border-red-200"
-                                  : "bg-blue-500/10 text-blue-600 border-blue-200"}
-                            px-2 py-0.5 text-[10px] uppercase font-bold
-                          `}>
-                            {getNestedValue(item, c.key)}
-                          </Badge>
+                                  : "bg-blue-500/10 text-blue-600 border-blue-200";
+                            return (
+                              <Badge variant="outline" className={`${colorClass} px-2 py-0.5 text-[10px] uppercase font-bold`}>
+                                {getNestedValue(item, c.key)}
+                              </Badge>
+                            );
+                          })()
                         ) : (
                           (() => {
                             const val = getNestedValue(item, c.key);
@@ -427,9 +457,13 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
                             }
 
                             if (field?.type === "select" && field.options) {
-                              const found = field.options.find((o: any) => typeof o === "object" && String(o.value) === String(val));
+                              const resolvedOpts = typeof field.options === "function" ? field.options(item) : field.options;
+                              const found = resolvedOpts.find((o: any) => typeof o === "object" && String(o.value) === String(val));
                               if (found && typeof found === "object") return found.label;
                             }
+
+                            if (c.render) return c.render(val, item);
+
                             return String(val ?? "");
                           })()
                         )}
@@ -484,17 +518,25 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
                 <div key={field.key} className={field.type === "textarea" ? "col-span-2" : ""}>
                   <Label className="text-xs">{field.label} {field.required && <span className="text-destructive">*</span>}</Label>
                   {field.type === "select" ? (
-                    <Select value={form[field.key] !== undefined && form[field.key] !== null ? String(form[field.key]) : ""} onValueChange={(v) => setForm({ ...form, [field.key]: v })}>
+                    <Select
+                      value={form[field.key] !== undefined && form[field.key] !== null ? String(form[field.key]) : ""}
+                      onValueChange={(v) => {
+                        const update: Record<string, any> = { ...form, [field.key]: v };
+                        // Reset any dependent fields when this value changes
+                        fields.forEach((f) => { if (f.dependsOn === field.key) update[f.key] = ""; });
+                        setForm(update);
+                      }}
+                    >
                       <SelectTrigger><SelectValue placeholder={field.placeholder || `Select ${field.label}`} /></SelectTrigger>
                       <SelectContent>
                         {(() => {
                           const seen = new Set();
-                          return (field.options || []).map((o, idx) => {
+                          const resolvedOptions = typeof field.options === "function" ? field.options(form) : (field.options || []);
+                          return resolvedOptions.map((o, idx) => {
                             const val = typeof o === "string" ? o : String(o.value);
                             const lab = typeof o === "string" ? o : o.label;
                             if (seen.has(val)) return null;
                             seen.add(val);
-                            // Use a safer key in case of empty strings or special characters
                             return <SelectItem key={`${val}-${idx}`} value={val}>{lab}</SelectItem>;
                           });
                         })()}
@@ -542,7 +584,13 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
                       type={field.type === "date" ? "date" : field.type === "password" ? "password" : field.type}
                       placeholder={field.placeholder}
                       value={form[field.key] ?? ""}
-                      onChange={(e) => setForm({ ...form, [field.key]: field.type === "number" ? Number(e.target.value) : e.target.value })}
+                      maxLength={field.maxLength}
+                      onChange={(e) => {
+                        let val: any = e.target.value;
+                        if (field.type === "number") val = Number(val);
+                        if (field.formatter) val = field.formatter(val);
+                        setForm({ ...form, [field.key]: val });
+                      }}
                     />
                   )}
                 </div>

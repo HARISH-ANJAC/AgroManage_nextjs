@@ -74,6 +74,47 @@ export function useSalesProformaStore() {
     }
   });
 
+  // Delete Proforma
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const encodedId = encodeURIComponent(encodeURIComponent(id));
+      const response = await fetch(`${API_URL}/sales-proformas/${encodedId}`, {
+        method: "DELETE",
+        headers: { 
+          'Authorization': `Bearer ${getAuthToken()}` 
+        }
+      });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.msg || "Failed to delete Sales Proforma");
+      }
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sales-proformas"] });
+    }
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const response = await fetch(`${API_URL}/sales-proformas/bulk-delete`, {
+        method: "POST",
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getAuthToken()}` 
+        },
+        body: JSON.stringify({ ids })
+      });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.msg || "Failed to delete Sales Proformas");
+      }
+      return ids;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sales-proformas"] });
+    }
+  });
 
   return {
     proformas,
@@ -81,6 +122,8 @@ export function useSalesProformaStore() {
     refetchProformas,
     addProforma: addMutation.mutateAsync,
     updateProforma: (id: string, payload: any) => updateMutation.mutateAsync({ id, payload }),
+    deleteProforma: deleteMutation.mutateAsync,
+    bulkDelete: bulkDeleteMutation.mutateAsync,
     getProformaById,
   };
 }

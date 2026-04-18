@@ -54,7 +54,7 @@ export default function PurchaseBookingPage() {
       // Handle logo with proper aspect ratio (placed on the left)
       try {
         const logoImg = new Image();
-        logoImg.src = "/assets/tbgs-logo.jpg";
+        logoImg.src = "/assets/logo.png";
         await new Promise((resolve) => {
           logoImg.onload = resolve;
           logoImg.onerror = resolve; // Continue even if logo fails
@@ -136,7 +136,7 @@ export default function PurchaseBookingPage() {
       doc.setTextColor(100, 116, 139);
       doc.text("Subtotal (Incl AC):", marginX, finalY);
       doc.text("VAT Total:", marginX, finalY + 7);
-
+      
       doc.setFontSize(12);
       doc.setTextColor(15, 23, 42);
       doc.text("Net Payable:", marginX, finalY + 16);
@@ -146,7 +146,7 @@ export default function PurchaseBookingPage() {
       doc.setFontSize(10);
       doc.text(`${currency} ${subtotal.toLocaleString()}`, 190, finalY, { align: 'right' });
       doc.text(`${currency} ${Number(h.TOTAL_VAT_HDR_AMOUNT || h.totalVatAmount || 0).toLocaleString()}`, 190, finalY + 7, { align: 'right' });
-
+      
       doc.setFontSize(14);
       doc.setTextColor(16, 185, 129);
       doc.text(`${currency} ${Number(h.FINAL_INVOICE_HDR_AMOUNT || h.finalAmount || 0).toLocaleString()}`, 190, finalY + 16, { align: 'right' });
@@ -191,10 +191,10 @@ export default function PurchaseBookingPage() {
       <div className="bg-card rounded-xl border p-6 shadow-sm">
         <div className="relative mb-6 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by PI Ref, Invoice No, PO Ref..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+          <Input 
+            placeholder="Search by PI Ref, Invoice No, PO Ref..." 
+            value={search} 
+            onChange={(e) => setSearch(e.target.value)} 
             className="pl-9 h-11 rounded-xl"
           />
         </div>
@@ -258,9 +258,9 @@ export default function PurchaseBookingPage() {
                           </button>
                           <button
                             onClick={() => {
-                              if (window.confirm("Are you sure you want to delete this invoice?")) {
-                                deleteBooking(id).then(() => toast.success("Invoice deleted")).catch((e: any) => toast.error(e.message));
-                              }
+                                if (window.confirm("Are you sure you want to delete this invoice?")) {
+                                    deleteBooking(id).then(() => toast.success("Invoice deleted")).catch((e:any) => toast.error(e.message));
+                                }
                             }}
                             className="p-2 rounded-lg hover:bg-red-50 text-red-500 transition-all border border-transparent hover:border-red-200"
                             title="Delete"

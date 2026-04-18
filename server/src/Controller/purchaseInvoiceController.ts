@@ -21,14 +21,35 @@ import { sql } from "drizzle-orm";
 export const getPurchaseInvoices = async (req: Request, res: Response): Promise<Response> => {
     try {
         // Aggregating unique GRN references from the detail table
-        const data = await db.select({
-            ...Object.fromEntries(Object.keys(TBL_PURCHASE_INVOICE_HDR).map(k => [k, TBL_PURCHASE_INVOICE_HDR[k as keyof typeof TBL_PURCHASE_INVOICE_HDR]])),
+        const headers = await db.select({
+            id: TBL_PURCHASE_INVOICE_HDR.SNO,
+            PURCHASE_INVOICE_REF_NO: TBL_PURCHASE_INVOICE_HDR.PURCHASE_INVOICE_REF_NO,
+            INVOICE_DATE: TBL_PURCHASE_INVOICE_HDR.INVOICE_DATE,
+            PO_REF_NO: TBL_PURCHASE_INVOICE_HDR.PO_REF_NO,
+            COMPANY_ID: TBL_PURCHASE_INVOICE_HDR.COMPANY_ID,
+            SUPPLIER_ID: TBL_PURCHASE_INVOICE_HDR.SUPPLIER_ID,
+            CURRENCY_ID: TBL_PURCHASE_INVOICE_HDR.CURRENCY_ID,
+            EXCHANGE_RATE: TBL_PURCHASE_INVOICE_HDR.EXCHANGE_RATE,
+            TOTAL_PRODUCT_HDR_AMOUNT: TBL_PURCHASE_INVOICE_HDR.TOTAL_PRODUCT_HDR_AMOUNT,
+            TOTAL_ADDITIONAL_COST_AMOUNT: TBL_PURCHASE_INVOICE_HDR.TOTAL_ADDITIONAL_COST_AMOUNT,
+            TOTAL_VAT_HDR_AMOUNT: TBL_PURCHASE_INVOICE_HDR.TOTAL_VAT_HDR_AMOUNT,
+            FINAL_INVOICE_HDR_AMOUNT: TBL_PURCHASE_INVOICE_HDR.FINAL_INVOICE_HDR_AMOUNT,
+            STATUS_ENTRY: TBL_PURCHASE_INVOICE_HDR.STATUS_ENTRY,
+            REMARKS: TBL_PURCHASE_INVOICE_HDR.REMARKS,
             GRN_REF_NO: sql<string>`(
                 SELECT string_agg(DISTINCT "GRN_REF_NO", ', ') 
                 FROM "stoentries"."TBL_PURCHASE_INVOICE_DTL" 
                 WHERE "PURCHASE_INVOICE_REF_NO" = ${TBL_PURCHASE_INVOICE_HDR.PURCHASE_INVOICE_REF_NO}
             )`
         }).from(TBL_PURCHASE_INVOICE_HDR);
+
+        // Fetch all items for these headers to allow frontend filtering
+        const allItems = await db.select().from(TBL_PURCHASE_INVOICE_DTL);
+
+        const data = headers.map(h => ({
+            ...h,
+            items: allItems.filter(i => i.PURCHASE_INVOICE_REF_NO === h.PURCHASE_INVOICE_REF_NO)
+        }));
         
         return res.status(200).json(data);
     } catch (error) {

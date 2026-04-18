@@ -1,5 +1,5 @@
 {
-  "id": "5fbb5574-f603-44cf-91f5-f9624bde7f98",
+  "id": "ad51718f-3491-490d-8870-41afc902ef86",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1281,7 +1281,7 @@
         },
         "Exchange_Rate": {
           "name": "Exchange_Rate",
-          "type": "numeric(15, 5)",
+          "type": "numeric(30, 5)",
           "primaryKey": false,
           "notNull": false
         },
@@ -1638,7 +1638,7 @@
         },
         "Requested_Credit_Limit_Amount": {
           "name": "Requested_Credit_Limit_Amount",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -1662,13 +1662,13 @@
         },
         "Total_Outstanding_Amount": {
           "name": "Total_Outstanding_Amount",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "Over_Due_Outstanding_Amount": {
           "name": "Over_Due_Outstanding_Amount",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -1680,7 +1680,7 @@
         },
         "Approved_Credit_Limit_Amount": {
           "name": "Approved_Credit_Limit_Amount",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -1998,13 +1998,13 @@
         },
         "LAT": {
           "name": "LAT",
-          "type": "numeric(15, 9)",
+          "type": "numeric(30, 9)",
           "primaryKey": false,
           "notNull": false
         },
         "LNG": {
           "name": "LNG",
-          "type": "numeric(15, 9)",
+          "type": "numeric(30, 9)",
           "primaryKey": false,
           "notNull": false
         },
@@ -2430,7 +2430,7 @@
         },
         "VAT_PERCENTAGE": {
           "name": "VAT_PERCENTAGE",
-          "type": "numeric(10, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -2616,13 +2616,13 @@
         },
         "UNIT_PRICE": {
           "name": "UNIT_PRICE",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "VAT_Percentage": {
           "name": "VAT_Percentage",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -2664,13 +2664,13 @@
         },
         "Requested_Product_Amount": {
           "name": "Requested_Product_Amount",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "Approved_Product_Amount": {
           "name": "Approved_Product_Amount",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -2900,7 +2900,7 @@
         },
         "Total_Population": {
           "name": "Total_Population",
-          "type": "numeric(18, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -2912,7 +2912,7 @@
         },
         "Distance_From_Arusha": {
           "name": "Distance_From_Arusha",
-          "type": "numeric(18, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -3020,7 +3020,7 @@
         },
         "Exchange_Rate": {
           "name": "Exchange_Rate",
-          "type": "numeric(15, 5)",
+          "type": "numeric(30, 5)",
           "primaryKey": false,
           "notNull": false
         },
@@ -3408,7 +3408,7 @@
         },
         "PAYMENT_MODE_PERCENTAGE": {
           "name": "PAYMENT_MODE_PERCENTAGE",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -3783,7 +3783,7 @@
         },
         "QTY_PER_PACKING": {
           "name": "QTY_PER_PACKING",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -3953,7 +3953,7 @@
         },
         "TOTAL_QTY": {
           "name": "TOTAL_QTY",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -4223,7 +4223,7 @@
         },
         "TOTAL_POPULATION": {
           "name": "TOTAL_POPULATION",
-          "type": "numeric(18, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -4235,7 +4235,7 @@
         },
         "DISTANCE_FROM_ARUSHA": {
           "name": "DISTANCE_FROM_ARUSHA",
-          "type": "numeric(18, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -4521,6 +4521,76 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "stomaster.TBL_SCHEDULER_SETTINGS": {
+      "name": "TBL_SCHEDULER_SETTINGS",
+      "schema": "stomaster",
+      "columns": {
+        "SNO": {
+          "name": "SNO",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "JOB_NAME": {
+          "name": "JOB_NAME",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CRON_EXPRESSION": {
+          "name": "CRON_EXPRESSION",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "IS_ENABLED": {
+          "name": "IS_ENABLED",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'True'"
+        },
+        "LAST_RUN": {
+          "name": "LAST_RUN",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "REMARKS": {
+          "name": "REMARKS",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_BY": {
+          "name": "MODIFIED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_DATE": {
+          "name": "MODIFIED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "TBL_SCHEDULER_SETTINGS_JOB_NAME_unique": {
+          "name": "TBL_SCHEDULER_SETTINGS_JOB_NAME_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "JOB_NAME"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "stomaster.tbl_Store_Master": {
       "name": "tbl_Store_Master",
       "schema": "stomaster",
@@ -4713,7 +4783,7 @@
         },
         "Purchase_Alert_Qty": {
           "name": "Purchase_Alert_Qty",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -4959,13 +5029,13 @@
         },
         "vat_Percentage": {
           "name": "vat_Percentage",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "Withholding_vat_percentage": {
           "name": "Withholding_vat_percentage",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -5332,7 +5402,7 @@
         },
         "VAT_PERCENTAGE": {
           "name": "VAT_PERCENTAGE",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -5633,19 +5703,19 @@
         },
         "RECEIPT_AMOUNT": {
           "name": "RECEIPT_AMOUNT",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "EXCHANGE_RATE": {
           "name": "EXCHANGE_RATE",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "RECEIPT_AMOUNT_LC": {
           "name": "RECEIPT_AMOUNT_LC",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -5871,25 +5941,25 @@
         },
         "ACTUAL_INVOICE_AMOUNT": {
           "name": "ACTUAL_INVOICE_AMOUNT",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "ALREADY_PAID_AMOUNT": {
           "name": "ALREADY_PAID_AMOUNT",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "OUTSTANDING_INVOICE_AMOUNT": {
           "name": "OUTSTANDING_INVOICE_AMOUNT",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "RECEIPT_INVOICE_ADJUST_AMOUNT": {
           "name": "RECEIPT_INVOICE_ADJUST_AMOUNT",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -6162,25 +6232,25 @@
         },
         "SALES_RATE_PER_QTY": {
           "name": "SALES_RATE_PER_QTY",
-          "type": "numeric(15, 6)",
+          "type": "numeric(30, 6)",
           "primaryKey": false,
           "notNull": false
         },
         "QTY_PER_PACKING": {
           "name": "QTY_PER_PACKING",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "REQUEST_QTY": {
           "name": "REQUEST_QTY",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "DELIVERY_QTY": {
           "name": "DELIVERY_QTY",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -6192,7 +6262,7 @@
         },
         "TOTAL_PACKING": {
           "name": "TOTAL_PACKING",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -6204,43 +6274,43 @@
         },
         "TOTAL_PRODUCT_AMOUNT": {
           "name": "TOTAL_PRODUCT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "VAT_PERCENTAGE": {
           "name": "VAT_PERCENTAGE",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "VAT_AMOUNT": {
           "name": "VAT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_SALES_AMOUNT": {
           "name": "FINAL_SALES_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_PRODUCT_AMOUNT_LC": {
           "name": "TOTAL_PRODUCT_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_SALES_AMOUNT_LC": {
           "name": "FINAL_SALES_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "STORE_STOCK_PCS": {
           "name": "STORE_STOCK_PCS",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -6482,37 +6552,37 @@
         },
         "EXCHANGE_RATE": {
           "name": "EXCHANGE_RATE",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_PRODUCT_AMOUNT": {
           "name": "TOTAL_PRODUCT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "VAT_AMOUNT": {
           "name": "VAT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_SALES_AMOUNT": {
           "name": "FINAL_SALES_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_PRODUCT_AMOUNT_LC": {
           "name": "TOTAL_PRODUCT_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_SALES_AMOUNT_LC": {
           "name": "FINAL_SALES_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -6704,13 +6774,13 @@
         },
         "EXPENSE_AMOUNT": {
           "name": "EXPENSE_AMOUNT",
-          "type": "numeric(18, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "EXPENSE_AMOUNT_LC": {
           "name": "EXPENSE_AMOUNT_LC",
-          "type": "numeric(18, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -7029,19 +7099,19 @@
         },
         "EXCHANGE_RATE": {
           "name": "EXCHANGE_RATE",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_EXPENSE_AMOUNT": {
           "name": "TOTAL_EXPENSE_AMOUNT",
-          "type": "numeric(18, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_EXPENSE_AMOUNT_LC": {
           "name": "TOTAL_EXPENSE_AMOUNT_LC",
-          "type": "numeric(18, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -7362,13 +7432,13 @@
         },
         "QTY_PER_PACKING": {
           "name": "QTY_PER_PACKING",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_QTY": {
           "name": "TOTAL_QTY",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -7380,7 +7450,7 @@
         },
         "TOTAL_PACKING": {
           "name": "TOTAL_PACKING",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -7776,7 +7846,7 @@
         },
         "ADDITIONAL_COST_AMOUNT": {
           "name": "ADDITIONAL_COST_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -7908,13 +7978,13 @@
         },
         "QTY_PER_PACKING": {
           "name": "QTY_PER_PACKING",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_QTY": {
           "name": "TOTAL_QTY",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -7926,7 +7996,7 @@
         },
         "TOTAL_PACKING": {
           "name": "TOTAL_PACKING",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -7938,61 +8008,61 @@
         },
         "RATE_PER_QTY": {
           "name": "RATE_PER_QTY",
-          "type": "numeric(15, 6)",
+          "type": "numeric(30, 6)",
           "primaryKey": false,
           "notNull": false
         },
         "PRODUCT_AMOUNT": {
           "name": "PRODUCT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "DISCOUNT_PERCENTAGE": {
           "name": "DISCOUNT_PERCENTAGE",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "DISCOUNT_AMOUNT": {
           "name": "DISCOUNT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_PRODUCT_AMOUNT": {
           "name": "TOTAL_PRODUCT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "VAT_PERCENTAGE": {
           "name": "VAT_PERCENTAGE",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "VAT_AMOUNT": {
           "name": "VAT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_PRODUCT_AMOUNT": {
           "name": "FINAL_PRODUCT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_PRODUCT_AMOUNT_LC": {
           "name": "TOTAL_PRODUCT_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_PRODUCT_AMOUNT_LC": {
           "name": "FINAL_PRODUCT_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -8326,67 +8396,67 @@
         },
         "PRODUCT_HDR_AMOUNT": {
           "name": "PRODUCT_HDR_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_ADDITIONAL_COST_AMOUNT": {
           "name": "TOTAL_ADDITIONAL_COST_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_PRODUCT_HDR_AMOUNT": {
           "name": "TOTAL_PRODUCT_HDR_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_VAT_HDR_AMOUNT": {
           "name": "TOTAL_VAT_HDR_AMOUNT",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_INVOICE_HDR_AMOUNT": {
           "name": "FINAL_INVOICE_HDR_AMOUNT",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "EXCHANGE_RATE": {
           "name": "EXCHANGE_RATE",
-          "type": "numeric(10, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "PRODUCT_HDR_AMOUNT_LC": {
           "name": "PRODUCT_HDR_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_ADDITIONAL_COST_AMOUNT_LC": {
           "name": "TOTAL_ADDITIONAL_COST_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_PRODUCT_HDR_AMOUNT_LC": {
           "name": "TOTAL_PRODUCT_HDR_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_VAT_HDR_AMOUNT_LC": {
           "name": "TOTAL_VAT_HDR_AMOUNT_LC",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_PURCHASE_INVOICE_AMOUNT_LC": {
           "name": "FINAL_PURCHASE_INVOICE_AMOUNT_LC",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -8658,7 +8728,7 @@
         },
         "ADDITIONAL_COST_AMOUNT": {
           "name": "ADDITIONAL_COST_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -8896,13 +8966,13 @@
         },
         "QTY_PER_PACKING": {
           "name": "QTY_PER_PACKING",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_QTY": {
           "name": "TOTAL_QTY",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -8914,7 +8984,7 @@
         },
         "TOTAL_PACKING": {
           "name": "TOTAL_PACKING",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -8926,61 +8996,61 @@
         },
         "RATE_PER_QTY": {
           "name": "RATE_PER_QTY",
-          "type": "numeric(15, 6)",
+          "type": "numeric(30, 6)",
           "primaryKey": false,
           "notNull": false
         },
         "PRODUCT_AMOUNT": {
           "name": "PRODUCT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "DISCOUNT_PERCENTAGE": {
           "name": "DISCOUNT_PERCENTAGE",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "DISCOUNT_AMOUNT": {
           "name": "DISCOUNT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_PRODUCT_AMOUNT": {
           "name": "TOTAL_PRODUCT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "VAT_PERCENTAGE": {
           "name": "VAT_PERCENTAGE",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "VAT_AMOUNT": {
           "name": "VAT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_PRODUCT_AMOUNT": {
           "name": "FINAL_PRODUCT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_PRODUCT_AMOUNT_LC": {
           "name": "TOTAL_PRODUCT_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_PRODUCT_AMOUNT_LC": {
           "name": "FINAL_PRODUCT_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -9326,67 +9396,67 @@
         },
         "PRODUCT_HDR_AMOUNT": {
           "name": "PRODUCT_HDR_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_ADDITIONAL_COST_AMOUNT": {
           "name": "TOTAL_ADDITIONAL_COST_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_PRODUCT_HDR_AMOUNT": {
           "name": "TOTAL_PRODUCT_HDR_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_VAT_HDR_AMOUNT": {
           "name": "TOTAL_VAT_HDR_AMOUNT",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_PURCHASE_HDR_AMOUNT": {
           "name": "FINAL_PURCHASE_HDR_AMOUNT",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "EXCHANGE_RATE": {
           "name": "EXCHANGE_RATE",
-          "type": "numeric(10, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "PRODUCT_HDR_AMOUNT_LC": {
           "name": "PRODUCT_HDR_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_ADDITIONAL_COST_AMOUNT_LC": {
           "name": "TOTAL_ADDITIONAL_COST_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_PRODUCT_HDR_AMOUNT_LC": {
           "name": "TOTAL_PRODUCT_HDR_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_VAT_HDR_AMOUNT_LC": {
           "name": "TOTAL_VAT_HDR_AMOUNT_LC",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_PURCHASE_HDR_AMOUNT_LC": {
           "name": "FINAL_PURCHASE_HDR_AMOUNT_LC",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -9704,7 +9774,7 @@
         },
         "STORE_STOCK_PCS": {
           "name": "STORE_STOCK_PCS",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -9722,37 +9792,37 @@
         },
         "PO_DTL_STOCK_QTY": {
           "name": "PO_DTL_STOCK_QTY",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "PURCHASE_RATE_PER_QTY": {
           "name": "PURCHASE_RATE_PER_QTY",
-          "type": "numeric(15, 6)",
+          "type": "numeric(30, 6)",
           "primaryKey": false,
           "notNull": false
         },
         "PO_EXPENSE_AMOUNT": {
           "name": "PO_EXPENSE_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "SALES_RATE_PER_QTY": {
           "name": "SALES_RATE_PER_QTY",
-          "type": "numeric(15, 6)",
+          "type": "numeric(30, 6)",
           "primaryKey": false,
           "notNull": false
         },
         "QTY_PER_PACKING": {
           "name": "QTY_PER_PACKING",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_QTY": {
           "name": "TOTAL_QTY",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -9764,7 +9834,7 @@
         },
         "TOTAL_PACKING": {
           "name": "TOTAL_PACKING",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -9776,37 +9846,37 @@
         },
         "TOTAL_PRODUCT_AMOUNT": {
           "name": "TOTAL_PRODUCT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "VAT_PERCENTAGE": {
           "name": "VAT_PERCENTAGE",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "VAT_AMOUNT": {
           "name": "VAT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_SALES_AMOUNT": {
           "name": "FINAL_SALES_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_PRODUCT_AMOUNT_LC": {
           "name": "TOTAL_PRODUCT_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_SALES_AMOUNT_LC": {
           "name": "FINAL_SALES_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -10101,7 +10171,13 @@
           "name": "SALES_ORDER_DATE",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
+        },
+        "SALES_PROFORMA_REF_NO": {
+          "name": "SALES_PROFORMA_REF_NO",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
         },
         "COMPANY_ID": {
           "name": "COMPANY_ID",
@@ -10135,19 +10211,19 @@
         },
         "CREDIT_LIMIT_AMOUNT": {
           "name": "CREDIT_LIMIT_AMOUNT",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "CREDIT_LIMIT_DAYS": {
           "name": "CREDIT_LIMIT_DAYS",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "OUTSTANDING_AMOUNT": {
           "name": "OUTSTANDING_AMOUNT",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
@@ -10159,37 +10235,37 @@
         },
         "EXCHANGE_RATE": {
           "name": "EXCHANGE_RATE",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_PRODUCT_AMOUNT": {
           "name": "TOTAL_PRODUCT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "VAT_AMOUNT": {
           "name": "VAT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_SALES_AMOUNT": {
           "name": "FINAL_SALES_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_PRODUCT_AMOUNT_LC": {
           "name": "TOTAL_PRODUCT_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_SALES_AMOUNT_LC": {
           "name": "FINAL_SALES_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -10262,6 +10338,20 @@
       },
       "indexes": {},
       "foreignKeys": {
+        "TBL_SALES_ORDER_HDR_SALES_PROFORMA_REF_NO_TBL_SALES_PROFORMA_HDR_SALES_PROFORMA_REF_NO_fk": {
+          "name": "TBL_SALES_ORDER_HDR_SALES_PROFORMA_REF_NO_TBL_SALES_PROFORMA_HDR_SALES_PROFORMA_REF_NO_fk",
+          "tableFrom": "TBL_SALES_ORDER_HDR",
+          "tableTo": "TBL_SALES_PROFORMA_HDR",
+          "schemaTo": "stoentries",
+          "columnsFrom": [
+            "SALES_PROFORMA_REF_NO"
+          ],
+          "columnsTo": [
+            "SALES_PROFORMA_REF_NO"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "TBL_SALES_ORDER_HDR_COMPANY_ID_tbl_Company_Master_Company_Id_fk": {
           "name": "TBL_SALES_ORDER_HDR_COMPANY_ID_tbl_Company_Master_Company_Id_fk",
           "tableFrom": "TBL_SALES_ORDER_HDR",
@@ -10389,7 +10479,7 @@
         },
         "STORE_STOCK_PCS": {
           "name": "STORE_STOCK_PCS",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -10407,37 +10497,37 @@
         },
         "PO_DTL_STOCK_QTY": {
           "name": "PO_DTL_STOCK_QTY",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "PURCHASE_RATE_PER_QTY": {
           "name": "PURCHASE_RATE_PER_QTY",
-          "type": "numeric(15, 6)",
+          "type": "numeric(30, 6)",
           "primaryKey": false,
           "notNull": false
         },
         "PO_EXPENSE_AMOUNT": {
           "name": "PO_EXPENSE_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "SALES_RATE_PER_QTY": {
           "name": "SALES_RATE_PER_QTY",
-          "type": "numeric(15, 6)",
+          "type": "numeric(30, 6)",
           "primaryKey": false,
           "notNull": false
         },
         "QTY_PER_PACKING": {
           "name": "QTY_PER_PACKING",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_QTY": {
           "name": "TOTAL_QTY",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -10449,7 +10539,7 @@
         },
         "TOTAL_PACKING": {
           "name": "TOTAL_PACKING",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -10461,37 +10551,37 @@
         },
         "TOTAL_PRODUCT_AMOUNT": {
           "name": "TOTAL_PRODUCT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "VAT_PERCENTAGE": {
           "name": "VAT_PERCENTAGE",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "VAT_AMOUNT": {
           "name": "VAT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_SALES_AMOUNT": {
           "name": "FINAL_SALES_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_PRODUCT_AMOUNT_LC": {
           "name": "TOTAL_PRODUCT_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_SALES_AMOUNT_LC": {
           "name": "FINAL_SALES_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -10826,37 +10916,37 @@
         },
         "EXCHANGE_RATE": {
           "name": "EXCHANGE_RATE",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_PRODUCT_AMOUNT": {
           "name": "TOTAL_PRODUCT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "VAT_AMOUNT": {
           "name": "VAT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_SALES_AMOUNT": {
           "name": "FINAL_SALES_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_PRODUCT_AMOUNT_LC": {
           "name": "TOTAL_PRODUCT_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_SALES_AMOUNT_LC": {
           "name": "FINAL_SALES_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -11074,25 +11164,25 @@
         },
         "SALES_RATE_PER_QTY": {
           "name": "SALES_RATE_PER_QTY",
-          "type": "numeric(15, 6)",
+          "type": "numeric(30, 6)",
           "primaryKey": false,
           "notNull": false
         },
         "QTY_PER_PACKING": {
           "name": "QTY_PER_PACKING",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "DELIVERY_QTY": {
           "name": "DELIVERY_QTY",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "INVOICE_QTY": {
           "name": "INVOICE_QTY",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -11104,7 +11194,7 @@
         },
         "TOTAL_PACKING": {
           "name": "TOTAL_PACKING",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -11116,37 +11206,37 @@
         },
         "TOTAL_PRODUCT_AMOUNT": {
           "name": "TOTAL_PRODUCT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "VAT_PERCENTAGE": {
           "name": "VAT_PERCENTAGE",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "VAT_AMOUNT": {
           "name": "VAT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_SALES_AMOUNT": {
           "name": "FINAL_SALES_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_PRODUCT_AMOUNT_LC": {
           "name": "TOTAL_PRODUCT_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_SALES_AMOUNT_LC": {
           "name": "FINAL_SALES_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
@@ -11481,37 +11571,37 @@
         },
         "EXCHANGE_RATE": {
           "name": "EXCHANGE_RATE",
-          "type": "numeric(15, 2)",
+          "type": "numeric(30, 2)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_PRODUCT_AMOUNT": {
           "name": "TOTAL_PRODUCT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "VAT_AMOUNT": {
           "name": "VAT_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_SALES_AMOUNT": {
           "name": "FINAL_SALES_AMOUNT",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "TOTAL_PRODUCT_AMOUNT_LC": {
           "name": "TOTAL_PRODUCT_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },
         "FINAL_SALES_AMOUNT_LC": {
           "name": "FINAL_SALES_AMOUNT_LC",
-          "type": "numeric(15, 4)",
+          "type": "numeric(30, 4)",
           "primaryKey": false,
           "notNull": false
         },

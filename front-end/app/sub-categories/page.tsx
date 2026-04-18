@@ -15,28 +15,28 @@ export default function SubCategoriesPage() {
   if (loadingCats || loadingSubs) return <div className="p-8 text-center text-muted-foreground font-medium">Loading catalog data...</div>;
 
   return <MasterCrudPage
-    domain="sub-categories" 
-    title="Sub Categories" 
-    description="Manage your business sub categories" 
-    idPrefix="SUB" 
+    domain="sub-categories"
+    title="Sub Categories"
+    description="Manage your business sub categories"
+    idPrefix="SUB"
     fields={[
       { key: "subCategoryName", label: "Sub Category Name", type: "text", required: true },
-      { 
-        key: "mainCategoryId", 
-        label: "Main Category", 
-        type: "select", 
+      {
+        key: "mainCategoryId",
+        label: "Main Category",
+        type: "select",
         required: true,
         options: categoryOptions,
         placeholder: "Select Category"
       },
       { key: "remarks", label: "Remarks", type: "textarea" },
-      { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
-    ]} 
-    initialData={subcategories || []} 
+      { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
+    ]}
+    initialData={subcategories || []}
     columns={[
-      { key: "subCategoryName", label: "Sub Category" }, 
-      { key: "mainCategoryName", label: "Main Category" }, 
+      { key: "subCategoryName", label: "Sub Category" },
+      { key: "mainCategoryName", label: "Main Category" },
       { key: "statusMaster", label: "Status" },
-    ]} 
+    ]}
   />;
 }

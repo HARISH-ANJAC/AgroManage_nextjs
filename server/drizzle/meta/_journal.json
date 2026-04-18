@@ -5,29 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1775287463508,
-      "tag": "0000_parched_sway",
+      "when": 1776342395955,
+      "tag": "0000_illegal_kabuki",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1775305193165,
-      "tag": "0001_messy_amphibian",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1775306112103,
-      "tag": "0002_bent_magik",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1775736464681,
-      "tag": "0003_material_praxagora",
+      "when": 1776496414955,
+      "tag": "0001_colorful_sabra",
       "breakpoints": true
     }
   ]

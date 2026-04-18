@@ -35,17 +35,20 @@ interface SalesOrderHeader {
 interface SalesOrderItem {
     productId: number;
     totalQty: number;
-    rate: number;
-    amount: number;
-    vatPercent: number;
+    salesRatePerQty: number;
+    totalProductAmount: number;
+    vatPercentage: number;
     vatAmount: number;
-    finalAmount: number;
+    finalSalesAmount: number;
     uom: string;
-    qtyPerPack: number;
-    mainCategoryId: number;
-    subCategoryId: number;
+    qtyPerPacking: number;
+    mainCategoryId?: number;
+    subCategoryId?: number;
     poRefNo?: string;
     poDtlSno?: number;
+    purchaseRate?: number;
+    expenseRate?: number;
+    storeStockPcs?: number;
 }
 
 export const getSalesOrders = async (req: Request, res: Response): Promise<Response> => {
@@ -144,7 +147,10 @@ export const getSalesOrderById = async (req: Request, res: Response): Promise<Re
             vatAmount: TBL_SALES_ORDER_DTL.VAT_AMOUNT,
             amount: TBL_SALES_ORDER_DTL.FINAL_SALES_AMOUNT,
             poRefNo: TBL_SALES_ORDER_DTL.PO_REF_NO,
-            poDtlSno: TBL_SALES_ORDER_DTL.PO_DTL_SNO
+            poDtlSno: TBL_SALES_ORDER_DTL.PO_DTL_SNO,
+            purchaseRate: TBL_SALES_ORDER_DTL.PURCHASE_RATE_PER_QTY,
+            expenseRate: TBL_SALES_ORDER_DTL.PO_EXPENSE_AMOUNT,
+            storeStockPcs: TBL_SALES_ORDER_DTL.STORE_STOCK_PCS
         })
             .from(TBL_SALES_ORDER_DTL)
             .leftJoin(TBL_PRODUCT_MASTER, eq(TBL_SALES_ORDER_DTL.PRODUCT_ID, TBL_PRODUCT_MASTER.PRODUCT_ID))
@@ -231,20 +237,23 @@ export const createSalesOrder = async (req: Request, res: Response): Promise<Res
                     SALES_ORDER_REF_NO: finalRefNo,
                     PRODUCT_ID: Number(item.productId),
                     TOTAL_QTY: String(item.totalQty || 0),
-                    SALES_RATE_PER_QTY: String(item.rate || 0),
-                    TOTAL_PRODUCT_AMOUNT: String(item.amount || 0),
-                    VAT_PERCENTAGE: String(item.vatPercent || 0),
+                    SALES_RATE_PER_QTY: String(item.salesRatePerQty || 0),
+                    TOTAL_PRODUCT_AMOUNT: String(item.totalProductAmount || 0),
+                    VAT_PERCENTAGE: String(item.vatPercentage || 0),
                     VAT_AMOUNT: String(item.vatAmount || 0),
-                    FINAL_SALES_AMOUNT: String(item.finalAmount || 0),
-                    TOTAL_PRODUCT_AMOUNT_LC: String((item.amount || 0) * (header.exchangeRate || 1)),
-                    FINAL_SALES_AMOUNT_LC: String((item.finalAmount || 0) * (header.exchangeRate || 1)),
+                    FINAL_SALES_AMOUNT: String(item.finalSalesAmount || 0),
+                    TOTAL_PRODUCT_AMOUNT_LC: String((item.totalProductAmount || 0) * (header.exchangeRate || 1)),
+                    FINAL_SALES_AMOUNT_LC: String((item.finalSalesAmount || 0) * (header.exchangeRate || 1)),
                     UOM: item.uom,
-                    QTY_PER_PACKING: String(item.qtyPerPack || 0),
-                    TOTAL_PACKING: String(item.qtyPerPack ? Number((item.totalQty / item.qtyPerPack).toFixed(2)) : 0),
+                    QTY_PER_PACKING: String(item.qtyPerPacking || 0),
+                    TOTAL_PACKING: String(item.qtyPerPacking ? Number((item.totalQty / item.qtyPerPacking).toFixed(2)) : 0),
                     MAIN_CATEGORY_ID: item.mainCategoryId ? Number(item.mainCategoryId) : null,
                     SUB_CATEGORY_ID: item.subCategoryId ? Number(item.subCategoryId) : null,
                     PO_REF_NO: item.poRefNo,
                     PO_DTL_SNO: item.poDtlSno ? Number(item.poDtlSno) : null,
+                    PURCHASE_RATE_PER_QTY: String(item.purchaseRate || 0),
+                    PO_EXPENSE_AMOUNT: String(item.expenseRate || 0),
+                    STORE_STOCK_PCS: String(item.storeStockPcs || 0),
                     STATUS_ENTRY: "Active",
                     CREATED_BY: audit?.user || "admin",
                     CREATED_DATE: new Date(),
@@ -321,20 +330,23 @@ export const updateSalesOrder = async (req: Request, res: Response): Promise<Res
                     SALES_ORDER_REF_NO: decodedId,
                     PRODUCT_ID: Number(item.productId),
                     TOTAL_QTY: String(item.totalQty || 0),
-                    SALES_RATE_PER_QTY: String(item.rate || 0),
-                    TOTAL_PRODUCT_AMOUNT: String(item.amount || 0),
-                    VAT_PERCENTAGE: String(item.vatPercent || 0),
+                    SALES_RATE_PER_QTY: String(item.salesRatePerQty || 0),
+                    TOTAL_PRODUCT_AMOUNT: String(item.totalProductAmount || 0),
+                    VAT_PERCENTAGE: String(item.vatPercentage || 0),
                     VAT_AMOUNT: String(item.vatAmount || 0),
-                    FINAL_SALES_AMOUNT: String(item.finalAmount || 0),
-                    TOTAL_PRODUCT_AMOUNT_LC: String((item.amount || 0) * (header.exchangeRate || 1)),
-                    FINAL_SALES_AMOUNT_LC: String((item.finalAmount || 0) * (header.exchangeRate || 1)),
+                    FINAL_SALES_AMOUNT: String(item.finalSalesAmount || 0),
+                    TOTAL_PRODUCT_AMOUNT_LC: String((item.totalProductAmount || 0) * (header.exchangeRate || 1)),
+                    FINAL_SALES_AMOUNT_LC: String((item.finalSalesAmount || 0) * (header.exchangeRate || 1)),
                     UOM: item.uom,
-                    QTY_PER_PACKING: String(item.qtyPerPack || 0),
-                    TOTAL_PACKING: String(item.qtyPerPack ? Number((item.totalQty / item.qtyPerPack).toFixed(2)) : 0),
+                    QTY_PER_PACKING: String(item.qtyPerPacking || 0),
+                    TOTAL_PACKING: String(item.qtyPerPacking ? Number((item.totalQty / item.qtyPerPacking).toFixed(2)) : 0),
                     MAIN_CATEGORY_ID: item.mainCategoryId ? Number(item.mainCategoryId) : null,
                     SUB_CATEGORY_ID: item.subCategoryId ? Number(item.subCategoryId) : null,
                     PO_REF_NO: item.poRefNo,
                     PO_DTL_SNO: item.poDtlSno ? Number(item.poDtlSno) : null,
+                    PURCHASE_RATE_PER_QTY: String(item.purchaseRate || 0),
+                    PO_EXPENSE_AMOUNT: String(item.expenseRate || 0),
+                    STORE_STOCK_PCS: String(item.storeStockPcs || 0),
                     STATUS_ENTRY: "Active",
                     CREATED_BY: audit?.user || "admin",
                     CREATED_DATE: new Date(),
@@ -370,5 +382,71 @@ export const updateSalesOrder = async (req: Request, res: Response): Promise<Res
     });
 
     return res.status(200).json(transaction);
+};
+
+export const deleteSalesOrder = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        let idRaw = (req.params.id || req.query.id || req.params[0]) as string;
+        if (Array.isArray(idRaw)) idRaw = idRaw.join('/');
+        const id = decodeURIComponent(idRaw);
+        
+        console.log("Deleting Sales Order:", id);
+
+        const transaction = await db.transaction(async (tx) => {
+            try {
+                // 1. Delete Files
+                await tx.delete(TBL_SALES_ORDER_FILES_UPLOAD).where(eq(TBL_SALES_ORDER_FILES_UPLOAD.SALES_ORDER_REF_NO, id));
+                
+                // 2. Delete Details
+                await tx.delete(TBL_SALES_ORDER_DTL).where(eq(TBL_SALES_ORDER_DTL.SALES_ORDER_REF_NO, id));
+                
+                // 3. Delete Header
+                await tx.delete(TBL_SALES_ORDER_HDR).where(eq(TBL_SALES_ORDER_HDR.SALES_ORDER_REF_NO, id));
+
+                return { msg: "Sales Order deleted successfully" };
+            } catch (error) {
+                console.error("Delete Sub-error:", error);
+                tx.rollback();
+                throw error;
+            }
+        });
+
+        return res.status(200).json(transaction);
+    } catch (error) {
+        console.error("Delete Sales Order Error:", error);
+        return res.status(500).json({ msg: "Internal server error" });
+    }
+};
+
+export const bulkDeleteSalesOrders = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const { ids } = req.body;
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ msg: "Invalid or empty IDs array" });
+        }
+
+        console.log("Bulk Deleting Sales Orders:", ids);
+
+        const transaction = await db.transaction(async (tx) => {
+            try {
+                // Perform deletes for each ID
+                for (const id of ids) {
+                    await tx.delete(TBL_SALES_ORDER_FILES_UPLOAD).where(eq(TBL_SALES_ORDER_FILES_UPLOAD.SALES_ORDER_REF_NO, id));
+                    await tx.delete(TBL_SALES_ORDER_DTL).where(eq(TBL_SALES_ORDER_DTL.SALES_ORDER_REF_NO, id));
+                    await tx.delete(TBL_SALES_ORDER_HDR).where(eq(TBL_SALES_ORDER_HDR.SALES_ORDER_REF_NO, id));
+                }
+                return { msg: `${ids.length} Sales Orders deleted successfully` };
+            } catch (error) {
+                console.error("Bulk Delete Sub-error:", error);
+                tx.rollback();
+                throw error;
+            }
+        });
+
+        return res.status(200).json(transaction);
+    } catch (error) {
+        console.error("Bulk Delete Sales Orders Error:", error);
+        return res.status(500).json({ msg: "Internal server error" });
+    }
 };
 

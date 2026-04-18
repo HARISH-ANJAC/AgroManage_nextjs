@@ -22,6 +22,7 @@ import {
 } from "@/hooks/useStoreData";
 import { useSalesProformaStore } from "@/hooks/useSalesProformaStore";
 import { usePurchaseBookingStore } from "@/hooks/usePurchaseBookingStore";
+import { useExpenseStore } from "@/hooks/useExpenseStore";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { SupportingDoc } from '@/components/ui/Supporting-Doc';
@@ -36,10 +37,14 @@ interface LineItem {
   totalQty: number;
   uom: string;
   alternateUom: string;
+  purchaseRate: number;
+  expenseRate: number;
+  costPrice: number;
   salesRatePerQty: number;
   vatPercentage: number;
   storeStockPcs: number;
   poRefNo: string;
+  selectedPiNo?: string;
   poDtlSno: number | null;
   totalProductAmount: number;
   vatAmount: number;
@@ -56,15 +61,29 @@ const emptyItem = (): LineItem => ({
   totalQty: 0,
   uom: "KG",
   alternateUom: "",
+  purchaseRate: 0,
+  expenseRate: 0,
+  costPrice: 0,
   salesRatePerQty: 0,
-  vatPercentage: 15,
+  vatPercentage: 18,
   storeStockPcs: 0,
   poRefNo: "",
+  selectedPiNo: "",
   poDtlSno: null,
   totalProductAmount: 0,
   vatAmount: 0,
   finalSalesAmount: 0,
 });
+
+const getLineItemMeta = (item: LineItem) => ({
+  totalPacking: item.qtyPerPacking ? item.totalQty / item.qtyPerPacking : 0,
+});
+
+const formatAmount = (value: number) =>
+  Number(value || 0).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
 function CreateProformaContent(): JSX.Element {
   const router = useRouter();
@@ -83,7 +102,8 @@ function CreateProformaContent(): JSX.Element {
   const { data: productsData = [] } = useProducts();
   const { data: uoms = [] } = useUoms();
   const { data: billingLocations = [], isLoading: billingLocationsLoading } = useBillingLocations();
-  const { bookings: purchaseInvoices, isLoading: invoicesLoading } = usePurchaseBookingStore();
+  const { bookings: purchaseInvoices, isLoading: invoicesLoading, getBookingById: getPIById } = usePurchaseBookingStore();
+  const { expenses } = useExpenseStore();
 
   const [header, setHeader] = useState({
     salesProformaDate: today,
@@ -115,38 +135,42 @@ function CreateProformaContent(): JSX.Element {
         if (res?.header) {
           const h = res.header;
           setHeader({
-            salesProformaDate: h.salesProformaDate ? new Date(h.salesProformaDate).toISOString().split("T")[0] : today,
-            companyId: h.companyId || 0,
-            customerId: h.customerId || 0,
-            storeId: h.storeId || 0,
-            billingLocationId: h.billingLocationId || 0,
-            salesPersonEmpId: h.salesPersonEmpId || 0,
-            currencyId: h.currencyId || 0,
-            exchangeRate: Number(h.exchangeRate) || 1,
-            status: h.status || "Draft",
-            remarks: h.remarks || "",
-            testDesc: h.testDesc || "",
-            salesProformaRefNo: h.salesProformaRefNo || "",
+            salesProformaDate: (h.salesProformaDate || h.SALES_PROFORMA_DATE) ? new Date(h.salesProformaDate || h.SALES_PROFORMA_DATE).toISOString().split("T")[0] : today,
+            companyId: h.companyId || h.COMPANY_ID || 0,
+            customerId: h.customerId || h.CUSTOMER_ID || 0,
+            storeId: h.storeId || h.STORE_ID || 0,
+            billingLocationId: h.billingLocationId || h.BILLING_LOCATION_ID || 0,
+            salesPersonEmpId: h.salesPersonEmpId || h.SALES_PERSON_EMP_ID || 0,
+            currencyId: h.currencyId || h.CURRENCY_ID || 0,
+            exchangeRate: Number(h.exchangeRate || h.EXCHANGE_RATE) || 1,
+            status: h.status || h.STATUS || "Draft",
+            remarks: h.remarks || h.REMARKS || "",
+            testDesc: h.testDesc || h.TEST_DESC || "",
+            salesProformaRefNo: h.salesProformaRefNo || h.SALES_PROFORMA_REF_NO || "",
           });
           if (res.items) {
             setItems(res.items.map((it: any) => ({
-              id: it.id,
-              productId: it.productId,
-              productName: it.productName || "",
-              mainCategoryId: it.mainCategoryId,
-              subCategoryId: it.subCategoryId,
-              qtyPerPacking: Number(it.qtyPerPacking) || 1,
-              totalQty: Number(it.totalQty) || 0,
-              uom: it.uom || "KG",
-              alternateUom: it.alternateUom || "",
-              salesRatePerQty: Number(it.salesRatePerQty) || 0,
-              vatPercentage: Number(it.vatPercentage) || 0,
-              storeStockPcs: Number(it.storeStockPcs) || 0,
-              poRefNo: it.poRefNo || "",
-              poDtlSno: it.poDtlSno || null,
-              totalProductAmount: Number(it.totalProductAmount) || 0,
-              vatAmount: Number(it.vatAmount) || 0,
-              finalSalesAmount: Number(it.finalSalesAmount) || 0,
+              id: it.id || it.ID || Date.now() + Math.random(),
+              productId: it.productId || it.PRODUCT_ID,
+              productName: it.productName || it.PRODUCT_NAME || "",
+              mainCategoryId: it.mainCategoryId || it.MAIN_CATEGORY_ID,
+              subCategoryId: it.subCategoryId || it.SUB_CATEGORY_ID,
+              qtyPerPacking: Number(it.qtyPerPacking || it.QTY_PER_PACKING) || 1,
+              totalQty: Number(it.totalQty || it.TOTAL_QTY) || 0,
+              uom: it.uom || it.UOM || "KG",
+              alternateUom: it.alternateUom || it.ALTERNATE_UOM || "",
+              purchaseRate: Number(it.purchaseRate || it.PURCHASE_RATE) || 0,
+              expenseRate: Number(it.expenseRate || it.EXPENSE_RATE) || 0,
+              costPrice: Number(it.costPrice || it.COST_PRICE) || 0,
+              salesRatePerQty: Number(it.salesRatePerQty || it.SALES_RATE_PER_QTY) || 0,
+              vatPercentage: Number(it.vatPercentage || it.VAT_PERCENTAGE) || 0,
+              storeStockPcs: Number(it.storeStockPcs || it.STORE_STOCK_PCS) || 0,
+              poRefNo: it.poRefNo || it.PO_REF_NO || "",
+              selectedPiNo: it.poRefNo || it.PO_REF_NO || "", // Map saved PO Ref to selection link
+              poDtlSno: it.poDtlSno || it.PO_DTL_SNO || null,
+              totalProductAmount: Number(it.totalProductAmount || it.TOTAL_PRODUCT_AMOUNT) || 0,
+              vatAmount: Number(it.vatAmount || it.VAT_AMOUNT) || 0,
+              finalSalesAmount: Number(it.finalSalesAmount || it.FINAL_SALES_AMOUNT) || 0,
             })));
           }
           if (res.files) setFiles(res.files);
@@ -177,7 +201,7 @@ function CreateProformaContent(): JSX.Element {
   const updateItem = (id: string | number, field: string, value: any) => {
     setItems(prev => prev.map(item => {
       if (item.id !== id) return item;
-      let updated = { ...item, [field]: value };
+      const updated = { ...item, [field]: value };
       if (field === "productName") {
         const p = productsData.find((pr: any) => pr.productName === value);
         if (p) {
@@ -190,6 +214,13 @@ function CreateProformaContent(): JSX.Element {
         }
       }
       return recalcItem(updated);
+    }));
+  };
+
+  const updateItemFields = (id: string | number, fields: Record<string, any>) => {
+    setItems(prev => prev.map(item => {
+      if (item.id !== id) return item;
+      return recalcItem({ ...item, ...fields });
     }));
   };
 
@@ -382,7 +413,7 @@ function CreateProformaContent(): JSX.Element {
 
   if (isFetchingData) {
     return (
-      <div className="max-w-[1600px] mx-auto pb-20 px-4 pt-6 space-y-8">
+      <div className="max-w-[1760px] mx-auto pb-20 px-4 pt-6 space-y-8">
         <div className="flex items-center justify-between mb-8">
           <Skeleton className="h-10 w-64" />
           <div className="flex gap-3">
@@ -417,7 +448,7 @@ function CreateProformaContent(): JSX.Element {
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto pb-20 px-4 pt-6">
+    <div className="max-w-[1760px] mx-auto pb-20 px-4 pt-6">
       {/* Top Bar */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
@@ -478,7 +509,7 @@ function CreateProformaContent(): JSX.Element {
                   <Calendar className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
                   <Input
                     type="date"
-                    value={header.salesProformaDate}
+                    value={header.salesProformaDate || ""}
                     onChange={e => setHeader({ ...header, salesProformaDate: e.target.value })}
                     className="rounded-xl h-11 pl-9"
                   />
@@ -564,7 +595,7 @@ function CreateProformaContent(): JSX.Element {
                 <Label>Exchange Rate</Label>
                 <Input
                   type="number"
-                  value={header.exchangeRate}
+                  value={header.exchangeRate || 1}
                   onChange={e => setHeader({ ...header, exchangeRate: Number(e.target.value) })}
                   className="rounded-xl h-11 font-bold"
                 />
@@ -574,7 +605,7 @@ function CreateProformaContent(): JSX.Element {
               <div className="space-y-2 md:col-span-3">
                 <Label>Remarks</Label>
                 <Input
-                  value={header.remarks}
+                  value={header.remarks || ""}
                   onChange={e => setHeader({ ...header, remarks: e.target.value })}
                   className="rounded-xl h-11"
                   placeholder="Notes or special instructions..."
@@ -585,7 +616,7 @@ function CreateProformaContent(): JSX.Element {
               <div className="space-y-2">
                 <Label>Test Description</Label>
                 <Input
-                  value={header.testDesc}
+                  value={header.testDesc || ""}
                   onChange={e => setHeader({ ...header, testDesc: e.target.value })}
                   className="rounded-xl h-11"
                   placeholder="Optional..."
@@ -594,144 +625,6 @@ function CreateProformaContent(): JSX.Element {
             </div>
           </div>
 
-          {/* Line Items Card */}
-          <div className="bg-white rounded-3xl border shadow-sm overflow-hidden">
-            <div className="p-6 border-b flex justify-between items-center">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Product Lines</h3>
-              <Button variant="outline" size="sm" onClick={addItem}>
-                <Plus className="w-4 h-4 mr-1" /> Add Product
-              </Button>
-            </div>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-muted/50 border-b">
-                  <th className="p-4 text-left text-xs font-bold uppercase text-muted-foreground">Product</th>
-                  <th className="p-4 text-center text-xs font-bold uppercase text-muted-foreground whitespace-nowrap">PO Link</th>
-                  <th className="p-4 text-center text-xs font-bold uppercase text-muted-foreground">Stock</th>
-                  <th className="p-4 text-center text-xs font-bold uppercase text-muted-foreground">Qty</th>
-                  <th className="p-4 text-center text-xs font-bold uppercase text-muted-foreground">UOM</th>
-                  <th className="p-4 text-center text-xs font-bold uppercase text-muted-foreground">Rate</th>
-                  <th className="p-4 text-center text-xs font-bold uppercase text-muted-foreground whitespace-nowrap">VAT %</th>
-                  <th className="p-4 text-right text-xs font-bold uppercase text-muted-foreground whitespace-nowrap">Subtotal</th>
-                  <th className="p-4 text-right text-xs font-bold uppercase text-muted-foreground whitespace-nowrap">VAT Amt</th>
-                  <th className="p-4 text-right text-xs font-bold uppercase text-muted-foreground whitespace-nowrap">Final Amt</th>
-                  <th className="p-4 w-10" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {items.map(item => {
-                  const prod = productsData.find((p: any) => p.productName === item.productName);
-                  return (
-                    <tr key={item.id} className="hover:bg-slate-50/80 transition-colors group">
-                      {/* Product */}
-                      <td className="p-4 min-w-[240px]">
-                        <div className="flex items-center gap-2">
-                          {prod?.contentData ? (
-                            <img src={prod.contentData} alt="" className="w-8 h-8 rounded object-cover border shrink-0 cursor-pointer" onClick={() => setPreviewImage(prod.contentData)} />
-                          ) : (
-                            <div className="w-8 h-8 rounded bg-slate-50 border flex items-center justify-center text-[9px] text-slate-400 font-bold shrink-0">IMG</div>
-                          )}
-                          <div className="flex-1">
-                            <Select value={item.productName} onValueChange={v => updateItem(item.id, "productName", v)}>
-                              <SelectTrigger className="border-none shadow-none focus:ring-0 font-bold text-slate-700 w-full">
-                                <SelectValue placeholder="Select product" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {productsData.map((p: any, i: number) => <SelectItem key={p.id || i} value={p.productName}>{p.productName}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                            {item.mainCategoryId && <p className="text-[9px] text-slate-400 px-3 uppercase tracking-tight">Cat: {item.mainCategoryId}</p>}
-                          </div>
-                        </div>
-                      </td>
-                      {/* PO Link */}
-                      <td className="p-4">
-                        <Select value={item.poRefNo || ""} onValueChange={v => updateItem(item.id, "poRefNo", v === "none" ? "" : v)}>
-                          <SelectTrigger className="w-24 mx-auto text-center border-dashed font-bold text-xs h-9 shadow-sm">
-                            <SelectValue placeholder="PO Ref..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">None</SelectItem>
-                            {purchaseInvoices?.map((inv: any) => (
-                              <SelectItem key={inv.PURCHASE_INVOICE_REF_NO || inv.id} value={inv.PURCHASE_INVOICE_REF_NO || String(inv.id)}>
-                                {inv.PURCHASE_INVOICE_REF_NO || String(inv.id)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </td>
-                      {/* Store Stock */}
-                      <td className="p-4">
-                        <Input
-                          type="number"
-                          value={item.storeStockPcs}
-                          onChange={e => updateItem(item.id, "storeStockPcs", Number(e.target.value))}
-                          className="w-20 mx-auto text-center font-bold text-xs h-9 border-dashed"
-                        />
-                      </td>
-                      {/* Qty */}
-                      <td className="p-4">
-                        <Input
-                          type="number"
-                          value={item.totalQty}
-                          onChange={e => updateItem(item.id, "totalQty", Number(e.target.value))}
-                          className="w-20 mx-auto text-center font-black border-none"
-                        />
-                      </td>
-                      {/* UOM */}
-                      <td className="p-4">
-                        <Select value={item.uom} onValueChange={v => updateItem(item.id, "uom", v)}>
-                          <SelectTrigger className="w-20 mx-auto border-none shadow-none focus:ring-0 text-center font-bold text-slate-500 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>{uoms.map((u: any, i: number) => <SelectItem key={u.id || i} value={u.UNIT_NAME || u.unitName}>{u.UNIT_NAME || u.unitName}</SelectItem>)}</SelectContent>
-                        </Select>
-                      </td>
-                      {/* Rate */}
-                      <td className="p-4">
-                        <Input
-                          type="number"
-                          value={item.salesRatePerQty}
-                          onChange={e => updateItem(item.id, "salesRatePerQty", Number(e.target.value))}
-                          className="w-24 mx-auto text-center font-black border-none"
-                        />
-                      </td>
-                      {/* VAT % */}
-                      <td className="p-4">
-                        <Input
-                          type="number"
-                          value={item.vatPercentage}
-                          onChange={e => updateItem(item.id, "vatPercentage", Number(e.target.value))}
-                          className="w-16 mx-auto text-center font-bold text-slate-500 border-none"
-                        />
-                      </td>
-                      {/* Subtotal */}
-                      <td className="p-4 text-right font-bold text-slate-700 tabular-nums text-xs">
-                        {item.totalProductAmount.toLocaleString()}
-                      </td>
-                      {/* VAT Amt */}
-                      <td className="p-4 text-right font-semibold text-slate-500 tabular-nums text-xs">
-                        {item.vatAmount.toLocaleString()}
-                      </td>
-                      {/* Final Amt */}
-                      <td className="p-4 text-right font-black text-slate-900 tabular-nums">
-                        {selectedCurrency} {item.finalSalesAmount.toLocaleString()}
-                      </td>
-                      {/* Delete */}
-                      <td className="p-4 text-center">
-                        <button onClick={() => removeItem(item.id)} className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 p-2">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Supporting Documents */}
-          <SupportingDoc files={files} onFilesChange={setFiles} />
         </div>
 
         {/* Financial Sidebar */}
@@ -749,21 +642,21 @@ function CreateProformaContent(): JSX.Element {
             <div className="space-y-4 text-sm opacity-80">
               <div className="flex justify-between">
                 <span className="font-bold uppercase text-[10px] tracking-widest text-white/50">Subtotal</span>
-                <span className="font-mono text-lg">{selectedCurrency} {subtotal.toLocaleString()}</span>
+                <span className="font-mono text-lg">{selectedCurrency} {formatAmount(subtotal)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="font-bold uppercase text-[10px] tracking-widest text-white/50">VAT Total</span>
-                <span className="font-mono text-lg">{selectedCurrency} {totalVat.toLocaleString()}</span>
+                <span className="font-mono text-lg">{selectedCurrency} {formatAmount(totalVat)}</span>
               </div>
               <div className="flex justify-between opacity-60">
                 <span className="font-bold uppercase text-[10px] tracking-widest text-white/50">LC Total</span>
-                <span className="font-mono">{(grandTotal * exchangeRate).toLocaleString()}</span>
+                <span className="font-mono">{formatAmount(grandTotal * exchangeRate)}</span>
               </div>
             </div>
 
             <div className="mt-10 pt-8 border-t border-white/10">
               <p className="text-[10px] uppercase font-black tracking-[0.2em] text-white/30 mb-2">Grand Total</p>
-              <p className="text-5xl font-black tracking-tighter tabular-nums mb-1">{grandTotal.toLocaleString()}</p>
+              <p className="text-5xl font-black tracking-tighter tabular-nums mb-1">{formatAmount(grandTotal)}</p>
               <p className="text-[10px] text-white/40 font-medium italic">Amount in {selectedCurrency}</p>
 
               <Button
@@ -785,6 +678,285 @@ function CreateProformaContent(): JSX.Element {
               )}
             </div>
           </div>
+        </div>
+
+        <div className="lg:col-span-4 space-y-8">
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <div className="flex flex-col gap-4 border-b border-slate-200 p-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap items-center gap-3">
+                <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-slate-500">Line Items</h3>
+                <Badge variant="outline" className="rounded-full border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-bold text-slate-600">
+                  {items.length} {items.length === 1 ? "Item" : "Items"}
+                </Badge>
+              </div>
+              <Button
+                variant="outline"
+                className="h-11 rounded-xl border-emerald-200 bg-white px-5 font-semibold text-emerald-700 hover:bg-emerald-50"
+                onClick={addItem}
+              >
+                <Plus className="mr-2 h-4 w-4" /> Add Product
+              </Button>
+            </div>
+
+            <div className="space-y-4 p-6">
+              {items.length === 0 ? (
+                <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50/80 px-6 py-16 text-center">
+                  <p className="text-lg font-bold text-slate-900">No line items added yet</p>
+                  <p className="mt-2 text-sm text-slate-500">
+                    Add the first product line to start preparing the sales proforma.
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="mt-6 h-11 rounded-xl border-emerald-200 bg-white px-5 font-semibold text-emerald-700 hover:bg-emerald-50"
+                    onClick={addItem}
+                  >
+                    <Plus className="mr-2 h-4 w-4" /> Add First Item
+                  </Button>
+                </div>
+              ) : (
+                items.map((item, index) => {
+                  const prod = productsData.find((p: any) => p.productName === item.productName);
+                  const totalPacking = getLineItemMeta(item).totalPacking;
+
+                  return (
+                    <div key={item.id} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
+                        <div className="min-w-0 space-y-3 lg:max-w-[820px]">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                              Item {index + 1}
+                            </Badge>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Product</Label>
+                            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+                              {prod?.contentData ? (
+                                <img
+                                  src={prod.contentData}
+                                  alt=""
+                                  className="h-10 w-10 shrink-0 rounded-lg border border-slate-200 object-cover shadow-sm cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all"
+                                  onClick={() => setPreviewImage(prod.contentData)}
+                                />
+                              ) : (
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-[10px] font-bold uppercase text-slate-400">
+                                  Img
+                                </div>
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <Select value={item.productName} onValueChange={(v) => {
+                                    updateItem(item.id, "productName", v);
+                                }}>
+                                  <SelectTrigger className="h-10 w-full border-0 bg-transparent px-0 text-left font-semibold text-slate-900 shadow-none focus:ring-0">
+                                    <SelectValue placeholder="Select Product" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {productsData.map((p: any, i: number) => <SelectItem key={p.id || i} value={p.productName}>{p.productName}</SelectItem>)}
+                                  </SelectContent>
+                                </Select>
+                                {item.mainCategoryId && <p className="px-0.5 text-[10px] uppercase tracking-tight text-slate-400">Cat: {item.mainCategoryId}</p>}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2 text-xs text-slate-500">
+                            <span className="rounded-full border border-slate-200 bg-white px-3 py-1">UOM: {item.uom || "-"}</span>
+                            <span className="rounded-full border border-slate-200 bg-white px-3 py-1">Pack: {item.qtyPerPacking || 0} {item.alternateUom || item.uom}</span>
+                            <span className="rounded-full border border-slate-200 bg-white px-3 py-1">Total Packs: {totalPacking.toFixed(2)}</span>
+                            <span className="rounded-full border border-slate-200 bg-white px-3 py-1">Stock: {Number(item.storeStockPcs || 0).toLocaleString("en-US")}</span>
+                          </div>
+                        </div>
+
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Final Amount</p>
+                          <p className="mt-2 text-2xl font-extrabold text-slate-900">{selectedCurrency} {formatAmount(item.finalSalesAmount)}</p>
+                          <button
+                            type="button"
+                            onClick={() => removeItem(item.id)}
+                            className="mt-4 inline-flex w-full items-center justify-center rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-2.5 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">PO Link</Label>
+                          <Select 
+                            key={item.id + (item.selectedPiNo || "none")}
+                            value={item.selectedPiNo || "none"} 
+                            onValueChange={async (v) => {
+                              const refNo = v === "none" ? "" : v;
+                              updateItem(item.id, "selectedPiNo", refNo);
+                              if (refNo) {
+                                toast.loading("Fetching PI details...", { id: `pi-fetch-${item.id}` });
+                                const pi = await getPIById(refNo);
+                                toast.dismiss(`pi-fetch-${item.id}`);
+                                if (pi && pi.items) {
+                                  const piItem = pi.items.find((i: any) => Number(i.productId || i.PRODUCT_ID) === Number(item.productId));
+                                  if (piItem) {
+                                    const qty = Number(piItem.receivedQty || piItem.totalQty || piItem.TOTAL_QTY || 0);
+                                    const uom = piItem.uom || piItem.UOM || item.uom;
+                                    const pRate = Number(piItem.ratePerQty || piItem.RATE_PER_QTY || 0);
+
+                                    // Use PO Ref for expense filtering, but store PI Ref as the "Link"
+                                    const poRef = pi.header?.PO_REF_NO || pi.header?.poRefNo || pi.PO_REF_NO || pi.poRefNo || "";
+                                    const poExpenses = expenses?.filter((e: any) => {
+                                      const expPo = e.poRefNo || e.PO_REF_NO || e.header?.poRefNo || e.header?.PO_REF_NO || "";
+                                      return expPo && poRef && String(expPo).trim() === String(poRef).trim();
+                                    }) || [];
+
+                                    const totalExp = poExpenses.reduce((sum: number, e: any) => {
+                                      const amount = Number(e.totalExpenseAmount || e.TOTAL_EXPENSE_AMOUNT || e.totalExpenseAmountLc || e.amount || e.AMOUNT || 0);
+                                      return sum + amount;
+                                    }, 0);
+
+                                    const eRate = qty > 0 ? totalExp / qty : 0;
+                                    const cPrice = pRate + eRate;
+
+                                    updateItemFields(item.id, {
+                                      poRefNo: refNo, // Store the PI Reference so it matches dropdown on reload
+                                      poDtlSno: piItem.sno || piItem.SNO || piItem.poDtlSno || null,
+                                      totalQty: qty,
+                                      storeStockPcs: qty,
+                                      uom: uom,
+                                      purchaseRate: pRate,
+                                      expenseRate: eRate,
+                                      costPrice: cPrice
+                                    });
+                                  } else {
+                                    toast.error("Product not found in this Purchase Invoice");
+                                  }
+                                }
+                              } else {
+                                // Clear all reference fields if none selected
+                                updateItemFields(item.id, {
+                                  poRefNo: "",
+                                  poDtlSno: null,
+                                  purchaseRate: 0,
+                                  expenseRate: 0,
+                                  costPrice: 0
+                                });
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="h-11 rounded-xl border-slate-200 bg-white font-semibold">
+                              <SelectValue placeholder="PO Ref..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">None</SelectItem>
+                              {purchaseInvoices?.filter((inv: any) => {
+                                const piRef = inv.PURCHASE_INVOICE_REF_NO || String(inv.id);
+                                // Always show the currently selected PI, even if the product filter fails
+                                if (item.selectedPiNo && String(piRef).trim() === String(item.selectedPiNo).trim()) return true;
+
+                                if (inv.items && inv.items.length > 0) {
+                                  return inv.items.some((i: any) => Number(i.productId || i.PRODUCT_ID) === Number(item.productId));
+                                }
+                                return true;
+                              }).map((inv: any) => (
+                                <SelectItem key={inv.PURCHASE_INVOICE_REF_NO || inv.id} value={inv.PURCHASE_INVOICE_REF_NO || String(inv.id)}>
+                                  {inv.PURCHASE_INVOICE_REF_NO || String(inv.id)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Store Stock</Label>
+                          <Input
+                            readOnly
+                            disabled
+                            type="number"
+                            value={item.storeStockPcs || 0}
+                            className="h-11 rounded-xl border-slate-200 bg-slate-50 text-center font-bold opacity-70 cursor-not-allowed"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Quantity</Label>
+                          <Input
+                            type="number"
+                            value={item.totalQty || 0}
+                            onChange={e => updateItem(item.id, "totalQty", Number(e.target.value))}
+                            className="h-11 rounded-xl border-slate-200 bg-white text-center font-bold"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">UOM</Label>
+                          <Input
+                            readOnly
+                            disabled
+                            value={item.uom || ""}
+                            className="h-11 rounded-xl border-slate-200 bg-slate-50 font-semibold opacity-70 cursor-not-allowed text-center"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Selling Price</Label>
+                          <Input
+                            type="number"
+                            value={item.salesRatePerQty || 0}
+                            onChange={e => updateItem(item.id, "salesRatePerQty", Number(e.target.value))}
+                            className="h-11 rounded-xl border-slate-200 bg-white text-center font-bold"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Purchase Rate</Label>
+                          <Input
+                            readOnly
+                            disabled
+                            type="number"
+                            value={item.purchaseRate || 0}
+                            className="h-11 rounded-xl border-slate-200 bg-slate-50 text-center font-bold opacity-70 cursor-not-allowed"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Expense Rate</Label>
+                          <Input
+                            readOnly
+                            disabled
+                            type="number"
+                            value={item.expenseRate || 0}
+                            className="h-11 rounded-xl border-slate-200 bg-slate-50 text-center font-bold opacity-70 cursor-not-allowed"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Cost Price</Label>
+                          <Input
+                            readOnly
+                            disabled
+                            type="number"
+                            value={item.costPrice || 0}
+                            className="h-11 rounded-xl border-slate-200 bg-slate-50 text-center font-bold opacity-70 cursor-not-allowed"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">VAT %</Label>
+                          <Input
+                            type="number"
+                            value={item.vatPercentage || 0}
+                            onChange={e => updateItem(item.id, "vatPercentage", Number(e.target.value))}
+                            className="h-11 rounded-xl border-slate-200 bg-white text-center font-bold"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          <SupportingDoc files={files} onFilesChange={setFiles} />
         </div>
       </div>
 

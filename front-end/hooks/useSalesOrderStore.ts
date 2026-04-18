@@ -74,15 +74,42 @@ export function useSalesOrderStore() {
     }
   });
 
-  // Delete/Archive (if needed, placeholder)
+  // Delete/Archive
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`${API_URL}/sales-orders/archive/${encodeURIComponent(id)}`, {
-        method: "PUT",
-        headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+      const encodedId = encodeURIComponent(encodeURIComponent(id));
+      const response = await fetch(`${API_URL}/sales-orders/${encodedId}`, {
+        method: "DELETE",
+        headers: { 
+          'Authorization': `Bearer ${getAuthToken()}` 
+        }
       });
-      if (!response.ok) throw new Error("Failed to archive Sales Order");
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.msg || "Failed to delete Sales Order");
+      }
       return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sales-orders"] });
+    }
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const response = await fetch(`${API_URL}/sales-orders/bulk-delete`, {
+        method: "POST",
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getAuthToken()}` 
+        },
+        body: JSON.stringify({ ids })
+      });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.msg || "Failed to delete Sales Orders");
+      }
+      return ids;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sales-orders"] });
@@ -96,6 +123,7 @@ export function useSalesOrderStore() {
     addOrder: addMutation.mutateAsync,
     updateOrder: (id: string, payload: any) => updateMutation.mutateAsync({ id, payload }),
     deleteOrder: deleteMutation.mutateAsync,
+    bulkDelete: bulkDeleteMutation.mutateAsync,
     getOrderById
   };
 }

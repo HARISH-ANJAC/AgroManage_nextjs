@@ -52,7 +52,7 @@ export default function GoodsReceiptsPage() {
   const handleExportPDF = async (grnHeader: any) => {
     toast.loading("Fetching GRN details...", { id: "grn-pdf" });
     const fullGrn = await getGRNById(grnHeader.GRN_REF_NO || grnHeader.grnRefNo);
-
+    
     if (!fullGrn) {
       toast.error("Failed to load GRN details", { id: "grn-pdf" });
       return;
@@ -70,7 +70,7 @@ export default function GoodsReceiptsPage() {
     // Handle logo with proper aspect ratio (placed on the left)
     try {
       const logoImg = new Image();
-      logoImg.src = "/assets/tbgs-logo.jpg";
+      logoImg.src = "/assets/logo.png";
       await new Promise((resolve) => {
         logoImg.onload = resolve;
         logoImg.onerror = resolve; // Continue even if logo fails
@@ -116,12 +116,12 @@ export default function GoodsReceiptsPage() {
         const poQty = Number(item.poQty || item.PO_QTY || 0);
         const recQty = Number(item.TOTAL_QTY || item.receivedQty || 0);
         return [
-          idx + 1,
-          item.productName || item.PRODUCT_NAME || "—",
-          poQty,
-          recQty,
-          item.UOM || item.uom || "KG",
-          poQty - recQty,
+          idx + 1, 
+          item.productName || item.PRODUCT_NAME || "—", 
+          poQty, 
+          recQty, 
+          item.UOM || item.uom || "KG", 
+          poQty - recQty, 
           item.REMARKS || ""
         ];
       }),

@@ -11,7 +11,15 @@ export default function ProductsPage() {
   if (loadingCats || loadingSubs || loadingProducts) return <div className="p-8 text-center text-muted-foreground font-medium">Loading catalog metadata...</div>;
 
   const categoryOptions = (categories || []).map((c: any) => ({ value: c.id, label: c.mainCategoryName }));
-  const subcategoryOptions = (subcategories || []).map((s: any) => ({ value: s.id, label: s.subCategoryName }));
+
+  // Dynamic: only show sub-categories that belong to the selected main category
+  const filteredSubcategoryOptions = (form: Record<string, any>) => {
+    const selectedMainId = form.mainCategoryId;
+    if (!selectedMainId) return [];
+    return (subcategories || [])
+      .filter((s: any) => String(s.mainCategoryId) === String(selectedMainId))
+      .map((s: any) => ({ value: s.id, label: s.subCategoryName }));
+  };
 
   return <MasterCrudPage
     domain="products"
@@ -21,43 +29,45 @@ export default function ProductsPage() {
     fields={[
       { key: "productName", label: "Product Name", type: "text", required: true },
       { key: "contentData", label: "Product Image", type: "image" },
-      { 
-        key: "mainCategoryId", 
-        label: "Main Category", 
-        type: "select", 
-        required: true, 
-        options: categoryOptions 
+      {
+        key: "mainCategoryId",
+        label: "Main Category",
+        type: "select",
+        required: true,
+        options: categoryOptions
       },
-      { 
-        key: "subCategoryId", 
-        label: "Sub Category", 
-        type: "select", 
-        required: true, 
-        options: subcategoryOptions 
+      {
+        key: "subCategoryId",
+        label: "Sub Category",
+        type: "select",
+        required: true,
+        options: filteredSubcategoryOptions,
+        dependsOn: "mainCategoryId",
+        placeholder: "Select Main Category first"
       },
-      { 
-        key: "uom", 
-        label: "Unit of Measure (UOM)", 
-        type: "text", 
+      {
+        key: "uom",
+        label: "Unit of Measure (UOM)",
+        type: "text",
         required: true,
         placeholder: "e.g., Pcs, Kg, Bgs"
       },
       { key: "qtyPerPacking", label: "Qty Per Packing", type: "number" },
-      { 
-        key: "alternateUom", 
-        label: "Alternate UOM", 
+      {
+        key: "alternateUom",
+        label: "Alternate UOM",
         type: "text",
         placeholder: "e.g., Ctn, Pkt"
       },
       { key: "remarks", label: "Remarks", type: "textarea" },
-      { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
+      { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
     ]}
     initialData={products || []}
     columns={[
       { key: "contentData", label: "Image" },
       { key: "productName", label: "Product Name" },
-      { key: "mainCategoryName", label: "Main Category" },
-      { key: "subCategoryName", label: "Sub Category" },
+      { key: "mainCategoryId", label: "Main Category" },
+      { key: "subCategoryId", label: "Sub Category" },
       { key: "uom", label: "UOM" },
       { key: "qtyPerPacking", label: "Qty/Pack" },
       { key: "alternateUom", label: "Alt UOM" },

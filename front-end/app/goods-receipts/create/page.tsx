@@ -39,6 +39,7 @@ function CreateGRNContent() {
   const { data: stores, isLoading: storesLoading } = useMasterData("user-store-mappings");
   const { addGRN, updateGRN, getGRNById, grns = [], isLoading: grnsLoading } = useGoodsReceiptStore();
   const { data: productsData = [], isLoading: productsDataLoading } = useMasterData("products");
+  const { data: suppliersData = [] } = useMasterData("suppliers");
 
   const [poLoading, setPoLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -418,7 +419,7 @@ function CreateGRNContent() {
             {/* Supplier (auto-filled) */}
             <div className="space-y-2">
               <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Supplier (Auto)</Label>
-              <Input value={header.supplierName || String(header.supplierId) || ""} disabled placeholder="Auto-filled from PO" className="bg-[#F1F5F9] border-[#E2E8F0] rounded-xl h-11" />
+              <Input value={header.supplierName || suppliersData.find((s: any) => String(s.id) === String(header.supplierId))?.supplierName || ""} disabled placeholder="Auto-filled from PO" className="bg-[#F1F5F9] border-[#E2E8F0] rounded-xl h-11" />
             </div>
 
             {/* GRN Store */}

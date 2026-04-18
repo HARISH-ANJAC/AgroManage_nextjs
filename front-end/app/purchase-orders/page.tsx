@@ -68,7 +68,7 @@ export default function PurchaseOrdersPage() {
     // Handle logo with proper aspect ratio (placed on the left)
     try {
       const logoImg = new Image();
-      logoImg.src = "/assets/tbgs-logo.jpg";
+      logoImg.src = "/assets/logo.png";
       await new Promise((resolve) => {
         logoImg.onload = resolve;
         logoImg.onerror = resolve; // Continue even if logo fails

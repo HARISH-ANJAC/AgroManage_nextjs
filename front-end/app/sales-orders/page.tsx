@@ -7,12 +7,12 @@ import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
 
 export default function SalesOrdersPage() {
-  const { orders, isLoading, addOrder, updateOrder, deleteOrder, getOrderById } = useSalesOrderStore();
+  const { orders, isLoading, addOrder, updateOrder, deleteOrder, bulkDelete, getOrderById } = useSalesOrderStore();
 
   const handleExportPDF = async (order: any) => {
     toast.loading("Generating Sales Order PDF...", { id: "so-pdf" });
     const fullOrder = await getOrderById(order.salesOrderRefNo || order.id);
-
+    
     if (!fullOrder) {
       toast.error("Failed to load order details", { id: "so-pdf" });
       return;
@@ -26,7 +26,7 @@ export default function SalesOrdersPage() {
     // Header & Logo — Logo LEFT, Title RIGHT
     try {
       const logoImg = new Image();
-      logoImg.src = "/assets/tbgs-logo.jpg";
+      logoImg.src = "/assets/logo.png";
       await new Promise((resolve) => {
         logoImg.onload = resolve;
         logoImg.onerror = resolve;
@@ -133,6 +133,7 @@ export default function SalesOrdersPage() {
       add: addOrder,
       update: (item: any) => updateOrder(item.id, item),
       remove: deleteOrder,
+      bulkRemove: bulkDelete,
       isLoading
     }}
     fields={[

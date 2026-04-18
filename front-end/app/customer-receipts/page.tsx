@@ -12,7 +12,7 @@ export default function CustomerReceiptsPage() {
   const handlePrintReceipt = async (receipt: any) => {
     toast.loading("Generating Payment Receipt PDF...", { id: "cr-pdf" });
     const fullReceipt = await getReceiptById(receipt.receiptRefNo || receipt.id);
-
+    
     if (!fullReceipt) {
       toast.error("Failed to load receipt details", { id: "cr-pdf" });
       return;
@@ -26,7 +26,7 @@ export default function CustomerReceiptsPage() {
     // Header & Logo — Logo LEFT, Title RIGHT
     try {
       const logoImg = new Image();
-      logoImg.src = "/assets/tbgs-logo.jpg";
+      logoImg.src = "/assets/logo.png";
       await new Promise((resolve) => {
         logoImg.onload = resolve;
         logoImg.onerror = resolve;
@@ -67,7 +67,7 @@ export default function CustomerReceiptsPage() {
     doc.setFontSize(10);
     doc.setTextColor(71, 85, 105);
     doc.text(h.customerName || "N/A", 14, 67);
-
+    
     // Summary Box
     doc.setFillColor(248, 250, 252);
     doc.roundedRect(14, 80, 182, 30, 2, 2, 'F');
@@ -80,23 +80,23 @@ export default function CustomerReceiptsPage() {
 
     // Allocations (if any)
     if (items.length > 0) {
-      doc.setFontSize(11);
-      doc.setTextColor(15, 23, 42);
-      doc.text("Invoice Allocations", 14, 125);
+        doc.setFontSize(11);
+        doc.setTextColor(15, 23, 42);
+        doc.text("Invoice Allocations", 14, 125);
 
-      autoTable(doc, {
-        startY: 130,
-        head: [['#', 'Invoice Ref', 'Invoiced Amt', 'Allocated Amt', 'Balance']],
-        body: items.map((it: any, idx: number) => [
-          idx + 1,
-          it.taxInvoiceRefNo,
-          `${currency} ${(it.actualInvoiceAmount || 0).toLocaleString()}`,
-          `${currency} ${(it.receiptInvoiceAdjustAmount || 0).toLocaleString()}`,
-          `${currency} ${(it.outstandingInvoiceAmount || 0).toLocaleString()}`
-        ]),
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [26, 46, 40] }
-      });
+        autoTable(doc, {
+            startY: 130,
+            head: [['#', 'Invoice Ref', 'Invoiced Amt', 'Allocated Amt', 'Balance']],
+            body: items.map((it: any, idx: number) => [
+                idx + 1,
+                it.taxInvoiceRefNo,
+                `${currency} ${(it.actualInvoiceAmount || 0).toLocaleString()}`,
+                `${currency} ${(it.receiptInvoiceAdjustAmount || 0).toLocaleString()}`,
+                `${currency} ${(it.outstandingInvoiceAmount || 0).toLocaleString()}`
+            ]),
+            styles: { fontSize: 8 },
+            headStyles: { fillColor: [26, 46, 40] }
+        });
     }
 
     doc.save(`Receipt_${h.receiptRefNo || "Export"}.pdf`);
@@ -116,8 +116,8 @@ export default function CustomerReceiptsPage() {
         formattedDate: n.receiptDate ? new Date(n.receiptDate).toLocaleDateString() : "-",
         formattedAmount: `TZS ${(n.receiptAmount || 0).toLocaleString()}`,
       })),
-      add: async () => { }, // Handled by separate page
-      update: async () => { }, // Handled by separate page
+      add: async () => {}, // Handled by separate page
+      update: async () => {}, // Handled by separate page
       remove: deleteReceipt,
       isLoading: isLoading
     }}

@@ -14,7 +14,7 @@ export default function DeliveryNotesPage() {
   const handleExportPDF = async (note: any) => {
     toast.loading("Generating Delivery Note PDF...", { id: "dn-pdf" });
     const fullNote = await getNoteById(note.deliveryNoteRefNo || note.id);
-
+    
     if (!fullNote) {
       toast.error("Failed to load delivery note details", { id: "dn-pdf" });
       return;
@@ -28,7 +28,7 @@ export default function DeliveryNotesPage() {
     // Header & Logo — Logo LEFT, Title RIGHT
     try {
       const logoImg = new Image();
-      logoImg.src = "/assets/tbgs-logo.jpg";
+      logoImg.src = "/assets/logo.png";
       await new Promise((resolve) => {
         logoImg.onload = resolve;
         logoImg.onerror = resolve;
@@ -72,7 +72,7 @@ export default function DeliveryNotesPage() {
     doc.setTextColor(71, 85, 105);
     doc.text(h.customerName || "N/A", 14, 67);
     doc.text(`From: ${h.fromStoreName || "Main Store"}`, 120, 67);
-
+    
     if (h.truckNo) doc.text(`Truck: ${h.truckNo} / ${h.trailerNo || ""}`, 120, 72);
     if (h.driverName) doc.text(`Driver: ${h.driverName}`, 120, 77);
     if (h.sealNo) doc.text(`Seal No: ${h.sealNo}`, 120, 82);
@@ -95,7 +95,7 @@ export default function DeliveryNotesPage() {
     });
 
     const finalY = ((doc as any).lastAutoTable?.finalY || 100) + 15;
-
+    
     // Summary
     doc.setFontSize(12);
     doc.setTextColor(15, 23, 42);
@@ -106,7 +106,7 @@ export default function DeliveryNotesPage() {
     doc.setTextColor(100, 116, 139);
     doc.text("Received By (Customer):", 14, finalY + 15);
     doc.text("________________________", 14, finalY + 25);
-
+    
     doc.text("Driver Confirmation:", 120, finalY + 15);
     doc.text("________________________", 120, finalY + 25);
 

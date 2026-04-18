@@ -104,6 +104,30 @@ function CreatePurchaseBookingContent() {
     const [files, setFiles] = useState<any[]>([]);
     const [uploading, setUploading] = useState(false);
     const [isFetchingData, setIsFetchingData] = useState(false);
+    const [activeTab, setActiveTab] = useState("header");
+
+    const validateHeader = () => {
+        if (!header.invoiceNo?.trim()) {
+            toast.error("Supplier Invoice Number is mandatory.");
+            return false;
+        }
+        if (!header.companyId) {
+            toast.error("Company is mandatory.");
+            return false;
+        }
+        if (!header.poRefNo) {
+            toast.error("PO Reference is mandatory.");
+            return false;
+        }
+        return true;
+    };
+
+    const handleTabChange = (val: string) => {
+        if (val !== "header" && !validateHeader()) {
+            return;
+        }
+        setActiveTab(val);
+    };
 
     // PI Ref No Logic
     const nextPiRefNo = useMemo(() => {
@@ -318,13 +342,13 @@ function CreatePurchaseBookingContent() {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 <main className="lg:col-span-8 space-y-6">
-                    <Tabs defaultValue="header" className="w-full">
+                    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                         <TabsList className="bg-slate-100 p-1 rounded-2xl mb-6">
                             <TabsTrigger value="header" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm">Header Details</TabsTrigger>
                             <TabsTrigger value="items" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm">Products / GRN</TabsTrigger>
                             <TabsTrigger value="costs" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm">Additional Costs</TabsTrigger>
                             <TabsTrigger value="files" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm">Documents</TabsTrigger>
-                            <TabsTrigger value="audit" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm text-[10px] tracking-tighter">Approval Audit</TabsTrigger>
+                            {/* <TabsTrigger value="audit" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm text-[10px] tracking-tighter">Approval Audit</TabsTrigger> */}
                         </TabsList>
 
                         <TabsContent value="header" className="mt-0">
@@ -415,6 +439,8 @@ function CreatePurchaseBookingContent() {
                                             const newITs = (fullGrn.items || []).map((i: any, dx: number) => {
                                                 const poItem = poItems.find((pi: any) => Number(pi.productId || pi.PRODUCT_ID) === Number(i.productId || i.PRODUCT_ID));
                                                 const poItemRate = Number(poItem?.rate || poItem?.RATE_PER_QTY || 0);
+                                                const poDiscPercent = Number(poItem?.discountPercentage || poItem?.DISCOUNT_PERCENTAGE || poItem?.discountPercent || 0);
+                                                const poVatPercent = Number(poItem?.vatPercentage || poItem?.VAT_PERCENTAGE || poItem?.vatPercent || i.vatPercent || i.VAT_PERCENTAGE || 0);
                                                 
                                                 return {
                                                     id: Date.now() + dx,
@@ -431,15 +457,17 @@ function CreatePurchaseBookingContent() {
                                                     alternateUom: "",
                                                     ratePerQty: Number(i.rate || i.RATE_PER_QTY || poItemRate),
                                                     poRate: poItemRate,
-                                                    productAmount: 0, discountPercentage: 0, discountAmount: 0, totalProductAmount: 0, vatPercentage: Number(i.vatPercent || i.VAT_PERCENTAGE || 0), vatAmount: 0, finalProductAmount: 0, remarks: ""
+                                                    productAmount: 0, discountPercentage: poDiscPercent, discountAmount: 0, totalProductAmount: 0, vatPercentage: poVatPercent, vatAmount: 0, finalProductAmount: 0, remarks: ""
                                                 };
                                             });
                                             setItems(prev => {
                                                 const filtered = newITs.filter((ni: any) => !prev.some(pi => pi.productId === ni.productId && pi.grnRefNo === ni.grnRefNo));
                                                 return [...prev, ...filtered].map(it => {
                                                     const amt = it.totalQty * it.ratePerQty;
-                                                    const vat = amt * (it.vatPercentage / 100);
-                                                    return { ...it, productAmount: amt, totalProductAmount: amt, vatAmount: vat, finalProductAmount: amt + vat };
+                                                    const discAmt = amt * (it.discountPercentage / 100);
+                                                    const totalProdAmt = amt - discAmt;
+                                                    const vat = totalProdAmt * (it.vatPercentage / 100);
+                                                    return { ...it, productAmount: amt, discountAmount: discAmt, totalProductAmount: totalProdAmt, vatAmount: vat, finalProductAmount: totalProdAmt + vat };
                                                 });
                                             });
                                         }}>
@@ -585,12 +613,12 @@ function CreatePurchaseBookingContent() {
                                             <div className="w-48 space-y-1.5 text-center">
                                                 <Label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Amount (TZS)</Label>
                                                 <div className="relative">
-                                                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">TZS</span>
                                                     <Input 
                                                         type="number" 
                                                         value={cost.amount} 
                                                         onChange={(e) => setAdditionalCosts(prev => prev.map(c => c.id === cost.id ? { ...c, amount: Number(e.target.value) } : c))} 
-                                                        className="h-11 rounded-xl bg-white pl-8 font-bold text-slate-900 border-slate-200 shadow-sm"
+                                                        className="h-11 rounded-xl bg-white pl-10 font-bold text-slate-900 border-slate-200 shadow-sm"
                                                     />
                                                 </div>
                                             </div>
@@ -621,7 +649,7 @@ function CreatePurchaseBookingContent() {
                              </div>
                         </TabsContent>
 
-                        <TabsContent value="audit">
+                        {/* <TabsContent value="audit">
                             <div className="bg-white rounded-[32px] border border-slate-200 p-8 shadow-sm">
                                 <h2 className="text-lg font-bold mb-6">Workflow Approval Status</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -642,7 +670,7 @@ function CreatePurchaseBookingContent() {
                                     </div>
                                 </div>
                             </div>
-                        </TabsContent>
+                        </TabsContent> */}
                     </Tabs>
                 </main>
 

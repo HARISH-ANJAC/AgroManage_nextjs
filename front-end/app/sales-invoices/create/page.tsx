@@ -151,8 +151,8 @@ function CreateInvoiceContent() {
             uom: item.uom || "Unit",
             rate: item.rate || 0,
             amount: (item.deliveryQty || 0) * (item.rate || 0),
-            vatPercent: item.vatPercent || 15, // Default VAT 15% if not provided
-            vatAmount: ((item.deliveryQty || 0) * (item.rate || 0)) * (15 / 100),
+            vatPercent: item.vatPercent || 18, // Default VAT 15% if not provided
+            vatAmount: ((item.deliveryQty || 0) * (item.rate || 0)) * (18 / 100),
             finalAmount: ((item.deliveryQty || 0) * (item.rate || 0)) * 1.15,
             deliveryNoteDtlSno: item.id
           })));
@@ -444,9 +444,9 @@ function CreateInvoiceContent() {
             </div>
 
             {/* Supporting Documents Section */}
-            <SupportingDoc 
-              files={files} 
-              onFilesChange={setFiles} 
+            <SupportingDoc
+              files={files}
+              onFilesChange={setFiles}
             />
           </div>
 

@@ -8,6 +8,8 @@ export default function MinimumStockPage() {
     const { data: companies } = useMasterData("companies");
     const { data: stores } = useMasterData("stores");
     const { data: products } = useMasterData("products");
+    const { data: mainCategories } = useMasterData("categories");
+    const { data: subCategories } = useMasterData("sub-categories");
 
     const companyOptions = companies?.map((c: any) => ({ value: c.id, label: c.companyName })) || [];
     const storeOptions = stores?.map((s: any) => ({ value: s.id, label: s.storeName })) || [];
@@ -21,7 +23,32 @@ export default function MinimumStockPage() {
         fields={[
             { key: "companyId", label: "Company", type: "select", options: companyOptions },
             { key: "storeId", label: "Store", type: "select", required: true, options: storeOptions },
-            { key: "productId", label: "Product", type: "select", required: true, options: productOptions },
+            { key: "mainCategoryId", label: "Main Category", type: "select", options: mainCategories?.map((c: any) => ({ value: c.id, label: c.mainCategoryName })) || [] },
+            { 
+              key: "subCategoryId", 
+              label: "Sub Category", 
+              type: "select", 
+              dependsOn: "mainCategoryId",
+              options: (form) => {
+                if (!form.mainCategoryId) return [];
+                return subCategories
+                  ?.filter((s: any) => String(s.mainCategoryId) === String(form.mainCategoryId))
+                  ?.map((s: any) => ({ value: s.id, label: s.subCategoryName })) || [];
+              }
+            },
+            { 
+              key: "productId", 
+              label: "Product", 
+              type: "select", 
+              required: true, 
+              dependsOn: "subCategoryId",
+              options: (form) => {
+                if (!form.subCategoryId) return [];
+                return products
+                  ?.filter((p: any) => String(p.subCategoryId) === String(form.subCategoryId))
+                  ?.map((p: any) => ({ value: p.id, label: p.productName })) || [];
+              }
+            },
             { key: "minimumStockPcs", label: "Min Stock (Pcs)", type: "number", required: true },
             { key: "purchaseAlertQty", label: "Purchase Alert Qty", type: "number", required: true },
             { key: "requestedBy", label: "Requested By", type: "text" },

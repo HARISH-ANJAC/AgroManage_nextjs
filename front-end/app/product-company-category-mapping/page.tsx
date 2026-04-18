@@ -13,11 +13,11 @@ export default function ProductCompanyCategoryMappingPage() {
 
   return <MasterCrudPage
     domain="product-company-category-mappings" title="Product Company Category Mapping" description="Manage your product company category mappings" idPrefix="PCM" fields={[
-    { key: "companyId", label: "Company", type: "select", required: true, options: companyOptions },
-    { key: "mainCategoryId", label: "Main Category", type: "select", required: true, options: categoryOptions },
-    { key: "remarks", label: "Remarks", type: "textarea" },
-    { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
-  ]} initialData={mappings || []} columns={[
-    { key: "companyName", label: "Company" }, { key: "categoryName", label: "Category" }, { key: "statusMaster", label: "Status" },
-  ]} />;
+      { key: "companyId", label: "Company", type: "select", required: true, options: companyOptions },
+      { key: "mainCategoryId", label: "Main Category", type: "select", required: true, options: categoryOptions },
+      { key: "remarks", label: "Remarks", type: "textarea" },
+      { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
+    ]} initialData={mappings || []} columns={[
+      { key: "companyName", label: "Company" }, { key: "categoryName", label: "Category" }, { key: "statusMaster", label: "Status" },
+    ]} />;
 }

@@ -26,6 +26,8 @@ export default function CustomersPage() {
     // Other related data
     const { data: companies } = useMasterData("companies");
     const { data: products } = useMasterData("products");
+    const { data: categories } = useMasterData("categories");
+    const { data: subCategories } = useMasterData("sub-categories");
 
     // Options mapping
     const customerOptions = customers?.map((c: any) => ({ value: c.id, label: c.customerName })) || [];
@@ -198,7 +200,32 @@ export default function CustomersPage() {
                         idPrefix="CPP"
                         fields={[
                             { key: "customerId", label: "Customer", type: "select", required: true, options: customerOptions },
-                            { key: "productId", label: "Product", type: "select", required: true, options: productOptions },
+                            { key: "mainCategoryId", label: "Main Category", type: "select", options: categories?.map((c: any) => ({ value: c.id, label: c.mainCategoryName })) || [] },
+                            {
+                                key: "subCategoryId",
+                                label: "Sub Category",
+                                type: "select",
+                                dependsOn: "mainCategoryId",
+                                options: (form) => {
+                                    if (!form.mainCategoryId) return [];
+                                    return subCategories
+                                        ?.filter((s: any) => String(s.mainCategoryId) === String(form.mainCategoryId))
+                                        ?.map((s: any) => ({ value: s.id, label: s.subCategoryName })) || [];
+                                }
+                            },
+                            {
+                                key: "productId",
+                                label: "Product",
+                                type: "select",
+                                required: true,
+                                dependsOn: "subCategoryId",
+                                options: (form) => {
+                                    if (!form.subCategoryId) return [];
+                                    return products
+                                        ?.filter((p: any) => String(p.subCategoryId) === String(form.subCategoryId))
+                                        ?.map((p: any) => ({ value: p.id, label: p.productName })) || [];
+                                }
+                            },
                             { key: "unitPrice", label: "Special Unit Price", type: "number", required: true },
                             { key: "effectiveFrom", label: "Effective From", type: "date" },
                             { key: "effectiveTo", label: "Effective To", type: "date" },

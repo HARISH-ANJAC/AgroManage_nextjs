@@ -3,7 +3,7 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, useMemo, Suspense } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Send, Plus, Trash2, Upload, Info, FileText, CheckCircle2, XCircle, X, History, Calendar } from "lucide-react";
+import { ArrowLeft, Save, Send, Plus, Trash2, Upload, FileText, CheckCircle2, XCircle, X, History, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +35,41 @@ interface AdditionalCost {
   typeName: string;
   amount: number;
 }
+
+const createLineItem = (vatPercent = 18): LineItem => ({
+  id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  productName: "",
+  qtyPerPack: 0,
+  totalQty: 0,
+  uom: "KG",
+  packing: "",
+  rate: 0,
+  amount: 0,
+  discPercent: 0,
+  vatPercent,
+});
+
+const getLineItemBreakdown = (item: LineItem) => {
+  const totalPacking = item.qtyPerPack ? item.totalQty / item.qtyPerPack : 0;
+  const discountAmount = (item.amount * item.discPercent) / 100;
+  const amountAfterDiscount = item.amount - discountAmount;
+  const vatAmount = (amountAfterDiscount * item.vatPercent) / 100;
+  const finalAmount = amountAfterDiscount + vatAmount;
+
+  return {
+    totalPacking,
+    discountAmount,
+    amountAfterDiscount,
+    vatAmount,
+    finalAmount,
+  };
+};
+
+const formatAmount = (value: number) =>
+  Number(value || 0).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
 function CreatePurchaseOrderContent() {
   const navigate = useRouter();
@@ -71,9 +106,7 @@ function CreatePurchaseOrderContent() {
     shipmentRemarks: "",
   });
 
-  const [items, setItems] = useState<LineItem[]>([
-    { id: Date.now(), productName: "", qtyPerPack: 0, totalQty: 0, uom: "KG", packing: "", rate: 0, amount: 0, discPercent: 0, vatPercent: 15 },
-  ]);
+  const [items, setItems] = useState<LineItem[]>([createLineItem(18)]);
 
   const [additionalCosts, setAdditionalCosts] = useState<AdditionalCost[]>([]);
   const [files, setFiles] = useState<any[]>([]);
@@ -134,7 +167,7 @@ function CreatePurchaseOrderContent() {
   // Step 1.5: Set default master IDs for new PO automatically from master data
   useEffect(() => {
     if (editId) return; // Only for new orders
-    
+
     const shouldUpdate = !header.companyId || !header.supplierId || !header.storeId || !header.paymentTermId || !header.currencyId;
     if (!shouldUpdate) return;
 
@@ -162,7 +195,7 @@ function CreatePurchaseOrderContent() {
         rate: Number(item.RATE_PER_QTY),
         amount: Number(item.PRODUCT_AMOUNT),
         discPercent: Number(item.DISCOUNT_PERCENTAGE) || 0,
-        vatPercent: Number(item.VAT_PERCENTAGE) || 15,
+        vatPercent: Number(item.VAT_PERCENTAGE) || 18,
         uom: item.UOM || prod?.uom || "KG",
         packing: prod?.packing || "",
         qtyPerPack: Number(item.QTY_PER_PACKING) || prod?.qtyPerPacking || 0,
@@ -212,8 +245,8 @@ function CreatePurchaseOrderContent() {
 
   const purchaseHistory = useMemo(() => {
     if (!header.companyId || !header.supplierId) return [];
-    return orders.filter((o: any) => 
-      Number(o.COMPANY_ID) === Number(header.companyId) && 
+    return orders.filter((o: any) =>
+      Number(o.COMPANY_ID) === Number(header.companyId) &&
       Number(o.SUPPLIER_ID) === Number(header.supplierId) &&
       o.PO_REF_NO !== header.poRefNo
     ).sort((a: any, b: any) => new Date(b.PO_DATE).getTime() - new Date(a.PO_DATE).getTime());
@@ -252,6 +285,14 @@ function CreatePurchaseOrderContent() {
     setAdditionalCosts(prev => [...prev, { id: Date.now(), typeName: "", amount: 0 }]);
   };
 
+  const handleAddItem = () => {
+    setItems(prev => [...prev, createLineItem(15)]);
+  };
+
+  const handleRemoveItem = (id: string | number) => {
+    setItems(prev => prev.filter(item => item.id !== id));
+  };
+
 
   const handleSave = async (isSubmit: boolean = false) => {
     if (!header.supplierId || !header.companyId) {
@@ -288,7 +329,7 @@ function CreatePurchaseOrderContent() {
 
   if (editId && !dbData) {
     return (
-      <div className="max-w-[1600px] mx-auto pb-20 px-4 pt-6 space-y-8">
+      <div className="max-w-[1760px] mx-auto pb-20 px-4 pt-6 space-y-8">
         <div className="flex items-center justify-between mb-8">
           <Skeleton className="h-10 w-48" />
           <div className="flex gap-3">
@@ -323,7 +364,7 @@ function CreatePurchaseOrderContent() {
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto pb-20 px-4 pt-6">
+    <div className="max-w-[1760px] mx-auto pb-20 px-4 pt-6">
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
           <Button variant="ghost" onClick={() => navigate.back()} className="rounded-full h-10 w-10 p-0"><ArrowLeft className="w-5 h-5" /></Button>
@@ -445,68 +486,245 @@ function CreatePurchaseOrderContent() {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Items Table */}
-          <div className="bg-white rounded-3xl border shadow-sm overflow-hidden">
-            <div className="p-6 border-b flex justify-between items-center">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Line Items</h3>
-              <Button variant="outline" size="sm" onClick={() => setItems(prev => [...prev, { id: Date.now(), productName: "", qtyPerPack: 0, totalQty: 0, uom: "KG", packing: "", rate: 0, amount: 0, discPercent: 0, vatPercent: 15 }])}><Plus className="w-4 h-4 mr-1" /> Add Item</Button>
+        <div className="space-y-8">
+          <div className="bg-[#1A2E28] rounded-[32px] p-8 text-white shadow-xl lg:sticky lg:top-8">
+            <h3 className="text-lg font-bold mb-8">Order Summary</h3>
+            <div className="space-y-4 text-sm opacity-80">
+              <div className="flex justify-between"><span>Product Amount</span><span>{selectedCurrency} {formatAmount(subtotal)}</span></div>
+              <div className="flex justify-between"><span>Discount</span><span>-{selectedCurrency} {formatAmount(totalDisc)}</span></div>
+              <div className="flex justify-between"><span>Tax (VAT)</span><span>{selectedCurrency} {formatAmount(totalVat)}</span></div>
+              <div className="flex justify-between"><span>Add. Costs</span><span>{selectedCurrency} {formatAmount(totalAdditional)}</span></div>
             </div>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-muted/50 border-b">
-                  <th className="p-4 text-left font-bold text-xs uppercase text-muted-foreground whitespace-nowrap">Product</th>
-                  <th className="p-4 text-center font-bold text-xs uppercase text-muted-foreground">Qty</th>
-                  <th className="p-4 text-center font-bold text-xs uppercase text-muted-foreground">UOM</th>
-                  <th className="p-4 text-center font-bold text-xs uppercase text-muted-foreground whitespace-nowrap">Total Pack</th>
-                  <th className="p-4 text-center font-bold text-xs uppercase text-muted-foreground">Rate</th>
-                  <th className="p-4 text-center font-bold text-xs uppercase text-muted-foreground whitespace-nowrap">Disc %</th>
-                  <th className="p-4 text-center font-bold text-xs uppercase text-muted-foreground whitespace-nowrap">VAT %</th>
-                  <th className="p-4 text-right font-bold text-xs uppercase text-muted-foreground whitespace-nowrap">Final Amt</th>
-                  <th className="p-4 w-10"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map(item => {
-                  const totalPacking = item.qtyPerPack ? (item.totalQty / item.qtyPerPack).toFixed(2) : "0";
-                  const discAmt = (item.amount * item.discPercent) / 100;
-                  const amountAfterDisc = item.amount - discAmt;
-                  const vatAmt = (amountAfterDisc * item.vatPercent) / 100;
-                  const finalAmount = amountAfterDisc + vatAmt;
+            <div className="mt-10 pt-8 border-t border-white/10">
+              <p className="text-[10px] uppercase font-bold tracking-widest opacity-50 mb-1">Grand Total</p>
+              <p className="text-4xl font-extrabold">{selectedCurrency} {formatAmount(grandTotal)}</p>
+              <Button onClick={() => handleSave(true)} disabled={isSaving} className="w-full mt-10 bg-[#059669] hover:bg-[#059669]/90 h-14 rounded-2xl font-bold">Confirm and Submit</Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="lg:col-span-4 space-y-8">
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <div className="flex flex-col gap-4 border-b border-slate-200 p-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap items-center gap-3">
+                <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-slate-500">Line Items</h3>
+                <Badge variant="outline" className="rounded-full border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-bold text-slate-600">
+                  {items.length} {items.length === 1 ? "Item" : "Items"}
+                </Badge>
+              </div>
+              <Button
+                variant="outline"
+                className="h-11 rounded-xl border-emerald-200 bg-white px-5 font-semibold text-emerald-700 hover:bg-emerald-50"
+                onClick={handleAddItem}
+              >
+                <Plus className="mr-2 h-4 w-4" /> Add Line Item
+              </Button>
+            </div>
+
+            <div className="space-y-4 p-6">
+              {items.length === 0 ? (
+                <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50/80 px-6 py-16 text-center">
+                  <p className="text-lg font-bold text-slate-900">No line items added yet</p>
+                  <p className="mt-2 text-sm text-slate-500">
+                    Add the first product line to start building the purchase order.
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="mt-6 h-11 rounded-xl border-emerald-200 bg-white px-5 font-semibold text-emerald-700 hover:bg-emerald-50"
+                    onClick={handleAddItem}
+                  >
+                    <Plus className="mr-2 h-4 w-4" /> Add First Item
+                  </Button>
+                </div>
+              ) : (
+                items.map((item, index) => {
+                  const selectedProd = productsData.find((p: any) => p.productName === item.productName);
+                  const imgData = selectedProd?.contentData;
+                  const { totalPacking, finalAmount } = getLineItemBreakdown(item);
 
                   return (
-                    <tr key={item.id} className="border-b">
-                      <td className="p-4 min-w-[280px]">
-                        <div className="flex items-center gap-3">
-                          {(() => {
-                            const selectedProd = productsData.find((p: any) => p.productName === item.productName);
-                            const imgData = selectedProd?.contentData;
-                            return imgData ? (
-                              <img src={imgData} alt="Product" className="w-8 h-8 rounded shrink-0 object-cover border border-slate-200 shadow-sm cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all" onClick={() => setPreviewImage(imgData)} title="Click to view" />
-                            ) : (
-                              <div className="w-8 h-8 rounded shrink-0 bg-slate-50 flex items-center justify-center border border-slate-200 text-[10px] text-slate-400 shadow-sm uppercase font-bold text-center leading-none">Img</div>
-                            );
-                          })()}
-                          <Select value={item.productName} onValueChange={v => handleUpdateItem(item.id, "productName", v)}>
-                            <SelectTrigger className="flex-1 border-none shadow-none focus:ring-0 font-medium"><SelectValue placeholder="Select Product" /></SelectTrigger>
-                            <SelectContent>{productsData.map((p: any) => <SelectItem key={p.id} value={p.productName}>{p.productName}</SelectItem>)}</SelectContent>
-                          </Select>
+                    <div
+                      key={item.id}
+                      className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"
+                    >
+                      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
+                        <div className="min-w-0 space-y-3 lg:max-w-[760px]">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                              Item {index + 1}
+                            </Badge>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Product</Label>
+                            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+                              {imgData ? (
+                                <img
+                                  src={imgData}
+                                  alt="Product"
+                                  className="h-10 w-10 shrink-0 rounded-lg border border-slate-200 object-cover shadow-sm cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all"
+                                  onClick={() => setPreviewImage(imgData)}
+                                  title="Click to view"
+                                />
+                              ) : (
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-[10px] font-bold uppercase text-slate-400">
+                                  Img
+                                </div>
+                              )}
+                              <Select value={item.productName} onValueChange={v => handleUpdateItem(item.id, "productName", v)}>
+                                <SelectTrigger className="h-10 flex-1 border-0 bg-transparent px-0 text-left font-semibold text-slate-900 shadow-none focus:ring-0">
+                                  <SelectValue placeholder="Select Product" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {productsData.map((p: any) => <SelectItem key={p.id} value={p.productName}>{p.productName}</SelectItem>)}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2 text-xs text-slate-500">
+                            <span className="rounded-full border border-slate-200 bg-white px-3 py-1">UOM: {item.uom || "-"}</span>
+                            <span className="rounded-full border border-slate-200 bg-white px-3 py-1">Pack: {item.qtyPerPack || 0} {item.uom}</span>
+                            <span className="rounded-full border border-slate-200 bg-white px-3 py-1">Total Packs: {totalPacking.toFixed(2)}</span>
+                          </div>
                         </div>
-                      </td>
-                      <td className="p-4"><Input type="number" value={item.totalQty} onChange={e => handleUpdateItem(item.id, "totalQty", Number(e.target.value))} className="w-20 mx-auto text-center border-none" /></td>
-                      <td className="p-4 text-center text-muted-foreground text-xs font-bold">{item.uom}</td>
-                      <td className="p-4 text-center font-bold text-xs text-muted-foreground">{totalPacking} <span className="text-[10px] font-normal">{item.packing}</span></td>
-                      <td className="p-4"><Input type="number" value={item.rate} onChange={e => handleUpdateItem(item.id, "rate", Number(e.target.value))} className="w-24 mx-auto text-center border-none" /></td>
-                      <td className="p-4"><Input type="number" value={item.discPercent} onChange={e => handleUpdateItem(item.id, "discPercent", Number(e.target.value))} className="w-16 mx-auto text-center border-none" /></td>
-                      <td className="p-4"><Input type="number" value={item.vatPercent} onChange={e => handleUpdateItem(item.id, "vatPercent", Number(e.target.value))} className="w-16 mx-auto text-center border-none" /></td>
-                      <td className="p-4 text-right font-bold text-[#0F172A]">{selectedCurrency} {finalAmount.toFixed(2)}</td>
-                      <td className="p-4"><button onClick={() => setItems(items.filter(i => i.id !== item.id))}><Trash2 className="w-4 h-4 text-destructive" /></button></td>
-                    </tr>
+
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Final Amount</p>
+                          <p className="mt-2 text-2xl font-extrabold text-slate-900">{selectedCurrency} {formatAmount(finalAmount)}</p>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveItem(item.id)}
+                            className="mt-4 inline-flex w-full items-center justify-center rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-2.5 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
+                            aria-label="Delete line item"
+                            title="Delete line item"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Quantity</Label>
+                          <Input
+                            type="number"
+                            value={item.totalQty}
+                            onChange={e => handleUpdateItem(item.id, "totalQty", Number(e.target.value))}
+                            className="h-11 rounded-xl border-slate-200 bg-white text-center font-bold"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Rate</Label>
+                          <Input
+                            type="number"
+                            value={item.rate}
+                            onChange={e => handleUpdateItem(item.id, "rate", Number(e.target.value))}
+                            className="h-11 rounded-xl border-slate-200 bg-white text-center font-bold"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Discount %</Label>
+                          <Input
+                            type="number"
+                            value={item.discPercent}
+                            onChange={e => handleUpdateItem(item.id, "discPercent", Number(e.target.value))}
+                            className="h-11 rounded-xl border-slate-200 bg-white text-center font-bold"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">VAT %</Label>
+                          <Input
+                            type="number"
+                            value={item.vatPercent}
+                            onChange={e => handleUpdateItem(item.id, "vatPercent", Number(e.target.value))}
+                            className="h-11 rounded-xl border-slate-200 bg-white text-center font-bold"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   );
-                })}
-              </tbody>
-            </table>
+                })
+              )}
+            </div>
           </div>
+
+          {editId && dbData && (
+            <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm overflow-hidden border-t-4 border-t-emerald-500">
+              <div className="flex flex-col gap-3 border-b border-slate-200 pb-6 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    Approval Workflow
+                  </h3>
+                  <p className="mt-2 text-sm text-slate-500">
+                    Review the current approval status and take the next action without losing sight of the main form.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Purchase Head</p>
+                    <div className="mt-3">
+                      <Badge variant={dbData.header.PURCHASE_HEAD_RESPONSE_STATUS === 'Approved' ? 'success' : 'secondary'}>
+                        {dbData.header.PURCHASE_HEAD_RESPONSE_STATUS || "Pending"}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Final Decision</p>
+                    <div className="mt-3">
+                      <Badge variant={dbData.header.STATUS_ENTRY === 'Approved' ? 'success' : 'outline'}>
+                        {dbData.header.STATUS_ENTRY}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">Approval Remarks</Label>
+                    <textarea
+                      className="min-h-[120px] w-full rounded-2xl border bg-white px-4 py-3 text-sm"
+                      placeholder="Type remarks for approval or rejection..."
+                      value={approvalRemarks}
+                      onChange={e => setApprovalRemarks(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                    <Button
+                      onClick={() => handleApprove("head", "Approved")}
+                      disabled={isSaving}
+                      className="bg-emerald-600 h-11 text-sm font-bold"
+                    >
+                      Approve (Head)
+                    </Button>
+                    <Button
+                      onClick={() => handleApprove("final", "Approved")}
+                      disabled={isSaving}
+                      className="bg-indigo-600 h-11 text-sm font-bold"
+                    >
+                      Final Approve
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleApprove("head", "Rejected")}
+                      disabled={isSaving}
+                      className="h-11 border-destructive text-destructive text-sm hover:bg-destructive/5"
+                    >
+                      Reject PO
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-white rounded-3xl border p-8 shadow-sm">
@@ -534,26 +752,26 @@ function CreatePurchaseOrderContent() {
                 {purchaseHistory.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-12 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
                     <div className="size-10 rounded-full bg-white flex items-center justify-center text-slate-300 mb-3 border shadow-sm">
-                       <History className="w-5 h-5" />
+                      <History className="w-5 h-5" />
                     </div>
                     <p className="text-xs font-medium text-slate-500">No past purchases found</p>
                     <p className="text-[10px] text-slate-400 mt-1">Select a Supplier & Company to see history</p>
                   </div>
                 )}
                 {purchaseHistory.map((po: any) => {
-                   const curr = currencies.find((c: any) => Number(c.id) === Number(po.CURRENCY_ID));
-                   const sym = curr?.currencyCode || "$";
-                   return (
+                  const curr = currencies.find((c: any) => Number(c.id) === Number(po.CURRENCY_ID));
+                  const sym = curr?.currencyCode || "$";
+                  return (
                     <div key={po.PO_REF_NO} className="p-4 bg-slate-50/30 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-md hover:border-slate-200 transition-all group">
                       <div className="flex justify-between items-start mb-3">
                         <div>
                           <div className="flex items-center gap-2 mb-1">
-                             <span className="text-[13px] font-bold text-slate-900 group-hover:text-primary transition-colors">{po.PO_REF_NO}</span>
-                             {po.STATUS_ENTRY === 'Approved' && <CheckCircle2 className="w-3 h-3 text-emerald-500" />}
+                            <span className="text-[13px] font-bold text-slate-900 group-hover:text-primary transition-colors">{po.PO_REF_NO}</span>
+                            {po.STATUS_ENTRY === 'Approved' && <CheckCircle2 className="w-3 h-3 text-emerald-500" />}
                           </div>
                           <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                             <Calendar className="w-3 h-3" />
-                             {new Date(po.PO_DATE).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
+                            <Calendar className="w-3 h-3" />
+                            {new Date(po.PO_DATE).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
                           </div>
                         </div>
                         <Badge variant={po.STATUS_ENTRY === 'Approved' ? 'success' : 'secondary'} className="text-[10px] px-2 py-0 h-5">
@@ -562,12 +780,12 @@ function CreatePurchaseOrderContent() {
                       </div>
                       <div className="flex justify-between items-center bg-white/50 p-2 rounded-xl border border-slate-100 group-hover:border-slate-200 transition-all">
                         <span className="text-sm font-bold text-slate-800">
-                           <span className="text-[10px] text-slate-400 font-medium mr-1">Total:</span> 
-                           {sym} {Number(po.FINAL_PURCHASE_HDR_AMOUNT).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          <span className="text-[10px] text-slate-400 font-medium mr-1">Total:</span>
+                          {sym} {formatAmount(Number(po.FINAL_PURCHASE_HDR_AMOUNT))}
                         </span>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           className="h-8 text-[11px] font-bold px-3 rounded-lg hover:bg-primary hover:text-white transition-all shadow-sm group-hover:shadow"
                           onClick={() => window.open(`/purchase-orders/create?id=${encodeURIComponent(po.PO_REF_NO)}`, '_blank')}
                         >
@@ -575,7 +793,7 @@ function CreatePurchaseOrderContent() {
                         </Button>
                       </div>
                     </div>
-                   );
+                  );
                 })}
               </div>
             </div>
@@ -600,88 +818,6 @@ function CreatePurchaseOrderContent() {
               </div>
             </div>
           </div>
-        </div>
-
-        <div className="space-y-8">
-          <div className="bg-[#1A2E28] rounded-[32px] p-8 text-white shadow-xl">
-            <h3 className="text-lg font-bold mb-8">Order Summary</h3>
-            <div className="space-y-4 text-sm opacity-80">
-              <div className="flex justify-between"><span>Product Amount</span><span>{selectedCurrency} {subtotal.toFixed(2)}</span></div>
-              <div className="flex justify-between"><span>Discount</span><span>-{selectedCurrency} {totalDisc.toFixed(2)}</span></div>
-              <div className="flex justify-between"><span>Tax (VAT)</span><span>{selectedCurrency} {totalVat.toFixed(2)}</span></div>
-              <div className="flex justify-between"><span>Add. Costs</span><span>{selectedCurrency} {totalAdditional.toFixed(2)}</span></div>
-            </div>
-            <div className="mt-10 pt-8 border-t border-white/10">
-              <p className="text-[10px] uppercase font-bold tracking-widest opacity-50 mb-1">Grand Total</p>
-              <p className="text-4xl font-extrabold">{selectedCurrency} {grandTotal.toFixed(2)}</p>
-              <Button onClick={() => handleSave(true)} disabled={isSaving} className="w-full mt-10 bg-[#059669] hover:bg-[#059669]/90 h-14 rounded-2xl font-bold">Confirm and Submit</Button>
-            </div>
-          </div>
-
-          {editId && dbData && (
-            <div className="bg-white rounded-3xl border p-8 shadow-sm overflow-hidden border-t-4 border-t-emerald-500">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-6 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                Approval Workflow
-              </h3>
-
-              <div className="space-y-6">
-                {/* Level display */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">Purchase Head:</span>
-                    <Badge variant={dbData.header.PURCHASE_HEAD_RESPONSE_STATUS === 'Approved' ? 'success' : 'secondary'}>
-                      {dbData.header.PURCHASE_HEAD_RESPONSE_STATUS || "Pending"}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">Final Decision:</span>
-                    <Badge variant={dbData.header.STATUS_ENTRY === 'Approved' ? 'success' : 'outline'}>
-                      {dbData.header.STATUS_ENTRY}
-                    </Badge>
-                  </div>
-                </div>
-
-                {/* Approval Controls (simplified to allow choosing level for demo/dev, usually filtered by role) */}
-                <div className="pt-4 border-t space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">Approval Remarks</Label>
-                    <textarea
-                      className="w-full text-xs p-3 rounded-xl border bg-muted/20"
-                      placeholder="Type remarks for approval/rejection..."
-                      value={approvalRemarks}
-                      onChange={e => setApprovalRemarks(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      onClick={() => handleApprove("head", "Approved")}
-                      disabled={isSaving}
-                      className="bg-emerald-600 h-10 text-xs font-bold"
-                    >
-                      Approve (Head)
-                    </Button>
-                    <Button
-                      onClick={() => handleApprove("final", "Approved")}
-                      disabled={isSaving}
-                      className="bg-indigo-600 h-10 text-xs font-bold"
-                    >
-                      Final Approve
-                    </Button>
-                  </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => handleApprove("head", "Rejected")}
-                    disabled={isSaving}
-                    className="w-full h-10 border-destructive text-destructive text-xs hover:bg-destructive/5"
-                  >
-                    Reject PO
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
       <Dialog open={!!previewImage} onOpenChange={(open) => !open && setPreviewImage(null)}>
