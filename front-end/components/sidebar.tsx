@@ -165,6 +165,7 @@ const navigation = [
     items: [
       { name: 'Suppliers', href: '/suppliers', icon: Truck },
       { name: 'Customers', href: '/customers', icon: Users },
+      { name: 'Departments', href: '/departments', icon: Briefcase },
       { name: 'Employees', href: '/employees', icon: Briefcase },
       { name: 'Sales Persons', href: '/sales-person', icon: User },
     ]

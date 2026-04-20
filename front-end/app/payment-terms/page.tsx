@@ -8,11 +8,11 @@ export default function PaymentTermsPage() {
 
   return <MasterCrudPage
     domain="payment-terms" title="Payment Terms" description="Manage your payment terms" idPrefix="PT" fields={[
-    { key: "paymentTermName", label: "Payment Term Name", type: "text", required: true },
-    { key: "remarks", label: "Remarks", type: "textarea" },
-    { key: "statusEntry", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
-  ]} initialData={paymentTerms || []} 
-  columns={[
-    { key: "paymentTermName", label: "Term" }, { key: "remarks", label: "Remarks" }, { key: "statusEntry", label: "Status" },
-  ]} />;
+      { key: "paymentTermName", label: "Payment Term Name", type: "text", required: true },
+      { key: "remarks", label: "Remarks", type: "textarea" },
+      { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
+    ]} initialData={paymentTerms || []}
+    columns={[
+      { key: "paymentTermName", label: "Term" }, { key: "remarks", label: "Remarks" }, { key: "statusEntry", label: "Status" },
+    ]} />;
 }

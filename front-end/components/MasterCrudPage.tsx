@@ -52,12 +52,13 @@ interface MasterPageProps {
   customAddUrl?: string;
   customEditUrl?: (id: string) => string;
   customStoreOverrides?: {
-    data: any[];
-    add: (item: any) => Promise<any> | any;
-    update: (item: any) => Promise<any> | void;
-    remove: (id: string) => Promise<any> | void;
-    bulkRemove?: (ids: string[]) => Promise<any> | void;
+    data?: any[];
+    add?: (item: any, next?: any) => any;
+    update?: (item: any, next?: any) => any;
+    remove?: (id: any, next?: any) => any;
+    bulkRemove?: (ids: any[], next?: any) => any;
     isLoading?: boolean;
+    onFieldChange?: (key: string, value: any, setForm: any, form: any) => boolean;
   };
   onPrint?: (item: any) => void;
 }
@@ -80,8 +81,9 @@ import { useMasterData } from "@/hooks/useMasterData";
 
 export default function MasterCrudPage({ title, description, idPrefix, domain, fields, initialData, columns, customAddUrl, customEditUrl, customStoreOverrides, onPrint }: MasterPageProps) {
   const router = useRouter();
-  const masterData = useMasterData(domain, initialData, idPrefix);
-  const { data, isLoading, add, update, remove, bulkRemove } = customStoreOverrides || masterData;
+  const masterData = useMasterData(domain, initialData, idPrefix) || {};
+  const overrides = customStoreOverrides || {};
+  const { data, isLoading, add, update, remove, bulkRemove } = { ...masterData, ...overrides };
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Record<string, any> | null>(null);
@@ -112,14 +114,17 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
   // Get unique statuses for the filter dropdown
   const uniqueStatuses = useMemo(() => {
     const statuses = new Set<string>();
-    data.forEach((d: Record<string, any>) => {
-      const status = d.status || d.statusMaster;
-      if (status) statuses.add(String(status));
-    });
+    if (Array.isArray(data)) {
+      data.forEach((d: Record<string, any>) => {
+        const status = d.status || d.statusMaster;
+        if (status) statuses.add(String(status));
+      });
+    }
     return Array.from(statuses);
   }, [data]);
 
   const filtered = useMemo(() => {
+    if (!Array.isArray(data)) return [];
     return data.filter((d: Record<string, any>) => {
       const searchable = columns.map((c) => String(getNestedValue(d, c.key) || "").toLowerCase()).join(" ");
       const matchesSearch = searchable.includes(search.toLowerCase());
@@ -143,7 +148,7 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
     if (selectedIds.size === paginated.length && paginated.length > 0) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(paginated.map((i: Record<string, any>) => i.id)));
+      setSelectedIds(new Set(paginated.filter(i => i && i.id).map((i: Record<string, any>) => i.id)));
     }
   };
 
@@ -157,11 +162,18 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
   const handleBulkDeleteFinal = async () => {
     try {
       const ids = Array.from(selectedIds);
-      if (bulkRemove) {
-        await bulkRemove(ids);
+      if (customStoreOverrides?.bulkRemove) {
+        await customStoreOverrides.bulkRemove(ids, (p: any) => masterData.bulkRemove(p));
+      } else if (masterData.bulkRemove) {
+        await masterData.bulkRemove(ids);
       } else {
+        // Fallback to sequential remove if bulkRemove is missing
         for (const id of ids) {
-          await remove(id);
+          if (customStoreOverrides?.remove) {
+            await customStoreOverrides.remove(id, (p: any) => masterData.remove(p));
+          } else {
+            await masterData.remove(id);
+          }
         }
       }
       setSelectedIds(new Set());
@@ -175,7 +187,11 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
   const handleSingleDeleteFinal = async () => {
     if (!deleteId) return;
     try {
-      await remove(deleteId);
+      if (customStoreOverrides?.remove) {
+        await customStoreOverrides.remove(deleteId, (p: any) => masterData.remove(p));
+      } else {
+        await masterData.remove(deleteId);
+      }
       setDeleteId(null);
       toast.success(`${title.replace(/s$/, "")} deleted successfully!`);
     } catch (e: any) {
@@ -218,10 +234,18 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
     }
     try {
       if (editing) {
-        await update({ ...editing, ...form });
+        if (customStoreOverrides?.update) {
+          await customStoreOverrides.update({ ...editing, ...form }, (p: any) => masterData.update(p));
+        } else {
+          await masterData.update({ ...editing, ...form });
+        }
         toast.success(`${title.replace(/s$/, "")} updated successfully!`);
       } else {
-        await add(form);
+        if (customStoreOverrides?.add) {
+          await customStoreOverrides.add(form, (p: any) => masterData.add(p));
+        } else {
+          await masterData.add(form);
+        }
         toast.success(`${title.replace(/s$/, "")} created successfully!`);
       }
       setDialogOpen(false);
@@ -266,8 +290,8 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
 
     doc.setFontSize(10);
     doc.text(`Exported: ${new Date().toLocaleString()}`, 196, 28, { align: "right" });
-    const headers = ["ID", ...columns.map(c => c.label)];
-    const rows = filtered.map((item: Record<string, any>) => [item.id, ...columns.map(c => String(getNestedValue(item, c.key) || ""))]);
+    const headers = ["ID", ...(columns || []).map(c => c.label)];
+    const rows = (filtered || []).map((item: Record<string, any>) => [item.id, ...(columns || []).map(c => String(getNestedValue(item, c.key) || ""))]);
     autoTable(doc, { head: [headers], body: rows, startY: 34, styles: { fontSize: 8 }, headStyles: { fillColor: [34, 68, 50] } });
     doc.save(`${title.toLowerCase().replace(/\s+/g, "_")}.pdf`);
   };
@@ -520,12 +544,16 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
                   {field.type === "select" ? (
                     <Select
                       value={form[field.key] !== undefined && form[field.key] !== null ? String(form[field.key]) : ""}
-                      onValueChange={(v) => {
-                        const update: Record<string, any> = { ...form, [field.key]: v };
-                        // Reset any dependent fields when this value changes
-                        fields.forEach((f) => { if (f.dependsOn === field.key) update[f.key] = ""; });
-                        setForm(update);
-                      }}
+                        onValueChange={(v) => {
+                          if (customStoreOverrides?.onFieldChange) {
+                            const handled = customStoreOverrides.onFieldChange(field.key, v, setForm, form);
+                            if (handled) return;
+                          }
+                          const update: Record<string, any> = { ...form, [field.key]: v };
+                          // Reset any dependent fields when this value changes
+                          fields.forEach((f) => { if (f.dependsOn === field.key) update[f.key] = ""; });
+                          setForm(update);
+                        }}
                     >
                       <SelectTrigger><SelectValue placeholder={field.placeholder || `Select ${field.label}`} /></SelectTrigger>
                       <SelectContent>
@@ -533,6 +561,7 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
                           const seen = new Set();
                           const resolvedOptions = typeof field.options === "function" ? field.options(form) : (field.options || []);
                           return resolvedOptions.map((o, idx) => {
+                            if (!o) return null;
                             const val = typeof o === "string" ? o : String(o.value);
                             const lab = typeof o === "string" ? o : o.label;
                             if (seen.has(val)) return null;
@@ -589,6 +618,12 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
                         let val: any = e.target.value;
                         if (field.type === "number") val = Number(val);
                         if (field.formatter) val = field.formatter(val);
+
+                        if (customStoreOverrides?.onFieldChange) {
+                          const handled = customStoreOverrides.onFieldChange(field.key, val, setForm, form);
+                          if (handled) return;
+                        }
+
                         setForm({ ...form, [field.key]: val });
                       }}
                     />

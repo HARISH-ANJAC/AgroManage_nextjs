@@ -39,7 +39,10 @@ import {
     CUSTOMER_CREDIT_LIMIT_FILE_UPLOAD,
     TBL_SALES_PERSON_MASTER,
     TBL_USER_INFO_HDR,
-    TBL_ROLE_MASTER
+    TBL_ROLE_MASTER,
+    TBL_DEPARTMENT_MASTER,
+    TBL_EMPLOYEE_MASTER,
+    TBL_TAX_MASTER
 } from "../db/schema/index.js";
 import { eq, inArray, getTableColumns, getTableName } from "drizzle-orm";
 
@@ -229,7 +232,14 @@ const TABLE_MAP: Record<string, { table: any; pk: string; joins?: any[] }> = {
             { table: TBL_CUSTOMER_MASTER, on: eq(TBL_CUSTOMER_CREDIT_LIMIT_DETAILS.Customer_Id, TBL_CUSTOMER_MASTER.Customer_Id), prefix: "CUSTOMER" }
         ]
     },
-    "sales-person": { table: TBL_SALES_PERSON_MASTER, pk: "Sales_Person_ID" }
+    "sales-person": { table: TBL_SALES_PERSON_MASTER, pk: "Sales_Person_ID" },
+    "departments": { table: TBL_DEPARTMENT_MASTER, pk: "Department_Id" },
+    "employees": {
+        table: TBL_EMPLOYEE_MASTER,
+        pk: "Employee_Id",
+        joins: [{ table: TBL_DEPARTMENT_MASTER, on: eq(TBL_EMPLOYEE_MASTER.Department, TBL_DEPARTMENT_MASTER.Department_Id), prefix: "DEPARTMENT" }]
+    },
+    "tax-master": { table: TBL_TAX_MASTER, pk: "Tax_Id" }
 };
 
 // 2. Dynamic Mappers: Bridge the gap between camelCase frontend and DB-specific casing
@@ -449,9 +459,10 @@ export const createOne = async (req: Request, res: Response): Promise<Response> 
         return res.status(201).json(createdRecord);
     } catch (error: any) {
         logError(`Master Controller Error [${req.method} ${req.originalUrl}]`, error);
-        // Catch Postgres Unique Constraint Violation (23505)
-        if (error.code === '23505' || error.originalError?.code === '23505') {
-            return res.status(400).json({ msg: "Duplicate entry found" });
+        const pgErrorCode = error.code || error.originalError?.code || error.cause?.code;
+        if (pgErrorCode === '23505') {
+            const detailMsg = error.cause?.detail || error.detail || "Duplicate record currently exists.";
+            return res.status(400).json({ msg: `Duplicate Entry: ${detailMsg}`, code: '23505' });
         }
         return res.status(500).json({ msg: "Internal server error" });
     }
@@ -495,8 +506,13 @@ export const updateOne = async (req: Request, res: Response): Promise<Response> 
             .where(eq(config.table[config.pk], targetId as any));
 
         return res.status(200).json({ msg: `${domain} updated successfully` });
-    } catch (error) {
+    } catch (error: any) {
         logError(`Master Controller Error [${req.method} ${req.url}]`, error);
+        const pgErrorCode = error.code || error.originalError?.code || error.cause?.code;
+        if (pgErrorCode === '23505') {
+            const detailMsg = error.cause?.detail || error.detail || "Duplicate record currently exists.";
+            return res.status(400).json({ msg: `Duplicate Entry: ${detailMsg}`, code: '23505' });
+        }
         return res.status(500).json({ msg: "Internal server error" });
     }
 };

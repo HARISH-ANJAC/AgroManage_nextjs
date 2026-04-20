@@ -8,13 +8,13 @@ export default function CurrencyMasterPage() {
 
   return <MasterCrudPage
     domain="currencies" title="Currencies" description="Manage your currencies" idPrefix="CUR" fields={[
-    { key: "currencyName", label: "Currency Name", type: "text", required: true },
-    { key: "exchangeRate", label: "Exchange Rate", type: "number" },
-    { key: "address", label: "Symbol / Address", type: "text" },
-    { key: "remarks", label: "Remarks", type: "textarea" },
-    { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
-  ]} initialData={currencies} 
-  columns={[
-    { key: "currencyName", label: "Currency" }, { key: "address", label: "Symbol" }, { key: "exchangeRate", label: "Rate" }, { key: "statusMaster", label: "Status" },
-  ]} />;
+      { key: "currencyName", label: "Currency Name", type: "text", required: true },
+      { key: "exchangeRate", label: "Exchange Rate", type: "number" },
+      { key: "address", label: "Symbol / Address", type: "text" },
+      { key: "remarks", label: "Remarks", type: "textarea" },
+      { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
+    ]} initialData={currencies}
+    columns={[
+      { key: "currencyName", label: "Currency" }, { key: "address", label: "Symbol" }, { key: "exchangeRate", label: "Rate" }, { key: "statusMaster", label: "Status" },
+    ]} />;
 }

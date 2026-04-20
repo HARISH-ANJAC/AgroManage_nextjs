@@ -4,10 +4,34 @@ import { useState } from "react";
 import MasterCrudPage from "@/components/MasterCrudPage";
 import { useMasterData } from "@/hooks/useMasterData";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { enforceCustomerValidation, formatTanzaniaPhone, cleanPhoneForStorage } from "@/lib/validation";
 
 export default function CustomersPage() {
     // Basic Data
-    const { data: customers } = useMasterData("customers");
+    const customersMaster = useMasterData("customers");
+    const { data: customers } = customersMaster;
+
+    const customersOverrides = {
+        ...customersMaster,
+        add: async (item: any) => {
+            enforceCustomerValidation(item);
+            const cleanedItem = {
+                ...item,
+                contactNumber: cleanPhoneForStorage(item.contactNumber),
+                phoneNumber2: cleanPhoneForStorage(item.phoneNumber2)
+            };
+            return customersMaster.add(cleanedItem);
+        },
+        update: async (item: any) => {
+            enforceCustomerValidation(item);
+            const cleanedItem = {
+                ...item,
+                contactNumber: cleanPhoneForStorage(item.contactNumber),
+                phoneNumber2: cleanPhoneForStorage(item.phoneNumber2)
+            };
+            return customersMaster.update(cleanedItem);
+        }
+    };
     const { data: countries } = useMasterData("countries");
     const { data: regions } = useMasterData("regions");
     const { data: districts } = useMasterData("districts");
@@ -67,31 +91,54 @@ export default function CustomersPage() {
                         idPrefix="CUS"
                         fields={[
                             { key: "customerName", label: "Customer Name", type: "text", required: true },
-                            { key: "tinNumber", label: "TIN Number", type: "text", required: true },
+                            { key: "tinNumber", label: "TIN Number", type: "text", required: true, placeholder: "Exactly 9 digits", maxLength: 9 },
                             { key: "vatNumber", label: "VAT Number", type: "text" },
                             { key: "contactPerson", label: "Contact Person", type: "text" },
-                            { key: "contactNumber", label: "Contact Number", type: "text" },
-                            { key: "phoneNumber2", label: "Phone Number 2", type: "text" },
-                            { key: "emailAddress", label: "Email Address", type: "text" },
+                            { key: "contactNumber", label: "Contact Number", type: "text", placeholder: "+255 XX XXX XXXX", formatter: formatTanzaniaPhone },
+                            { key: "phoneNumber2", label: "Phone Number 2", type: "text", placeholder: "+255 XX XXX XXXX", formatter: formatTanzaniaPhone },
+                            { key: "emailAddress", label: "Email Address", type: "text", placeholder: "example@domain.com" },
                             { key: "location", label: "Location", type: "text" },
-                            { key: "natureOfBusiness", label: "Nature of Business", type: "text" },
+                            { key: "natureOfBusiness", label: "Nature of Business", type: "select", options: ["B2B", "B2C", "C2B", "C2C"] },
                             { key: "billingLocationId", label: "Billing Location", type: "select", options: billingLocationOptions },
                             { key: "countryId", label: "Country", type: "select", options: countryOptions },
-                            { key: "regionId", label: "Region", type: "select", options: regionOptions },
-                            { key: "districtId", label: "District", type: "select", options: districtOptions },
+                            {
+                                key: "regionId",
+                                label: "Region",
+                                type: "select",
+                                dependsOn: "countryId",
+                                options: (form) => {
+                                    if (!form.countryId) return [];
+                                    return regions
+                                        ?.filter((r: any) => String(r.countryId) === String(form.countryId))
+                                        ?.map((r: any) => ({ value: r.id, label: r.regionName })) || [];
+                                }
+                            },
+                            {
+                                key: "districtId",
+                                label: "District",
+                                type: "select",
+                                dependsOn: "regionId",
+                                options: (form) => {
+                                    if (!form.regionId) return [];
+                                    return districts
+                                        ?.filter((d: any) => String(d.regionId) === String(form.regionId))
+                                        ?.map((d: any) => ({ value: d.id, label: d.districtName })) || [];
+                                }
+                            },
                             { key: "currencyId", label: "Currency", type: "select", options: currencyOptions },
                             { key: "creditAllowed", label: "Credit Allowed", type: "select", options: ["Yes", "No"] },
                             { key: "address", label: "Address", type: "textarea" },
                             { key: "tier", label: "Tier", type: "select", options: ["Tier 1", "Tier 2", "Tier 3"] },
                             { key: "remarks", label: "Remarks", type: "textarea" },
-                            { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
+                            { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
                         ]}
                         initialData={customers || []}
+                        customStoreOverrides={customersOverrides}
                         columns={[
                             { key: "customerName", label: "Customer Name" },
                             { key: "tinNumber", label: "TIN" },
                             { key: "contactPerson", label: "Contact" },
-                            { key: "contactNumber", label: "Phone" },
+                            { key: "contactNumber", label: "Phone", render: (val) => formatTanzaniaPhone(val) },
                             { key: "regionName", label: "Region" },
                             { key: "statusMaster", label: "Status" },
                         ]}
@@ -110,7 +157,7 @@ export default function CustomersPage() {
                             { key: "address", label: "Full Address", type: "textarea", required: true },
                             { key: "locationArea", label: "Location/Area", type: "text" },
                             { key: "isPrimary", label: "Is Primary", type: "select", options: ["Yes", "No"] },
-                            { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
+                            { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
                         ]}
                         initialData={addresses || []}
                         columns={[
@@ -134,7 +181,7 @@ export default function CustomersPage() {
                             { key: "contentData", label: "Select File", type: "image", required: true },
                             { key: "fileName", label: "File Name (Auto-filled)", type: "text", required: true },
                             { key: "descriptions", label: "Remarks/Description", type: "textarea" },
-                            { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
+                            { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
                         ]}
                         initialData={files || []}
                         columns={[
@@ -158,7 +205,7 @@ export default function CustomersPage() {
                             { key: "billingLocationId", label: "Billing Location", type: "select", required: true, options: billingLocationOptions },
                             { key: "isDefault", label: "Is Default", type: "select", options: ["Yes", "No"] },
                             { key: "remarks", label: "Remarks", type: "textarea" },
-                            { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
+                            { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
                         ]}
                         initialData={billingMappings || []}
                         columns={[
@@ -180,7 +227,7 @@ export default function CustomersPage() {
                             { key: "vatPercentage", label: "VAT Percentage (%)", type: "number", required: true },
                             { key: "effectiveFrom", label: "Effective From", type: "date" },
                             { key: "effectiveTo", label: "Effective To", type: "date" },
-                            { key: "requestStatus", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
+                            { key: "requestStatus", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
                         ]}
                         initialData={vatSettings || []}
                         columns={[
@@ -230,7 +277,7 @@ export default function CustomersPage() {
                             { key: "effectiveFrom", label: "Effective From", type: "date" },
                             { key: "effectiveTo", label: "Effective To", type: "date" },
                             { key: "remarks", label: "Remarks", type: "textarea" },
-                            { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
+                            { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
                         ]}
                         initialData={prices || []}
                         columns={[
@@ -254,7 +301,7 @@ export default function CustomersPage() {
                             { key: "approvedCreditLimitAmount", label: "Credit Limit Amount", type: "number", required: true },
                             { key: "totalOutstandingAmount", label: "Current Balance", type: "number" },
                             { key: "remarks", label: "Remarks", type: "textarea" },
-                            { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
+                            { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
                         ]}
                         initialData={creditLimits || []}
                         columns={[
@@ -276,7 +323,7 @@ export default function CustomersPage() {
                             { key: "creditLimitId", label: "Credit Limit Reference", type: "select", required: true, options: creditLimitOptions },
                             { key: "fileName", label: "File Name", type: "text", required: true },
                             { key: "filePath", label: "File Path", type: "text", required: true },
-                            { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
+                            { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
                         ]}
                         initialData={creditFiles || []}
                         columns={[

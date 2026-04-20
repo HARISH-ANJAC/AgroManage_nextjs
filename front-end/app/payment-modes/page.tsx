@@ -8,13 +8,13 @@ export default function PaymentModesPage() {
 
   return <MasterCrudPage
     domain="payment-modes" title="Payment Modes" description="Manage your payment modes" idPrefix="PMD" fields={[
-    { key: "paymentModeName", label: "Payment Mode Name", type: "text", required: true },
-    { key: "paymentModePercentage", label: "Payment Mode Percentage", type: "number" },
-    { key: "remarks", label: "Remarks", type: "textarea" },
-    { key: "statusEntry", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
-  ]} initialData={paymentModes} columns={[
-    { key: "paymentModeName", label: "Mode" }, 
-    { key: "paymentModePercentage", label: "%" }, 
-    { key: "statusEntry", label: "Status" },
-  ]} />;
+      { key: "paymentModeName", label: "Payment Mode Name", type: "text", required: true },
+      { key: "paymentModePercentage", label: "Payment Mode Percentage", type: "number" },
+      { key: "remarks", label: "Remarks", type: "textarea" },
+      { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
+    ]} initialData={paymentModes} columns={[
+      { key: "paymentModeName", label: "Mode" },
+      { key: "paymentModePercentage", label: "%" },
+      { key: "statusEntry", label: "Status" },
+    ]} />;
 }

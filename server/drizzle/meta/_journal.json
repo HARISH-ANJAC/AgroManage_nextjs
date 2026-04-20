@@ -15,6 +15,20 @@
       "when": 1776496414955,
       "tag": "0001_colorful_sabra",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776670282738,
+      "tag": "0002_chilly_ulik",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1776681467777,
+      "tag": "0003_perfect_zaladane",
+      "breakpoints": true
     }
   ]
 }

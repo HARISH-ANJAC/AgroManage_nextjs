@@ -19,10 +19,10 @@ export default function LedgerMasterPage() {
     })) || [];
 
     return <MasterCrudPage
-        domain="ledger-master" 
-        title="Ledger Master" 
-        description="Manage your financial ledgers and mappings to groups" 
-        idPrefix="LDG" 
+        domain="ledger-master"
+        title="Ledger Master"
+        description="Manage your financial ledgers and mappings to groups"
+        idPrefix="LDG"
         fields={[
             { key: "companyId", label: "Company", type: "select", options: companyOptions },
             { key: "ledgerName", label: "Ledger Name", type: "text", required: true },
@@ -30,14 +30,14 @@ export default function LedgerMasterPage() {
             { key: "ledgerType", label: "Ledger Type", type: "text" },
             { key: "ledgerDesc", label: "Description", type: "text" },
             { key: "remarks", label: "Remarks", type: "textarea" },
-            { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
-        ]} 
-        initialData={ledgers || []} 
+            { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
+        ]}
+        initialData={ledgers || []}
         columns={[
-            { key: "ledgerName", label: "Ledger" }, 
-            { key: "groupName", label: "Group" }, 
-            { key: "ledgerType", label: "Type" }, 
+            { key: "ledgerName", label: "Ledger" },
+            { key: "groupName", label: "Group" },
+            { key: "ledgerType", label: "Type" },
             { key: "statusMaster", label: "Status" },
-        ]} 
+        ]}
     />;
 }

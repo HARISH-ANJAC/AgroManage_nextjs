@@ -1,3 +1,14 @@
+export const TANZANIA_ZONES = [
+  "Northern Zone",
+  "Central Zone",
+  "Lake Zone",
+  "Eastern Zone",
+  "Southern Highlands Zone",
+  "Southern Zone",
+  "Western Zone",
+  "Coastal Zone"
+];
+
 /**
  * Utility functions for common data validation patterns
  */
@@ -123,6 +134,44 @@ export const enforceSupplierValidation = (form: Record<string, any>) => {
 
   if (form.phoneNumber && !validateTanzaniaPhone(form.phoneNumber)) {
     throw new Error("Phone Number must be in Tanzania format (e.g., +255XXXXXXXXX).");
+  }
+
+  return true;
+};
+
+/**
+ * Validates customer-specific fields
+ */
+export const enforceCustomerValidation = (form: Record<string, any>) => {
+  if (form.tinNumber && !validateTin(form.tinNumber)) {
+    throw new Error("TIN Number must be exactly 9 digits.");
+  }
+
+  if (form.emailAddress && !validateEmail(form.emailAddress)) {
+    throw new Error("Invalid Email format.");
+  }
+
+  if (form.contactNumber && !validateTanzaniaPhone(form.contactNumber)) {
+    throw new Error("Contact Number must be in Tanzania format (e.g., +255XXXXXXXXX).");
+  }
+
+  if (form.phoneNumber2 && !validateTanzaniaPhone(form.phoneNumber2)) {
+    throw new Error("Phone Number 2 must be in Tanzania format (e.g., +255XXXXXXXXX).");
+  }
+
+  return true;
+};
+
+/**
+ * Validates employee-specific fields
+ */
+export const enforceEmployeeValidation = (form: Record<string, any>) => {
+  if (form.email && !validateEmail(form.email)) {
+    throw new Error("Invalid Email format.");
+  }
+
+  if (form.phone && !validateTanzaniaPhone(form.phone)) {
+    throw new Error("Phone must be in Tanzania format (e.g., +255XXXXXXXXX).");
   }
 
   return true;

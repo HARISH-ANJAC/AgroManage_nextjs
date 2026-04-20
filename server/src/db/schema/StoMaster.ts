@@ -65,6 +65,54 @@ export const TBL_ROLE_MASTER = StoMasterSchema.table("TBL_ROLE_MASTER", {
   MODIFIED_MAC_ADDRESS: varchar("MODIFIED_MAC_ADDRESS", { length: 50 }),
 });
 
+export const TBL_DEPARTMENT_MASTER = StoMasterSchema.table("tbl_Department_Master", {
+  Department_Id: serial("Department_Id").primaryKey(),
+  Department_Name: varchar("Department_Name", { length: 100 }).unique(),
+  Department_Description: varchar("Department_Description", { length: 200 }),
+  Remarks: varchar("Remarks", { length: 1000 }),
+  Status_Master: varchar("Status_Master", { length: 20 }),
+  Created_By: varchar("Created_By", { length: 50 }),
+  Created_Date: timestamp("Created_Date", { mode: "date" }),
+  Created_Mac_Address: varchar("Created_Mac_Address", { length: 50 }),
+  Modified_By: varchar("Modified_By", { length: 50 }),
+  Modified_Date: timestamp("Modified_Date", { mode: "date" }),
+  Modified_Mac_Address: varchar("Modified_Mac_Address", { length: 50 }),
+});
+
+
+export const TBL_EMPLOYEE_MASTER = StoMasterSchema.table("tbl_Employee_Master", {
+  Employee_Id: serial("Employee_Id").primaryKey(),
+  Card_Id: varchar("Card_Id", { length: 50 }),
+  Name: varchar("Name", { length: 150 }).notNull(),
+  Role: varchar("Role", { length: 100 }),
+  Department: integer("Department").references(() => TBL_DEPARTMENT_MASTER.Department_Id),
+  Phone: varchar("Phone", { length: 50 }),
+  Email: varchar("Email", { length: 150 }),
+  Remarks: varchar("Remarks", { length: 1000 }),
+  Status_Master: varchar("Status_Master", { length: 20 }).default("Active"),
+  Created_By: varchar("Created_By", { length: 50 }),
+  Created_Date: timestamp("Created_Date", { mode: "date" }),
+  Created_Mac_Address: varchar("Created_Mac_Address", { length: 50 }),
+  Modified_By: varchar("Modified_By", { length: 50 }),
+  Modified_Date: timestamp("Modified_Date", { mode: "date" }),
+  Modified_Mac_Address: varchar("Modified_Mac_Address", { length: 50 }),
+});
+
+
+export const TBL_TAX_MASTER = StoMasterSchema.table("tbl_Tax_Master", {
+  Tax_Id: serial("Tax_Id").primaryKey(),
+  Name: varchar("Name", { length: 100 }).notNull(),
+  Rate: numeric("Rate", { precision: 5, scale: 2 }).notNull(),
+  Description: varchar("Description", { length: 255 }),
+  Status_Master: varchar("Status_Master", { length: 20 }).default("Active"),
+  Created_By: varchar("Created_By", { length: 50 }),
+  Created_Date: timestamp("Created_Date", { mode: "date" }).defaultNow(),
+  Created_Mac_Address: varchar("Created_Mac_Address", { length: 50 }),
+  Modified_By: varchar("Modified_By", { length: 50 }),
+  Modified_Date: timestamp("Modified_Date", { mode: "date" }),
+  Modified_Mac_Address: varchar("Modified_Mac_Address", { length: 50 }),
+});
+
 export const TBL_CURRENCY_MASTER = StoMasterSchema.table("TBL_CURRENCY_MASTER", {
   CURRENCY_ID: serial("CURRENCY_ID").primaryKey(),
   CURRENCY_NAME: varchar("CURRENCY_NAME", { length: 50 }).unique(),
@@ -333,7 +381,7 @@ export const TBL_COUNTRY_MASTER = StoMasterSchema.table("tbl_country_master", {
   iso3: varchar("iso3", { length: 50 }),
   numcode: integer("numcode"),
   phonecode: integer("phonecode"),
-  Batch_No: varchar("Batch_No", { length: 2 }),
+  Batch_No: varchar("Batch_No", { length: 50 }),
   Remarks: varchar("Remarks", { length: 1000 }),
   Status_Master: varchar("Status_Master", { length: 50 }),
   Created_User: varchar("Created_User", { length: 50 }),
