@@ -14,6 +14,7 @@ import { useGoodsReceiptStore } from "@/hooks/useGoodsReceiptStore";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { SupportingDoc } from "@/components/ui/Supporting-Doc";
+import { formatTanzaniaPhone, validateTanzaniaPhone } from "@/lib/validation";
 
 interface GRNItem {
   id: number;
@@ -227,6 +228,11 @@ function CreateGRNContent() {
   const handleSubmit = async () => {
     if (!header.poRefNo) { toast.error("Please select a PO Reference"); return; }
     if (!header.grnStoreId) { toast.error("Please select a GRN Store"); return; }
+    if (header.driverContact && !validateTanzaniaPhone(header.driverContact)) {
+      toast.error("Driver Contact must be in Tanzania format (e.g., +255XXXXXXXXX)");
+      return;
+    }
+
     if (items.length === 0) { toast.error("No items loaded from PO"); return; }
 
     for (const item of items) {
@@ -458,7 +464,12 @@ function CreateGRNContent() {
             {/* Driver Contact */}
             <div className="space-y-2">
               <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Driver Contact</Label>
-              <Input value={header.driverContact} onChange={(e) => setHeader({ ...header, driverContact: e.target.value })} placeholder="Enter contact number" className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11" />
+              <Input 
+                value={header.driverContact} 
+                onChange={(e) => setHeader({ ...header, driverContact: formatTanzaniaPhone(e.target.value) })} 
+                placeholder="Enter contact number" 
+                className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11" 
+              />
             </div>
 
             {/* Vehicle */}

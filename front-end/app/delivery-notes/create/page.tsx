@@ -33,6 +33,7 @@ import { useDeliveryNoteStore } from "@/hooks/useDeliveryNoteStore";
 import { useStores } from "@/hooks/useStoreData";
 import { useMasterData } from "@/hooks/useMasterData";
 import { getCurrentUser } from "@/lib/auth";
+import { formatTanzaniaPhone, validateTanzaniaPhone } from "@/lib/validation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { SupportingDoc } from "@/components/ui/Supporting-Doc";
@@ -176,6 +177,11 @@ function CreateDNContent() {
   const handleCreateDN = async (statusValue: string = "Submitted") => {
     if (!header.deliverySourceRefNo) {
       toast.error("Please select a Sales Order Reference");
+      return;
+    }
+
+    if (header.driverContactNumber && !validateTanzaniaPhone(header.driverContactNumber)) {
+      toast.error("Driver Contact Number must be in Tanzania format (e.g., +255XXXXXXXXX)");
       return;
     }
 
@@ -416,7 +422,7 @@ function CreateDNContent() {
 
             <div className="space-y-2">
               <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Driver Contact</Label>
-              <Input value={header.driverContactNumber} onChange={(e) => setHeader({ ...header, driverContactNumber: e.target.value })} placeholder="+255..." className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11 font-medium" />
+              <Input value={header.driverContactNumber} onChange={(e) => setHeader({ ...header, driverContactNumber: formatTanzaniaPhone(e.target.value) })} placeholder="+255..." className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11 font-medium" />
             </div>
 
             <div className="space-y-2">

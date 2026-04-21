@@ -17,12 +17,12 @@ export default function UserStoreMappingPage() {
 
   return <MasterCrudPage
     domain="user-store-mappings" title="User-Store Mapping" description="Manage your user to store mappings" idPrefix="USM" fields={[
-    { key: "userId", label: "User", type: "select", required: true, options: userOptions },
-    { key: "companyId", label: "Company", type: "select", options: companyOptions },
-    { key: "storeId", label: "Store", type: "select", required: true, options: storeOptions },
-    { key: "roleId", label: "Role", type: "select", options: roleOptions },
-    { key: "status", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
-  ]} initialData={mappings || []} columns={[
-    { key: "userName", label: "User" }, { key: "companyName", label: "Company" }, { key: "storeName", label: "Store" }, { key: "roleName", label: "Role" }, { key: "statusUserToRole", label: "Status" },
-  ]} />;
+      { key: "userIdUserToRole", label: "User", type: "select", required: true, options: userOptions },
+      { key: "companyId", label: "Company", type: "select", options: companyOptions },
+      { key: "storeIdUserToRole", label: "Store", type: "select", required: true, options: storeOptions },
+      { key: "roleIdUserToRole", label: "Role", type: "select", options: roleOptions },
+      { key: "statusUserToRole", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
+    ]} initialData={mappings || []} columns={[
+      { key: "userLoginName", label: "User" }, { key: "companyCompanyName", label: "Company" }, { key: "storeStoreName", label: "Store" }, { key: "roleRoleName", label: "Role" }, { key: "statusUserToRole", label: "Status" },
+    ]} />;
 }

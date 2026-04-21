@@ -8,12 +8,12 @@ export default function RolesPage() {
 
   return <MasterCrudPage
     domain="roles" title="Roles" description="Manage your roles" idPrefix="ROL" fields={[
-    { key: "roleName", label: "Role Name", type: "text", required: true },
-    { key: "roleDescription", label: "Role Description", type: "text" },
-    { key: "remarks", label: "Remarks", type: "textarea" },
-    { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"] },
-  ]} initialData={roles} 
-  columns={[
-    { key: "roleName", label: "Role" }, { key: "roleDescription", label: "Description" }, { key: "statusMaster", label: "Status" },
-  ]} />;
+      { key: "roleName", label: "Role Name", type: "text", required: true },
+      { key: "roleDescription", label: "Role Description", type: "text" },
+      { key: "remarks", label: "Remarks", type: "textarea" },
+      { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
+    ]} initialData={roles}
+    columns={[
+      { key: "roleName", label: "Role" }, { key: "roleDescription", label: "Description" }, { key: "statusMaster", label: "Status" },
+    ]} />;
 }
