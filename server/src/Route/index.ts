@@ -19,11 +19,14 @@ import { customerReceiptRoute } from "./customerReceiptRoute.js";
 import { expenseRoute } from "./expenseRoute.js";
 import { purchaseApprovalRoute } from "./purchaseApprovalRoute.js";
 import { schedulerRoute } from "./schedulerRoute.js";
+import accountingRoute from "./accountingRoute.js";
+import inventoryRoute from "./inventoryRoute.js";
 
 const Router = express.Router();
 
 Router.use("/auth", authRoute);
 Router.use("/dashboard", authenticate, dashboardRoute);
+Router.use("/inventory", authenticate, inventoryRoute);
 
 // Apply authentication middleware to all subsequent routes
 Router.use(authenticate);
@@ -53,6 +56,7 @@ Router.use("/sales-invoices", taxInvoiceRoute);
 Router.use("/customer-receipts", customerReceiptRoute);
 
 Router.use("/expenses", expenseRoute);
+Router.use("/accounting", accountingRoute);
 Router.use("/scheduler", schedulerRoute);
 
 // Master routes are top-level because domain names are unique (companies, stores, etc.)

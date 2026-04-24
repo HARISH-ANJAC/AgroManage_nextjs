@@ -6,9 +6,12 @@ import {
     TBL_EXPENSE_FILES_UPLOAD,
     TBL_COMPANY_MASTER,
     TBL_SUPPLIER_MASTER,
-    TBL_ACCOUNTS_HEAD_MASTER
+    TBL_ACCOUNTS_HEAD_MASTER,
+    TBL_JOURNAL_HDR,
+    TBL_JOURNAL_DTL
 } from "../db/schema/index.js";
 import { eq, desc, sql, and, ne } from "drizzle-orm";
+import { createJournalEntry, getSystemLedger, getLedgerForSupplier } from "../utils/accountingUtils.js";
 
 export const getExpenses = async (req: Request, res: Response): Promise<Response> => {
     try {
@@ -183,6 +186,41 @@ export const createExpense = async (req: Request, res: Response): Promise<Respon
                 await tx.insert(TBL_EXPENSE_FILES_UPLOAD).values(fValues as any);
             }
 
+            // 4. Generate Accounting Journal Entry
+            // We'll use the Account Head ID as the Ledger ID for simplicity, 
+            // OR find/create a ledger with the same name.
+            const expenseAccount = await tx.select().from(TBL_ACCOUNTS_HEAD_MASTER).where(eq(TBL_ACCOUNTS_HEAD_MASTER.ACCOUNT_HEAD_ID, header.accountHeadId)).limit(1);
+            const expenseLedgerId = await getSystemLedger(tx, header.companyId, expenseAccount[0]?.ACCOUNT_HEAD_NAME || "General Expense", "Expense");
+            
+            const supplierLedgerId = header.expenseSupplierId 
+                ? await getLedgerForSupplier(tx, header.expenseSupplierId, header.companyId)
+                : await getSystemLedger(tx, header.companyId, "Cash in Hand", "Asset"); // Default to Cash if no supplier
+
+            const journalDetails = [
+                {
+                    ledgerId: expenseLedgerId,
+                    debit: Number(header.totalExpenseAmount),
+                    credit: 0,
+                    remarks: `Expense - ${expenseRefNo}`
+                },
+                {
+                    ledgerId: supplierLedgerId,
+                    debit: 0,
+                    credit: Number(header.totalExpenseAmount),
+                    remarks: `Paid via/to ${header.expenseSupplierId ? 'Supplier' : 'Cash'}`
+                }
+            ];
+
+            await createJournalEntry(tx, {
+                journalDate: hValues.EXPENSE_DATE,
+                companyId: hValues.COMPANY_ID!,
+                moduleName: "EXPENSE",
+                moduleRefNo: expenseRefNo,
+                narration: `Expense: ${expenseAccount[0]?.ACCOUNT_HEAD_NAME || 'General'}`,
+                createdBy: audit?.user || "System",
+                ipAddress: req.ip
+            }, journalDetails);
+
             return { msg: "Expense created successfully", expenseRefNo };
         });
 
@@ -267,6 +305,50 @@ export const updateExpense = async (req: Request, res: Response): Promise<Respon
                 await tx.insert(TBL_EXPENSE_FILES_UPLOAD).values(fValues as any);
             }
 
+            // Update Accounting Journal Entry
+            // 1. Delete old entries
+            const oldJournals = await tx.select({ journalRefNo: TBL_JOURNAL_HDR.JOURNAL_REF_NO })
+                .from(TBL_JOURNAL_HDR)
+                .where(and(eq(TBL_JOURNAL_HDR.MODULE_REF_NO, id), eq(TBL_JOURNAL_HDR.MODULE_NAME, "EXPENSE")));
+            
+            for (const j of oldJournals) {
+                await tx.delete(TBL_JOURNAL_DTL).where(eq(TBL_JOURNAL_DTL.JOURNAL_REF_NO, j.journalRefNo));
+                await tx.delete(TBL_JOURNAL_HDR).where(eq(TBL_JOURNAL_HDR.JOURNAL_REF_NO, j.journalRefNo));
+            }
+
+            // 2. Create new entry
+            const expenseAccount = await tx.select().from(TBL_ACCOUNTS_HEAD_MASTER).where(eq(TBL_ACCOUNTS_HEAD_MASTER.ACCOUNT_HEAD_ID, header.accountHeadId)).limit(1);
+            const expenseLedgerId = await getSystemLedger(tx, header.companyId, expenseAccount[0]?.ACCOUNT_HEAD_NAME || "General Expense", "Expense");
+            
+            const supplierLedgerId = header.expenseSupplierId 
+                ? await getLedgerForSupplier(tx, header.expenseSupplierId, header.companyId)
+                : await getSystemLedger(tx, header.companyId, "Cash in Hand", "Asset");
+
+            const journalDetails = [
+                {
+                    ledgerId: expenseLedgerId,
+                    debit: Number(header.totalExpenseAmount),
+                    credit: 0,
+                    remarks: `Expense Update - ${id}`
+                },
+                {
+                    ledgerId: supplierLedgerId,
+                    debit: 0,
+                    credit: Number(header.totalExpenseAmount),
+                    remarks: `Paid via/to ${header.expenseSupplierId ? 'Supplier' : 'Cash'}`
+                }
+            ];
+
+            await createJournalEntry(tx, {
+                journalDate: hUpdates.EXPENSE_DATE || new Date(),
+                companyId: hUpdates.COMPANY_ID!,
+                moduleName: "EXPENSE",
+                moduleRefNo: id,
+                narration: `Expense Update: ${expenseAccount[0]?.ACCOUNT_HEAD_NAME || 'General'}`,
+                createdBy: audit?.user || "System",
+                ipAddress: req.ip
+            }, journalDetails);
+
             return { msg: "Expense updated successfully" };
         });
 
@@ -281,6 +363,16 @@ export const deleteExpense = async (req: Request, res: Response): Promise<Respon
     try {
         const id = decodeURIComponent(req.params.id as string);
         await db.transaction(async (tx) => {
+            // Delete Journal Entries
+            const oldJournals = await tx.select({ journalRefNo: TBL_JOURNAL_HDR.JOURNAL_REF_NO })
+                .from(TBL_JOURNAL_HDR)
+                .where(and(eq(TBL_JOURNAL_HDR.MODULE_REF_NO, id), eq(TBL_JOURNAL_HDR.MODULE_NAME, "EXPENSE")));
+            
+            for (const j of oldJournals) {
+                await tx.delete(TBL_JOURNAL_DTL).where(eq(TBL_JOURNAL_DTL.JOURNAL_REF_NO, j.journalRefNo));
+                await tx.delete(TBL_JOURNAL_HDR).where(eq(TBL_JOURNAL_HDR.JOURNAL_REF_NO, j.journalRefNo));
+            }
+
             await tx.delete(TBL_EXPENSE_DTL).where(eq(TBL_EXPENSE_DTL.EXPENSE_REF_NO, id));
             await tx.delete(TBL_EXPENSE_HDR).where(eq(TBL_EXPENSE_HDR.EXPENSE_REF_NO, id));
         });

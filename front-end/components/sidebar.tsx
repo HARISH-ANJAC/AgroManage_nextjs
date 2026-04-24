@@ -50,7 +50,8 @@ import {
   User,
   History,
   ClipboardList,
-  Clock
+  Clock,
+  Calculator
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -158,6 +159,7 @@ const navigation = [
       { name: 'Products', href: '/products', icon: Package },
       { name: 'Opening Stock', href: '/product-opening-stock', icon: Database },
       { name: 'Category Mapping', href: '/product-company-category-mapping', icon: Link2 },
+      { name: 'Stock Ledger', href: '/stock-ledger', icon: History },
     ]
   },
   {
@@ -221,6 +223,8 @@ const navigation = [
     group: 'Finance',
     items: [
       { name: 'Expenses', href: '/expenses', icon: CreditCard },
+      { name: 'Journals', href: '/journals', icon: BookOpen },
+      { name: 'General Ledger', href: '/ledgers', icon: Calculator },
     ]
   },
   {

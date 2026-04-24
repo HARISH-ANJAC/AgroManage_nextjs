@@ -42,10 +42,7 @@ export default function EmployeesPage() {
       { key: "email", label: "Email", type: "text" },
       { key: "remarks", label: "Remarks", type: "textarea" },
       { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
-    ]} initialData={[
-      { id: "EMP001", cardId: "CRD-001", name: "Julian Thorne", role: "Chief Agronomist", departmentName: "Operations", phone: "+255 754 100 200", email: "julian@agromanage.co.tz", remarks: "", statusMaster: "Active" },
-      { id: "EMP002", cardId: "CRD-002", name: "Sarah Kimani", role: "Procurement Manager", departmentName: "Purchasing", phone: "+255 712 300 400", email: "sarah@agromanage.co.tz", remarks: "", statusMaster: "Active" },
-    ]} columns={[
+    ]} initialData={[]} columns={[
       { key: "cardId", label: "Card ID" }, { key: "name", label: "Name" }, { key: "role", label: "Role" }, { key: "departmentName", label: "Dept" }, { key: "phone", label: "Phone", render: (val) => formatTanzaniaPhone(val) }, { key: "statusMaster", label: "Status" },
     ]} />;
 }

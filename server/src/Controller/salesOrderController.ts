@@ -7,9 +7,12 @@ import {
     TBL_PRODUCT_MASTER,
     TBL_CUSTOMER_MASTER,
     TBL_STORE_MASTER,
-    TBL_COMPANY_MASTER
+    TBL_COMPANY_MASTER,
+    TBL_JOURNAL_HDR,
+    TBL_JOURNAL_DTL
 } from "../db/schema/index.js";
-import { eq, like, desc, getTableColumns } from "drizzle-orm";
+import { eq, like, desc, inArray, and } from "drizzle-orm";
+import { createJournalEntry, getSystemLedger, getLedgerForCustomer } from "../utils/accountingUtils.js";
 
 interface SalesOrderHeader {
     salesOrderRefNo?: string;
@@ -279,6 +282,47 @@ export const createSalesOrder = async (req: Request, res: Response): Promise<Res
                 await tx.insert(TBL_SALES_ORDER_FILES_UPLOAD).values(fValues as any);
             }
 
+            // Journal Entry — only when status is Confirmed
+            if (header.status === "Confirmed") {
+                const salesLedgerId = await getSystemLedger(tx, Number(header.companyId), "Sales Account", "Revenue");
+                const customerLedgerId = await getLedgerForCustomer(tx, Number(header.customerId), Number(header.companyId));
+                const vatLedgerId = await getSystemLedger(tx, Number(header.companyId), "VAT Output Account", "Liability");
+
+                const journalDetails = [
+                    {
+                        ledgerId: customerLedgerId,
+                        debit: Number(header.finalAmount),
+                        credit: 0,
+                        remarks: `Sales Order: ${finalRefNo}`
+                    },
+                    {
+                        ledgerId: salesLedgerId,
+                        debit: 0,
+                        credit: Number(header.productAmount),
+                        remarks: `Sales Revenue - ${finalRefNo}`
+                    }
+                ];
+
+                if (Number(header.totalVatAmount) > 0) {
+                    journalDetails.push({
+                        ledgerId: vatLedgerId,
+                        debit: 0,
+                        credit: Number(header.totalVatAmount),
+                        remarks: `VAT Output - ${finalRefNo}`
+                    });
+                }
+
+                await createJournalEntry(tx, {
+                    journalDate: new Date(header.salesOrderDate),
+                    companyId: Number(header.companyId),
+                    moduleName: "SALES_ORDER",
+                    moduleRefNo: finalRefNo!,
+                    narration: `Sales Order ${finalRefNo} for Customer ID: ${header.customerId}`,
+                    createdBy: audit?.user || "System",
+                    ipAddress: req.ip
+                }, journalDetails);
+            }
+
             return { msg: "Sales Order created successfully", salesOrderRefNo: finalRefNo };
         } catch (error: any) {
             console.error(error);
@@ -373,6 +417,56 @@ export const updateSalesOrder = async (req: Request, res: Response): Promise<Res
                 await tx.insert(TBL_SALES_ORDER_FILES_UPLOAD).values(fValues as any);
             }
 
+            // Journal Sync — delete old, create new
+            const oldJournals = await tx.select({ journalRefNo: TBL_JOURNAL_HDR.JOURNAL_REF_NO })
+                .from(TBL_JOURNAL_HDR)
+                .where(and(eq(TBL_JOURNAL_HDR.MODULE_REF_NO, decodedId), eq(TBL_JOURNAL_HDR.MODULE_NAME, "SALES_ORDER")));
+
+            for (const j of oldJournals) {
+                await tx.delete(TBL_JOURNAL_DTL).where(eq(TBL_JOURNAL_DTL.JOURNAL_REF_NO, j.journalRefNo));
+                await tx.delete(TBL_JOURNAL_HDR).where(eq(TBL_JOURNAL_HDR.JOURNAL_REF_NO, j.journalRefNo));
+            }
+
+            if (header.status === "Confirmed") {
+                const salesLedgerId = await getSystemLedger(tx, Number(header.companyId), "Sales Account", "Revenue");
+                const customerLedgerId = await getLedgerForCustomer(tx, Number(header.customerId), Number(header.companyId));
+                const vatLedgerId = await getSystemLedger(tx, Number(header.companyId), "VAT Output Account", "Liability");
+
+                const journalDetails = [
+                    {
+                        ledgerId: customerLedgerId,
+                        debit: Number(header.finalAmount),
+                        credit: 0,
+                        remarks: `Sales Order Update: ${decodedId}`
+                    },
+                    {
+                        ledgerId: salesLedgerId,
+                        debit: 0,
+                        credit: Number(header.productAmount),
+                        remarks: `Sales Revenue (Updated) - ${decodedId}`
+                    }
+                ];
+
+                if (Number(header.totalVatAmount) > 0) {
+                    journalDetails.push({
+                        ledgerId: vatLedgerId,
+                        debit: 0,
+                        credit: Number(header.totalVatAmount),
+                        remarks: `VAT Output (Updated) - ${decodedId}`
+                    });
+                }
+
+                await createJournalEntry(tx, {
+                    journalDate: new Date(header.salesOrderDate),
+                    companyId: Number(header.companyId),
+                    moduleName: "SALES_ORDER",
+                    moduleRefNo: decodedId,
+                    narration: `Sales Order ${decodedId} Updated`,
+                    createdBy: audit?.user || "System",
+                    ipAddress: req.ip
+                }, journalDetails);
+            }
+
             return { msg: "Sales Order updated successfully" };
         } catch (error) {
             console.error(error);
@@ -394,13 +488,22 @@ export const deleteSalesOrder = async (req: Request, res: Response): Promise<Res
 
         const transaction = await db.transaction(async (tx) => {
             try {
-                // 1. Delete Files
+                // 1. Delete Journal Entries
+                const oldJournals = await tx.select({ journalRefNo: TBL_JOURNAL_HDR.JOURNAL_REF_NO })
+                    .from(TBL_JOURNAL_HDR)
+                    .where(and(eq(TBL_JOURNAL_HDR.MODULE_REF_NO, id), eq(TBL_JOURNAL_HDR.MODULE_NAME, "SALES_ORDER")));
+                for (const j of oldJournals) {
+                    await tx.delete(TBL_JOURNAL_DTL).where(eq(TBL_JOURNAL_DTL.JOURNAL_REF_NO, j.journalRefNo));
+                    await tx.delete(TBL_JOURNAL_HDR).where(eq(TBL_JOURNAL_HDR.JOURNAL_REF_NO, j.journalRefNo));
+                }
+
+                // 2. Delete Files
                 await tx.delete(TBL_SALES_ORDER_FILES_UPLOAD).where(eq(TBL_SALES_ORDER_FILES_UPLOAD.SALES_ORDER_REF_NO, id));
                 
-                // 2. Delete Details
+                // 3. Delete Details
                 await tx.delete(TBL_SALES_ORDER_DTL).where(eq(TBL_SALES_ORDER_DTL.SALES_ORDER_REF_NO, id));
                 
-                // 3. Delete Header
+                // 4. Delete Header
                 await tx.delete(TBL_SALES_ORDER_HDR).where(eq(TBL_SALES_ORDER_HDR.SALES_ORDER_REF_NO, id));
 
                 return { msg: "Sales Order deleted successfully" };
@@ -431,6 +534,14 @@ export const bulkDeleteSalesOrders = async (req: Request, res: Response): Promis
             try {
                 // Perform deletes for each ID
                 for (const id of ids) {
+                    // Delete journal entries first
+                    const oldJournals = await tx.select({ journalRefNo: TBL_JOURNAL_HDR.JOURNAL_REF_NO })
+                        .from(TBL_JOURNAL_HDR)
+                        .where(and(eq(TBL_JOURNAL_HDR.MODULE_REF_NO, id), eq(TBL_JOURNAL_HDR.MODULE_NAME, "SALES_ORDER")));
+                    for (const j of oldJournals) {
+                        await tx.delete(TBL_JOURNAL_DTL).where(eq(TBL_JOURNAL_DTL.JOURNAL_REF_NO, j.journalRefNo));
+                        await tx.delete(TBL_JOURNAL_HDR).where(eq(TBL_JOURNAL_HDR.JOURNAL_REF_NO, j.journalRefNo));
+                    }
                     await tx.delete(TBL_SALES_ORDER_FILES_UPLOAD).where(eq(TBL_SALES_ORDER_FILES_UPLOAD.SALES_ORDER_REF_NO, id));
                     await tx.delete(TBL_SALES_ORDER_DTL).where(eq(TBL_SALES_ORDER_DTL.SALES_ORDER_REF_NO, id));
                     await tx.delete(TBL_SALES_ORDER_HDR).where(eq(TBL_SALES_ORDER_HDR.SALES_ORDER_REF_NO, id));

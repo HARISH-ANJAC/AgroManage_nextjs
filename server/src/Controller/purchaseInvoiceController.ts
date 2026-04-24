@@ -6,9 +6,11 @@ import {
     TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS,
     TBL_PURCHASE_INVOICE_FILES_UPLOAD,
     TBL_PURCHASE_ORDER_DTL,
-    TBL_GOODS_INWARD_GRN_DTL
+    TBL_GOODS_INWARD_GRN_DTL,
+    TBL_JOURNAL_HDR,
+    TBL_JOURNAL_DTL
 } from "../db/schema/index.js";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, and } from "drizzle-orm";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -17,6 +19,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 import { sql } from "drizzle-orm";
+import { createJournalEntry, getSystemLedger, getLedgerForSupplier } from "../utils/accountingUtils.js";
 
 export const getPurchaseInvoices = async (req: Request, res: Response): Promise<Response> => {
     try {
@@ -206,6 +209,45 @@ export const createPurchaseInvoice = async (req: Request, res: Response): Promis
                 await tx.insert(TBL_PURCHASE_INVOICE_FILES_UPLOAD).values(fValues as any);
             }
 
+            // 5. Generate Accounting Journal Entry
+            const purchaseLedgerId = await getSystemLedger(tx, hValues.COMPANY_ID!, "Purchase Account", "Direct Expense");
+            const supplierLedgerId = await getLedgerForSupplier(tx, hValues.SUPPLIER_ID!, hValues.COMPANY_ID!);
+            const vatLedgerId = await getSystemLedger(tx, hValues.COMPANY_ID!, "VAT Input Account", "Asset");
+
+            const journalDetails = [
+                {
+                    ledgerId: purchaseLedgerId,
+                    debit: Number(header.totalProductHdrAmount) + Number(header.totalAdditionalCostAmount || 0),
+                    credit: 0,
+                    remarks: `Purchase Items & Costs - ${header.purchaseInvoiceRefNo}`
+                },
+                {
+                    ledgerId: supplierLedgerId,
+                    debit: 0,
+                    credit: Number(header.finalAmount),
+                    remarks: `Invoice Ref: ${header.invoiceNo}`
+                }
+            ];
+
+            if (Number(header.totalVatAmount) > 0) {
+                journalDetails.push({
+                    ledgerId: vatLedgerId,
+                    debit: Number(header.totalVatAmount),
+                    credit: 0,
+                    remarks: `VAT Input - ${header.purchaseInvoiceRefNo}`
+                });
+            }
+
+            await createJournalEntry(tx, {
+                journalDate: hValues.INVOICE_DATE,
+                companyId: hValues.COMPANY_ID!,
+                moduleName: "PURCHASE_INVOICE",
+                moduleRefNo: header.purchaseInvoiceRefNo,
+                narration: `Purchase Invoice ${header.invoiceNo} from Supplier ID: ${header.supplierId}`,
+                createdBy: audit?.user || "System",
+                ipAddress: req.ip
+            }, journalDetails);
+
             return { msg: "Purchase Invoice created successfully", id: header.purchaseInvoiceRefNo };
         } catch (error: any) {
             console.error(error);
@@ -343,6 +385,56 @@ export const updatePurchaseInvoice = async (req: Request, res: Response): Promis
                 await tx.insert(TBL_PURCHASE_INVOICE_FILES_UPLOAD).values(fValues as any);
             }
 
+            // --- Accounting Journal Sync ---
+            // 1. Delete old journal entries
+            const oldJournals = await tx.select({ journalRefNo: TBL_JOURNAL_HDR.JOURNAL_REF_NO })
+                .from(TBL_JOURNAL_HDR)
+                .where(and(eq(TBL_JOURNAL_HDR.MODULE_REF_NO, id), eq(TBL_JOURNAL_HDR.MODULE_NAME, "PURCHASE_INVOICE")));
+            
+            for (const j of oldJournals) {
+                await tx.delete(TBL_JOURNAL_DTL).where(eq(TBL_JOURNAL_DTL.JOURNAL_REF_NO, j.journalRefNo));
+                await tx.delete(TBL_JOURNAL_HDR).where(eq(TBL_JOURNAL_HDR.JOURNAL_REF_NO, j.journalRefNo));
+            }
+
+            // 2. Create new journal entry
+            const purchaseLedgerId = await getSystemLedger(tx, hUpdates.COMPANY_ID!, "Purchase Account", "Direct Expense");
+            const supplierLedgerId = await getLedgerForSupplier(tx, hUpdates.SUPPLIER_ID!, hUpdates.COMPANY_ID!);
+            const vatLedgerId = await getSystemLedger(tx, hUpdates.COMPANY_ID!, "VAT Input Account", "Asset");
+
+            const journalDetails = [
+                {
+                    ledgerId: purchaseLedgerId,
+                    debit: Number(header.totalProductHdrAmount) + Number(header.totalAdditionalCostAmount || 0),
+                    credit: 0,
+                    remarks: `Purchase Items & Costs (Updated) - ${id}`
+                },
+                {
+                    ledgerId: supplierLedgerId,
+                    debit: 0,
+                    credit: Number(header.finalAmount),
+                    remarks: `Invoice Ref (Updated): ${header.invoiceNo}`
+                }
+            ];
+
+            if (Number(header.totalVatAmount) > 0) {
+                journalDetails.push({
+                    ledgerId: vatLedgerId,
+                    debit: Number(header.totalVatAmount),
+                    credit: 0,
+                    remarks: `VAT Input (Updated) - ${id}`
+                });
+            }
+
+            await createJournalEntry(tx, {
+                journalDate: hUpdates.INVOICE_DATE || new Date(),
+                companyId: hUpdates.COMPANY_ID!,
+                moduleName: "PURCHASE_INVOICE",
+                moduleRefNo: id,
+                narration: `Purchase Invoice ${header.invoiceNo} from Supplier ID: ${header.supplierId} (Updated)`,
+                createdBy: audit?.user || "System",
+                ipAddress: req.ip
+            }, journalDetails);
+
             return { msg: "Purchase Invoice updated successfully" };
         } catch (error: any) {
             console.error(error);
@@ -402,6 +494,16 @@ export const deletePurchaseInvoice = async (req: Request, res: Response): Promis
     const id = decodeURIComponent(idRaw);
     try {
         await db.transaction(async (tx) => {
+            // Delete Journal Entries
+            const oldJournals = await tx.select({ journalRefNo: TBL_JOURNAL_HDR.JOURNAL_REF_NO })
+                .from(TBL_JOURNAL_HDR)
+                .where(and(eq(TBL_JOURNAL_HDR.MODULE_REF_NO, id), eq(TBL_JOURNAL_HDR.MODULE_NAME, "PURCHASE_INVOICE")));
+            
+            for (const j of oldJournals) {
+                await tx.delete(TBL_JOURNAL_DTL).where(eq(TBL_JOURNAL_DTL.JOURNAL_REF_NO, j.journalRefNo));
+                await tx.delete(TBL_JOURNAL_HDR).where(eq(TBL_JOURNAL_HDR.JOURNAL_REF_NO, j.journalRefNo));
+            }
+
             await tx.delete(TBL_PURCHASE_INVOICE_DTL).where(eq(TBL_PURCHASE_INVOICE_DTL.PURCHASE_INVOICE_REF_NO, id));
             await tx.delete(TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS).where(eq(TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS.PURCHASE_INVOICE_NO, id));
             await tx.delete(TBL_PURCHASE_INVOICE_FILES_UPLOAD).where(eq(TBL_PURCHASE_INVOICE_FILES_UPLOAD.PURCHASE_INVOICE_REF_NO, id));

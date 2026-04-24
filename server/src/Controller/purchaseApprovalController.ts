@@ -5,6 +5,7 @@ import {
     TBL_PURCHASE_ORDER_CONVERSATION_DTL
 } from "../db/schema/index.js";
 import { eq, or } from "drizzle-orm";
+import { createJournalEntry, getLedgerForSupplier, getSystemLedger } from "../utils/accountingUtils.js";
 
 export const getPendingApprovals = async (req: Request, res: Response): Promise<Response> => {
     try {
@@ -70,6 +71,7 @@ export const approvePurchaseOrder = async (req: Request, res: Response): Promise
                 CREATED_DATE: new Date(),
                 CREATED_IP_ADDRESS: ip
             } as any);
+
         });
 
         return res.status(200).json({ msg: `PO ${level} approval updated successfully` });

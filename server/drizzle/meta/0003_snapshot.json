@@ -1,5 +1,5 @@
 {
-  "id": "e2a3fc03-b234-4780-bfe8-05910e6e846f",
+  "id": "9d3c7835-0502-4e43-9c83-aff12c939aa2",
   "prevId": "33fa85aa-ded2-4e60-870a-400abdbd9bad",
   "version": "7",
   "dialect": "postgresql",
@@ -1188,7 +1188,7 @@
         },
         "Batch_No": {
           "name": "Batch_No",
-          "type": "varchar(2)",
+          "type": "varchar(50)",
           "primaryKey": false,
           "notNull": false
         },
@@ -3092,6 +3092,12 @@
           "type": "serial",
           "primaryKey": true,
           "notNull": true
+        },
+        "Card_Id": {
+          "name": "Card_Id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
         },
         "Name": {
           "name": "Name",
@@ -5315,6 +5321,87 @@
           ]
         }
       },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "stomaster.tbl_Tax_Master": {
+      "name": "tbl_Tax_Master",
+      "schema": "stomaster",
+      "columns": {
+        "Tax_Id": {
+          "name": "Tax_Id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "Name": {
+          "name": "Name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "Rate": {
+          "name": "Rate",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "Description": {
+          "name": "Description",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Status_Master": {
+          "name": "Status_Master",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'Active'"
+        },
+        "Created_By": {
+          "name": "Created_By",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Created_Date": {
+          "name": "Created_Date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "Created_Mac_Address": {
+          "name": "Created_Mac_Address",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Modified_By": {
+          "name": "Modified_By",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Modified_Date": {
+          "name": "Modified_Date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Modified_Mac_Address": {
+          "name": "Modified_Mac_Address",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -7913,6 +8000,199 @@
           ],
           "columnsTo": [
             "Supplier_Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "stoentries.TBL_JOURNAL_DTL": {
+      "name": "TBL_JOURNAL_DTL",
+      "schema": "stoentries",
+      "columns": {
+        "SNO": {
+          "name": "SNO",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "JOURNAL_REF_NO": {
+          "name": "JOURNAL_REF_NO",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "LEDGER_ID": {
+          "name": "LEDGER_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "DEBIT": {
+          "name": "DEBIT",
+          "type": "numeric(30, 2)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0'"
+        },
+        "CREDIT": {
+          "name": "CREDIT",
+          "type": "numeric(30, 2)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0'"
+        },
+        "REMARKS": {
+          "name": "REMARKS",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_JOURNAL_DTL_JOURNAL_REF_NO_TBL_JOURNAL_HDR_JOURNAL_REF_NO_fk": {
+          "name": "TBL_JOURNAL_DTL_JOURNAL_REF_NO_TBL_JOURNAL_HDR_JOURNAL_REF_NO_fk",
+          "tableFrom": "TBL_JOURNAL_DTL",
+          "tableTo": "TBL_JOURNAL_HDR",
+          "schemaTo": "stoentries",
+          "columnsFrom": [
+            "JOURNAL_REF_NO"
+          ],
+          "columnsTo": [
+            "JOURNAL_REF_NO"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_JOURNAL_DTL_LEDGER_ID_TBL_ACCOUNTS_LEDGER_MASTER_LEDGER_ID_fk": {
+          "name": "TBL_JOURNAL_DTL_LEDGER_ID_TBL_ACCOUNTS_LEDGER_MASTER_LEDGER_ID_fk",
+          "tableFrom": "TBL_JOURNAL_DTL",
+          "tableTo": "TBL_ACCOUNTS_LEDGER_MASTER",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "LEDGER_ID"
+          ],
+          "columnsTo": [
+            "LEDGER_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "stoentries.TBL_JOURNAL_HDR": {
+      "name": "TBL_JOURNAL_HDR",
+      "schema": "stoentries",
+      "columns": {
+        "SNO": {
+          "name": "SNO",
+          "type": "serial",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "JOURNAL_REF_NO": {
+          "name": "JOURNAL_REF_NO",
+          "type": "varchar(50)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "JOURNAL_DATE": {
+          "name": "JOURNAL_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "COMPANY_ID": {
+          "name": "COMPANY_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODULE_NAME": {
+          "name": "MODULE_NAME",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODULE_REF_NO": {
+          "name": "MODULE_REF_NO",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "NARRATION": {
+          "name": "NARRATION",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "STATUS_ENTRY": {
+          "name": "STATUS_ENTRY",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_BY": {
+          "name": "CREATED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_DATE": {
+          "name": "CREATED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "CREATED_IP_ADDRESS": {
+          "name": "CREATED_IP_ADDRESS",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_BY": {
+          "name": "MODIFIED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_DATE": {
+          "name": "MODIFIED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_IP_ADDRESS": {
+          "name": "MODIFIED_IP_ADDRESS",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_JOURNAL_HDR_COMPANY_ID_tbl_Company_Master_Company_Id_fk": {
+          "name": "TBL_JOURNAL_HDR_COMPANY_ID_tbl_Company_Master_Company_Id_fk",
+          "tableFrom": "TBL_JOURNAL_HDR",
+          "tableTo": "tbl_Company_Master",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "COMPANY_ID"
+          ],
+          "columnsTo": [
+            "Company_Id"
           ],
           "onDelete": "no action",
           "onUpdate": "no action"

@@ -8,9 +8,12 @@ import {
     TBL_CUSTOMER_MASTER,
     TBL_STORE_MASTER,
     TBL_COMPANY_MASTER,
-    TBL_CUSTOMER_RECEIPT_INVOICE_DTL
+    TBL_CUSTOMER_RECEIPT_INVOICE_DTL,
+    TBL_JOURNAL_HDR,
+    TBL_JOURNAL_DTL
 } from "../db/schema/index.js";
-import { eq, desc, like, sql, inArray } from "drizzle-orm";
+import { eq, desc, like, sql, inArray, and } from "drizzle-orm";
+import { createJournalEntry, getSystemLedger, getLedgerForCustomer } from "../utils/accountingUtils.js";
 import { sendEmail, getBaseTemplate } from "../utils/emailService.js";
 import { generatePdfFromHtml } from "../utils/pdfGenerator.js";
 import { LandscapeInvoice } from "../utils/invoiceTemplates/LandscapeInvoiceTemplate.js";
@@ -205,6 +208,45 @@ export const createTaxInvoice = async (req: Request, res: Response): Promise<Res
                 await tx.insert(TBL_TAX_INVOICE_FILES_UPLOAD).values(fValues as any);
             }
 
+            // 5. Generate Accounting Journal Entry
+            const salesLedgerId = await getSystemLedger(tx, header.companyId, "Sales Account", "Direct Income");
+            const customerLedgerId = await getLedgerForCustomer(tx, header.customerId, header.companyId);
+            const vatOutputLedgerId = await getSystemLedger(tx, header.companyId, "VAT Output Account", "Liability");
+
+            const journalDetails = [
+                {
+                    ledgerId: salesLedgerId,
+                    debit: 0,
+                    credit: Number(header.totalProductAmount),
+                    remarks: `Sales - ${finalRefNo}`
+                },
+                {
+                    ledgerId: customerLedgerId,
+                    debit: Number(header.finalSalesAmount),
+                    credit: 0,
+                    remarks: `Invoice - ${finalRefNo}`
+                }
+            ];
+
+            if (Number(header.vatAmount) > 0) {
+                journalDetails.push({
+                    ledgerId: vatOutputLedgerId,
+                    debit: 0,
+                    credit: Number(header.vatAmount),
+                    remarks: `VAT Output - ${finalRefNo}`
+                });
+            }
+
+            await createJournalEntry(tx, {
+                journalDate: hValues.INVOICE_DATE,
+                companyId: hValues.COMPANY_ID!,
+                moduleName: "TAX_INVOICE",
+                moduleRefNo: finalRefNo,
+                narration: `Sales Invoice ${finalRefNo} to Customer ID: ${header.customerId}`,
+                createdBy: audit?.user || "System",
+                ipAddress: req.ip
+            }, journalDetails);
+
             const invoiceResult = { msg: "Tax Invoice created successfully", taxInvoiceRefNo: finalRefNo };
 
             // Send Email to Customer
@@ -361,6 +403,56 @@ export const updateTaxInvoice = async (req: Request, res: Response): Promise<Res
                 await tx.insert(TBL_TAX_INVOICE_FILES_UPLOAD).values(fValues as any);
             }
 
+            // Update Accounting Journal Entry
+            // 1. Delete old entries
+            const oldJournals = await tx.select({ journalRefNo: TBL_JOURNAL_HDR.JOURNAL_REF_NO })
+                .from(TBL_JOURNAL_HDR)
+                .where(and(eq(TBL_JOURNAL_HDR.MODULE_REF_NO, decodedId), eq(TBL_JOURNAL_HDR.MODULE_NAME, "TAX_INVOICE")));
+            
+            for (const j of oldJournals) {
+                await tx.delete(TBL_JOURNAL_DTL).where(eq(TBL_JOURNAL_DTL.JOURNAL_REF_NO, j.journalRefNo));
+                await tx.delete(TBL_JOURNAL_HDR).where(eq(TBL_JOURNAL_HDR.JOURNAL_REF_NO, j.journalRefNo));
+            }
+
+            // 2. Create new entry
+            const salesLedgerId = await getSystemLedger(tx, header.companyId, "Sales Account", "Revenue");
+            const customerLedgerId = await getLedgerForCustomer(tx, header.customerId, header.companyId);
+            const vatLedgerId = await getSystemLedger(tx, header.companyId, "VAT Output Account", "Liability");
+
+            const journalDetails = [
+                {
+                    ledgerId: customerLedgerId,
+                    debit: Number(header.finalInvoiceAmount),
+                    credit: 0,
+                    remarks: `Invoice Update: ${id}`
+                },
+                {
+                    ledgerId: salesLedgerId,
+                    debit: 0,
+                    credit: Number(header.totalProductAmount),
+                    remarks: `Sales Items (Updated) - ${id}`
+                }
+            ];
+
+            if (Number(header.totalVatAmount) > 0) {
+                journalDetails.push({
+                    ledgerId: vatLedgerId,
+                    debit: 0,
+                    credit: Number(header.totalVatAmount),
+                    remarks: `VAT Output (Updated) - ${id}`
+                });
+            }
+
+            await createJournalEntry(tx, {
+                journalDate: hUpdates.INVOICE_DATE || new Date(),
+                companyId: header.companyId,
+                moduleName: "TAX_INVOICE",
+                moduleRefNo: decodedId,
+                narration: `Tax Invoice ${decodedId} (Updated)`,
+                createdBy: audit?.user || "System",
+                ipAddress: req.ip
+            }, journalDetails);
+
             return { msg: "Tax Invoice updated successfully" };
         } catch (error) {
             console.error(error);
@@ -380,6 +472,16 @@ export const deleteTaxInvoice = async (req: Request, res: Response): Promise<Res
         await db.transaction(async (tx) => {
             // 1. Delete references in customer receipts bridge table
             await tx.delete(TBL_CUSTOMER_RECEIPT_INVOICE_DTL).where(eq(TBL_CUSTOMER_RECEIPT_INVOICE_DTL.TAX_INVOICE_REF_NO, decodedId));
+
+            // Delete Journal Entries
+            const oldJournals = await tx.select({ journalRefNo: TBL_JOURNAL_HDR.JOURNAL_REF_NO })
+                .from(TBL_JOURNAL_HDR)
+                .where(and(eq(TBL_JOURNAL_HDR.MODULE_REF_NO, decodedId), eq(TBL_JOURNAL_HDR.MODULE_NAME, "TAX_INVOICE")));
+            
+            for (const j of oldJournals) {
+                await tx.delete(TBL_JOURNAL_DTL).where(eq(TBL_JOURNAL_DTL.JOURNAL_REF_NO, j.journalRefNo));
+                await tx.delete(TBL_JOURNAL_HDR).where(eq(TBL_JOURNAL_HDR.JOURNAL_REF_NO, j.journalRefNo));
+            }
 
             // 2. Delete related files
             await tx.delete(TBL_TAX_INVOICE_FILES_UPLOAD).where(eq(TBL_TAX_INVOICE_FILES_UPLOAD.TAX_INVOICE_REF_NO, decodedId));

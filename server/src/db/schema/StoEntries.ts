@@ -976,6 +976,38 @@ export const TBL_SALES_PROFORMA_FILES_UPLOAD = StoEntriesSchema.table("TBL_SALES
   MODIFIED_IP_ADDRESS: varchar("MODIFIED_IP_ADDRESS", { length: 50 }),
 });
 
+export const TBL_JOURNAL_HDR = StoEntriesSchema.table("TBL_JOURNAL_HDR", {
+  SNO: serial("SNO"),
+  JOURNAL_REF_NO: varchar("JOURNAL_REF_NO", { length: 50 }).primaryKey(),
+  JOURNAL_DATE: timestamp("JOURNAL_DATE", { mode: "date" }).notNull(),
+  COMPANY_ID: integer("COMPANY_ID").references(() => StoMasterSchema.TBL_COMPANY_MASTER.Company_Id),
+  MODULE_NAME: varchar("MODULE_NAME", { length: 50 }),
+  // OPENING_BALANCE
+  // SALES_INVOICE
+  // PURCHASE_INVOICE
+  // RECEIPT
+  // PAYMENT
+  // EXPENSE
+  MODULE_REF_NO: varchar("MODULE_REF_NO", { length: 50 }),
+  NARRATION: text("NARRATION"),
+  STATUS_ENTRY: varchar("STATUS_ENTRY", { length: 20 }),
+  CREATED_BY: varchar("CREATED_BY", { length: 50 }),
+  CREATED_DATE: timestamp("CREATED_DATE", { mode: "date" }).defaultNow(),
+  CREATED_IP_ADDRESS: varchar("CREATED_IP_ADDRESS", { length: 50 }),
+  MODIFIED_BY: varchar("MODIFIED_BY", { length: 50 }),
+  MODIFIED_DATE: timestamp("MODIFIED_DATE", { mode: "date" }),
+  MODIFIED_IP_ADDRESS: varchar("MODIFIED_IP_ADDRESS", { length: 50 }),
+});
+
+export const TBL_JOURNAL_DTL = StoEntriesSchema.table("TBL_JOURNAL_DTL", {
+  SNO: serial("SNO").primaryKey(),
+  JOURNAL_REF_NO: varchar("JOURNAL_REF_NO", { length: 50 }).references(() => TBL_JOURNAL_HDR.JOURNAL_REF_NO),
+  LEDGER_ID: integer("LEDGER_ID").references(() => StoMasterSchema.TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_ID),
+  DEBIT: numeric("DEBIT", { precision: 30, scale: 2 }).default("0"),
+  CREDIT: numeric("CREDIT", { precision: 30, scale: 2 }).default("0"),
+  REMARKS: varchar("REMARKS", { length: 255 }),
+});
+
 export const TBL_GOODS_FILES_UPLOADRelations = relations(TBL_GOODS_FILES_UPLOAD, ({ one }) => ({
   goods_inward_grn_hdr: one(TBL_GOODS_INWARD_GRN_HDR, { fields: [TBL_GOODS_FILES_UPLOAD.GRN_REF_NO], references: [TBL_GOODS_INWARD_GRN_HDR.GRN_REF_NO] }),
 }));
@@ -1022,6 +1054,16 @@ export const TBL_SALES_PROFORMA_DTLRelations = relations(TBL_SALES_PROFORMA_DTL,
 
 export const TBL_SALES_PROFORMA_FILES_UPLOADRelations = relations(TBL_SALES_PROFORMA_FILES_UPLOAD, ({ one }) => ({
   sales_proforma_hdr: one(TBL_SALES_PROFORMA_HDR, { fields: [TBL_SALES_PROFORMA_FILES_UPLOAD.SALES_PROFORMA_REF_NO], references: [TBL_SALES_PROFORMA_HDR.SALES_PROFORMA_REF_NO] }),
+}));
+
+export const TBL_JOURNAL_HDRRelations = relations(TBL_JOURNAL_HDR, ({ one, many }) => ({
+  company_master: one(StoMasterSchema.TBL_COMPANY_MASTER, { fields: [TBL_JOURNAL_HDR.COMPANY_ID], references: [StoMasterSchema.TBL_COMPANY_MASTER.Company_Id] }),
+  details: many(TBL_JOURNAL_DTL),
+}));
+
+export const TBL_JOURNAL_DTLRelations = relations(TBL_JOURNAL_DTL, ({ one }) => ({
+  journal_hdr: one(TBL_JOURNAL_HDR, { fields: [TBL_JOURNAL_DTL.JOURNAL_REF_NO], references: [TBL_JOURNAL_HDR.JOURNAL_REF_NO] }),
+  ledger_master: one(StoMasterSchema.TBL_ACCOUNTS_LEDGER_MASTER, { fields: [TBL_JOURNAL_DTL.LEDGER_ID], references: [StoMasterSchema.TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_ID] }),
 }));
 
 

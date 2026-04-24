@@ -68,8 +68,8 @@ export function useCustomers() {
 
 export function useStores() {
   return useMasterData("user-store-mappings", [
-    { id: 1, storeName: "Main Warehouse", status: "Active" },
-    { id: 2, storeName: "Zanzibar Hub", status: "Active" }
+    { id: 1, storeName: "Main Warehouse", status: "Active", storeIdUserToRole: 1, userName: "Admin" },
+    { id: 2, storeName: "Zanzibar Hub", status: "Active", storeIdUserToRole: 2, userName: "Manager" }
   ], "STR");
 }
 

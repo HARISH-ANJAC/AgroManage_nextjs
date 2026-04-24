@@ -1,8 +1,15 @@
 import { Request, Response } from "express";
 import { db } from "../db/index.js";
-import { TBL_CUSTOMER_RECEIPT_HDR, TBL_CUSTOMER_RECEIPT_INVOICE_DTL, TBL_CUSTOMER_RECEIPT_FILES_UPLOAD } from "../db/schema/StoEntries.js";
+import {
+    TBL_CUSTOMER_RECEIPT_HDR,
+    TBL_CUSTOMER_RECEIPT_INVOICE_DTL,
+    TBL_CUSTOMER_RECEIPT_FILES_UPLOAD,
+    TBL_JOURNAL_HDR,
+    TBL_JOURNAL_DTL
+} from "../db/schema/StoEntries.js";
 import { TBL_CUSTOMER_MASTER, TBL_COMPANY_MASTER, TBL_CURRENCY_MASTER, TBL_CUSTOMER_PAYMENT_MODE_MASTER } from "../db/schema/StoMaster.js";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, and } from "drizzle-orm";
+import { createJournalEntry, getLedgerForCustomer, getSystemLedger } from "../utils/accountingUtils.js";
 
 export const getCustomerReceipts = async (req: Request, res: Response) => {
     try {
@@ -178,6 +185,40 @@ export const addCustomerReceipt = async (req: Request, res: Response) => {
                 }));
                 await tx.insert(TBL_CUSTOMER_RECEIPT_FILES_UPLOAD).values(fValues as any);
             }
+
+            // 4. Generate Accounting Journal Entry
+            const customerLedgerId = await getLedgerForCustomer(tx, header.customerId, header.companyId);
+            
+            // Assume DR_BANK_CASH_ID is the ledger ID for the bank/cash account
+            // If it's a Bank Master ID, we should ideally map it, but for now we use it directly or lookup
+            const bankLedgerId = header.drBankCashId; 
+
+            if (bankLedgerId && customerLedgerId) {
+                const journalDetails = [
+                    {
+                        ledgerId: Number(bankLedgerId),
+                        debit: Number(header.receiptAmount),
+                        credit: 0,
+                        remarks: `Receipt - ${receiptRefNo}`
+                    },
+                    {
+                        ledgerId: customerLedgerId,
+                        debit: 0,
+                        credit: Number(header.receiptAmount),
+                        remarks: `Customer Payment - ${receiptRefNo}`
+                    }
+                ];
+
+                await createJournalEntry(tx, {
+                    journalDate: header.receiptDate ? new Date(header.receiptDate) : new Date(),
+                    companyId: header.companyId,
+                    moduleName: "CUSTOMER_RECEIPT",
+                    moduleRefNo: receiptRefNo,
+                    narration: `Payment received from Customer ID: ${header.customerId}`,
+                    createdBy: audit?.user || "System",
+                    ipAddress: req.ip
+                }, journalDetails);
+            }
         });
         res.status(201).json({ message: "Customer receipt created successfully" });
     } catch (error: any) {
@@ -191,7 +232,18 @@ export const deleteCustomerReceipt = async (req: Request, res: Response) => {
         const idParam = req.params.id as string;
         const id = decodeURIComponent(idParam);
         await db.transaction(async (tx) => {
+            // Delete Journal Entries
+            const oldJournals = await tx.select({ journalRefNo: TBL_JOURNAL_HDR.JOURNAL_REF_NO })
+                .from(TBL_JOURNAL_HDR)
+                .where(and(eq(TBL_JOURNAL_HDR.MODULE_REF_NO, id), eq(TBL_JOURNAL_HDR.MODULE_NAME, "CUSTOMER_RECEIPT")));
+            
+            for (const j of oldJournals) {
+                await tx.delete(TBL_JOURNAL_DTL).where(eq(TBL_JOURNAL_DTL.JOURNAL_REF_NO, j.journalRefNo));
+                await tx.delete(TBL_JOURNAL_HDR).where(eq(TBL_JOURNAL_HDR.JOURNAL_REF_NO, j.journalRefNo));
+            }
+
             await tx.delete(TBL_CUSTOMER_RECEIPT_INVOICE_DTL).where(eq(TBL_CUSTOMER_RECEIPT_INVOICE_DTL.RECEIPT_REF_NO, id));
+            await tx.delete(TBL_CUSTOMER_RECEIPT_FILES_UPLOAD).where(eq(TBL_CUSTOMER_RECEIPT_FILES_UPLOAD.RECEIPT_REF_NO, id));
             await tx.delete(TBL_CUSTOMER_RECEIPT_HDR).where(eq(TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_REF_NO, id));
         });
         res.json({ message: "Receipt deleted successfully" });

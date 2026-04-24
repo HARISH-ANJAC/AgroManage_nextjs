@@ -394,12 +394,12 @@ function CreateDNContent() {
               {storesLoading ? (
                 <Skeleton className="h-11 w-full rounded-xl" />
               ) : (
-                <Select value={header.fromStoreId.toString()} onValueChange={(v) => setHeader({ ...header, fromStoreId: Number(v) })}>
+                <Select value={String(header.fromStoreId)} onValueChange={(v) => setHeader({ ...header, fromStoreId: Number(v) })}>
                   <SelectTrigger className="bg-[#F8FAFC]/50 border-[#E2E8F0] rounded-xl h-11 font-bold text-[#0F172A]">
                     <SelectValue placeholder="Select Warehouse" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
-                    {stores.map((s: any) => <SelectItem key={s.id} value={s.storeIdUserToRole.toString()}>{s.storeName} (@{s.userName})</SelectItem>)}
+                    {stores.map((s: any) => <SelectItem key={s.id} value={String(s.storeIdUserToRole || s.id)}>{s.storeName} (@{s.userName || 'N/A'})</SelectItem>)}
                   </SelectContent>
                 </Select>
               )}
@@ -472,7 +472,7 @@ function CreateDNContent() {
                           <span>{item.productName}</span>
                         </div>
                       </td>
-                      <td className="p-4 text-center text-[#64748B] font-medium">{item.requestQty.toLocaleString()}</td>
+                      <td className="p-4 text-center text-[#64748B] font-medium">{(item.requestQty || 0).toLocaleString()}</td>
                       <td className="p-4 text-center">
                         <Input
                           type="number"
@@ -483,7 +483,7 @@ function CreateDNContent() {
                       </td>
                       <td className="p-4 text-center text-[#94A3B8] font-black uppercase text-xs">{item.uom}</td>
                       <td className="p-4 text-right font-black text-[#0F172A] tabular-nums tracking-tighter">
-                        TZS {item.amount.toLocaleString()}
+                        TZS {(item.amount || 0).toLocaleString()}
                       </td>
                     </tr>
                   ))
