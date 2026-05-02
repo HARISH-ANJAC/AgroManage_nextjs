@@ -1,23 +1,42 @@
-
 import pg from 'pg';
+import fs from 'fs';
+import path from 'path';
 import dotenv from 'dotenv';
+
 dotenv.config();
 
-const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
-});
-
 async function run() {
-  try {
-    console.log('Attempting to drop table with CASCADE to resolve sequence dependency...');
-    // Drop the table with CASCADE to ensure all dependent sequences are also handled
-    await pool.query('DROP TABLE IF EXISTS stomaster."CUSTOMER_CREDIT_LIMIT_FILE_UPLOAD" CASCADE;');
-    console.log('Successfully dropped table stomaster."CUSTOMER_CREDIT_LIMIT_FILE_UPLOAD"');
-  } catch (err) {
-    console.error('Error executing SQL:', err);
-  } finally {
-    await pool.end();
-  }
+    const client = new pg.Client({
+        connectionString: process.env.DATABASE_URL,
+    });
+
+    await client.connect();
+    console.log("Connected to database");
+
+    try {
+        const sql = fs.readFileSync('./drizzle/0005_typical_wildside.sql', 'utf8');
+        const statements = sql.split('--> statement-breakpoint');
+
+        for (const statement of statements) {
+            if (statement.trim()) {
+                console.log(`Executing: ${statement.substring(0, 50)}...`);
+                await client.query(statement).catch(e => {
+                    if (e.message.includes('already exists')) {
+                        console.log('Skipping (already exists)');
+                    } else {
+                        throw e;
+                    }
+                });
+            }
+        }
+        
+        console.log("Multi-currency tables created/verified successfully");
+        
+    } catch (err) {
+        console.error("Error during manual fix:", err);
+    } finally {
+        await client.end();
+    }
 }
 
 run();

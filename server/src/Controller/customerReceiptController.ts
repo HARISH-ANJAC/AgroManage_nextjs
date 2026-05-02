@@ -7,7 +7,14 @@ import {
     TBL_JOURNAL_HDR,
     TBL_JOURNAL_DTL
 } from "../db/schema/StoEntries.js";
-import { TBL_CUSTOMER_MASTER, TBL_COMPANY_MASTER, TBL_CURRENCY_MASTER, TBL_CUSTOMER_PAYMENT_MODE_MASTER } from "../db/schema/StoMaster.js";
+import { 
+    TBL_CUSTOMER_MASTER, 
+    TBL_COMPANY_MASTER, 
+    TBL_CURRENCY_MASTER, 
+    TBL_CUSTOMER_PAYMENT_MODE_MASTER,
+    TBL_MULTI_CURRENCY_TRANSACTIONS,
+    TBL_REALIZED_GAIN_LOSS
+} from "../db/schema/StoMaster.js";
 import { eq, desc, sql, and } from "drizzle-orm";
 import { createJournalEntry, getLedgerForCustomer, getSystemLedger } from "../utils/accountingUtils.js";
 
@@ -152,21 +159,70 @@ export const addCustomerReceipt = async (req: Request, res: Response) => {
                 CREATED_DATE: new Date(),
             } as any);
 
-            // 3. Insert Details (linked invoices)
+            // 3. Insert Details & Handle Realized Gain/Loss (linked invoices)
             if (items && items.length > 0) {
-                const dtlValues = items.map((item: any) => ({
-                    RECEIPT_REF_NO: receiptRefNo,
-                    TAX_INVOICE_REF_NO: item.taxInvoiceRefNo,
-                    ACTUAL_INVOICE_AMOUNT: String(item.actualInvoiceAmount || 0),
-                    ALREADY_PAID_AMOUNT: String(item.alreadyPaidAmount || 0),
-                    OUTSTANDING_INVOICE_AMOUNT: String(item.outstandingInvoiceAmount || 0),
-                    RECEIPT_INVOICE_ADJUST_AMOUNT: String(item.receiptInvoiceAdjustAmount || 0),
-                    REMARKS: item.remarks,
-                    STATUS_ENTRY: "Normal",
-                    CREATED_BY: audit?.user || "System",
-                    CREATED_DATE: new Date(),
-                }));
-                await tx.insert(TBL_CUSTOMER_RECEIPT_INVOICE_DTL).values(dtlValues as any);
+                for (const item of items) {
+                    await tx.insert(TBL_CUSTOMER_RECEIPT_INVOICE_DTL).values({
+                        RECEIPT_REF_NO: receiptRefNo,
+                        TAX_INVOICE_REF_NO: item.taxInvoiceRefNo,
+                        ACTUAL_INVOICE_AMOUNT: String(item.actualInvoiceAmount || 0),
+                        ALREADY_PAID_AMOUNT: String(item.alreadyPaidAmount || 0),
+                        OUTSTANDING_INVOICE_AMOUNT: String(item.outstandingInvoiceAmount || 0),
+                        RECEIPT_INVOICE_ADJUST_AMOUNT: String(item.receiptInvoiceAdjustAmount || 0),
+                        REMARKS: item.remarks,
+                        STATUS_ENTRY: "Normal",
+                        CREATED_BY: audit?.user || "System",
+                        CREATED_DATE: new Date(),
+                    });
+
+                    // Logic for Realized Gain/Loss (Step 4)
+                    const settleAmount = Number(item.receiptInvoiceAdjustAmount || 0);
+                    if (settleAmount > 0) {
+                        // Find original transaction
+                        const origTx = await tx.select()
+                            .from(TBL_MULTI_CURRENCY_TRANSACTIONS)
+                            .where(and(
+                                eq(TBL_MULTI_CURRENCY_TRANSACTIONS.DOCUMENT_NUMBER, item.taxInvoiceRefNo),
+                                eq(TBL_MULTI_CURRENCY_TRANSACTIONS.DOCUMENT_TYPE, 'TAX_INVOICE')
+                            ))
+                            .limit(1);
+
+                        if (origTx.length > 0) {
+                            const txData = origTx[0];
+                            const currentRate = Number(header.exchangeRate || 1);
+                            const originalRate = Number(txData.EXCHANGE_RATE_USED || 1);
+
+                            if (currentRate !== originalRate) {
+                                const currentBase = settleAmount * currentRate;
+                                const originalBase = settleAmount * originalRate;
+                                const glDiff = currentBase - originalBase; // Positive diff on receipt (AR) is a GAIN
+                                
+                                await tx.insert(TBL_REALIZED_GAIN_LOSS).values({
+                                    Company_ID: header.companyId,
+                                    TRANSACTION_ID: txData.TRANSACTION_ID,
+                                    SETTLEMENT_DATE: new Date().toISOString().split('T')[0],
+                                    SETTLEMENT_AMOUNT: settleAmount.toString(),
+                                    SETTLEMENT_RATE: currentRate.toString(),
+                                    SETTLEMENT_BASE_AMOUNT: currentBase.toString(),
+                                    ORIGINAL_BASE_AMOUNT: originalBase.toString(),
+                                    REALIZED_GAIN_LOSS: Math.abs(glDiff).toString(),
+                                    GL_TYPE: glDiff > 0 ? 'GAIN' : 'LOSS',
+                                    CREATED_BY: audit?.user || "System",
+                                    CREATED_DATE: new Date()
+                                });
+                            }
+
+                            // Update settled amount in MC tracking
+                            const newSettledTotal = Number(txData.SETTLED_AMOUNT || 0) + settleAmount;
+                            await tx.update(TBL_MULTI_CURRENCY_TRANSACTIONS)
+                                .set({ 
+                                    SETTLED_AMOUNT: newSettledTotal.toString(),
+                                    STATUS: newSettledTotal >= Number(txData.TRANSACTION_AMOUNT) ? 'FULLY_SETTLED' : 'PARTIAL'
+                                })
+                                .where(eq(TBL_MULTI_CURRENCY_TRANSACTIONS.TRANSACTION_ID, txData.TRANSACTION_ID));
+                        }
+                    }
+                }
             }
 
             if (req.body.files && req.body.files.length > 0) {

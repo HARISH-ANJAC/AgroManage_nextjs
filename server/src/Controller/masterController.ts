@@ -42,7 +42,10 @@ import {
     TBL_ROLE_MASTER,
     TBL_DEPARTMENT_MASTER,
     TBL_EMPLOYEE_MASTER,
-    TBL_TAX_MASTER
+    TBL_TAX_MASTER,
+    TBL_COST_CENTER_BUDGET,
+    TBL_COST_CENTER_MASTER,
+    TBL_BILLING_LOCATION_WISE_PRODUCT_PRICE
 } from "../db/schema/index.js";
 import { eq, inArray, getTableColumns, getTableName } from "drizzle-orm";
 
@@ -219,6 +222,15 @@ const TABLE_MAP: Record<string, { table: any; pk: string; joins?: any[] }> = {
             { table: TBL_PRODUCT_MASTER, on: eq(TBL_CUSTOMER_WISE_PRODUCT_PRICE_SETTINGS.Product_Id, TBL_PRODUCT_MASTER.PRODUCT_ID), prefix: "PRODUCT" }
         ]
     },
+    "billing-location-pricing": {
+        table: TBL_BILLING_LOCATION_WISE_PRODUCT_PRICE,
+        pk: "SNO",
+        joins: [
+            { table: TBL_BILLING_LOCATION_MASTER, on: eq(TBL_BILLING_LOCATION_WISE_PRODUCT_PRICE.Billing_Location_Id, TBL_BILLING_LOCATION_MASTER.Billing_Location_Id), prefix: "BILLING" },
+            { table: TBL_PRODUCT_MASTER, on: eq(TBL_BILLING_LOCATION_WISE_PRODUCT_PRICE.Product_Id, TBL_PRODUCT_MASTER.PRODUCT_ID), prefix: "PRODUCT" }
+        ]
+    },
+
     "customer-credit-limits": {
         table: TBL_CUSTOMER_CREDIT_LIMIT_DETAILS,
         pk: "Sno",
@@ -239,7 +251,12 @@ const TABLE_MAP: Record<string, { table: any; pk: string; joins?: any[] }> = {
         pk: "Employee_Id",
         joins: [{ table: TBL_DEPARTMENT_MASTER, on: eq(TBL_EMPLOYEE_MASTER.Department, TBL_DEPARTMENT_MASTER.Department_Id), prefix: "DEPARTMENT" }]
     },
-    "tax-master": { table: TBL_TAX_MASTER, pk: "Tax_Id" }
+    "tax-master": { table: TBL_TAX_MASTER, pk: "Tax_Id" },
+    "cost-center-budgets": {
+        table: TBL_COST_CENTER_BUDGET,
+        pk: "BUDGET_ID",
+        joins: [{ table: TBL_COST_CENTER_MASTER, on: eq(TBL_COST_CENTER_BUDGET.COST_CENTER_ID, TBL_COST_CENTER_MASTER.COST_CENTER_ID), prefix: "COST_CENTER" }]
+    }
 };
 
 // 2. Dynamic Mappers: Bridge the gap between camelCase frontend and DB-specific casing
@@ -421,6 +438,9 @@ export const createOne = async (req: Request, res: Response): Promise<Response> 
         const config = TABLE_MAP[domain];
         if (!config) return res.status(404).json({ msg: "Domain not found" });
 
+        // Resolve status from various possible keys
+        const statusValue = data.statusMaster || data.statusEntry || data.status || "Active";
+
         // Build composite audit object
         const auditData = {
             createdBy: audit?.user || "System",
@@ -431,11 +451,11 @@ export const createOne = async (req: Request, res: Response): Promise<Response> 
             createdUserFldHdr: audit?.user || "System",
             createdDateFldHdr: new Date(),
             createdMacAddrFldHdr: audit?.macAddress || "Unknown",
-            statusMaster: data.statusMaster || "Active",
-            statusEntry: data.statusMaster || "Active",
-            statusFldHdr: data.statusMaster || "Active",
-            statusFldDtl: data.statusMaster || "Active",
-            statusUserToRole: data.statusMaster || "Active",
+            statusMaster: statusValue,
+            statusEntry: statusValue,
+            statusFldHdr: statusValue,
+            statusFldDtl: statusValue,
+            statusUserToRole: statusValue,
             remarksFldHdr: data.remarks,
             remarksFldDtl: data.remarks,
             createdUserUserToRole: audit?.user || "System",
@@ -476,6 +496,9 @@ export const updateOne = async (req: Request, res: Response): Promise<Response> 
         const config = TABLE_MAP[domain];
         if (!config) return res.status(404).json({ msg: "Domain not found" });
 
+        // Resolve status from various possible keys
+        const statusValue = data.statusMaster || data.statusEntry || data.status || "Active";
+
         const auditData = {
             modifiedBy: audit?.user || "System",
             modifiedDate: new Date(),
@@ -485,11 +508,11 @@ export const updateOne = async (req: Request, res: Response): Promise<Response> 
             modifiedUserFldHdr: audit?.user || "System",
             modifiedDateFldHdr: new Date(),
             modifiedMacAddrFldHdr: audit?.macAddress || "Unknown",
-            statusMaster: data.statusMaster || "Active",
-            statusEntry: data.statusMaster || "Active",
-            statusFldHdr: data.statusMaster || "Active",
-            statusFldDtl: data.statusMaster || "Active",
-            statusUserToRole: data.statusMaster || "Active",
+            statusMaster: statusValue,
+            statusEntry: statusValue,
+            statusFldHdr: statusValue,
+            statusFldDtl: statusValue,
+            statusUserToRole: statusValue,
             remarksFldHdr: data.remarks,
             remarksFldDtl: data.remarks,
             modifiedUserUserToRole: audit?.user || "System",

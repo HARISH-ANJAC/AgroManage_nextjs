@@ -1,16 +1,19 @@
 import { Request, Response } from "express";
 import { db } from "../db/index.js";
-import { 
-    TBL_EXPENSE_HDR, 
+import {
+    TBL_EXPENSE_HDR,
     TBL_EXPENSE_DTL,
     TBL_EXPENSE_FILES_UPLOAD,
     TBL_COMPANY_MASTER,
     TBL_SUPPLIER_MASTER,
     TBL_ACCOUNTS_HEAD_MASTER,
     TBL_JOURNAL_HDR,
-    TBL_JOURNAL_DTL
+    TBL_JOURNAL_DTL,
+    TBL_COST_CENTER_ALLOCATION,
+    TBL_COST_CENTER_BUDGET
 } from "../db/schema/index.js";
-import { eq, desc, sql, and, ne } from "drizzle-orm";
+import * as multiCurrencyController from "./multiCurrencyController.js";
+import { eq, desc, sql, and, ne, lte, gte } from "drizzle-orm";
 import { createJournalEntry, getSystemLedger, getLedgerForSupplier } from "../utils/accountingUtils.js";
 
 export const getExpenses = async (req: Request, res: Response): Promise<Response> => {
@@ -36,11 +39,11 @@ export const getExpenses = async (req: Request, res: Response): Promise<Response
             createdBy: TBL_EXPENSE_HDR.CREATED_BY,
             createdDate: TBL_EXPENSE_HDR.CREATED_DATE
         })
-        .from(TBL_EXPENSE_HDR)
-        .leftJoin(TBL_COMPANY_MASTER, eq(TBL_EXPENSE_HDR.COMPANY_ID, TBL_COMPANY_MASTER.Company_Id))
-        .leftJoin(TBL_SUPPLIER_MASTER, eq(TBL_EXPENSE_HDR.EXPENSE_SUPPLIER_ID, TBL_SUPPLIER_MASTER.Supplier_Id))
-        .leftJoin(TBL_ACCOUNTS_HEAD_MASTER, eq(TBL_EXPENSE_HDR.ACCOUNT_HEAD_ID, TBL_ACCOUNTS_HEAD_MASTER.ACCOUNT_HEAD_ID))
-        .orderBy(desc(TBL_EXPENSE_HDR.CREATED_DATE));
+            .from(TBL_EXPENSE_HDR)
+            .leftJoin(TBL_COMPANY_MASTER, eq(TBL_EXPENSE_HDR.COMPANY_ID, TBL_COMPANY_MASTER.Company_Id))
+            .leftJoin(TBL_SUPPLIER_MASTER, eq(TBL_EXPENSE_HDR.EXPENSE_SUPPLIER_ID, TBL_SUPPLIER_MASTER.Supplier_Id))
+            .leftJoin(TBL_ACCOUNTS_HEAD_MASTER, eq(TBL_EXPENSE_HDR.ACCOUNT_HEAD_ID, TBL_ACCOUNTS_HEAD_MASTER.ACCOUNT_HEAD_ID))
+            .orderBy(desc(TBL_EXPENSE_HDR.CREATED_DATE));
 
         return res.status(200).json(data);
     } catch (error) {
@@ -70,9 +73,9 @@ export const getExpenseById = async (req: Request, res: Response): Promise<Respo
             remarks: TBL_EXPENSE_HDR.REMARKS,
             status: TBL_EXPENSE_HDR.STATUS_ENTRY,
         })
-        .from(TBL_EXPENSE_HDR)
-        .where(eq(TBL_EXPENSE_HDR.EXPENSE_REF_NO, id))
-        .limit(1);
+            .from(TBL_EXPENSE_HDR)
+            .where(eq(TBL_EXPENSE_HDR.EXPENSE_REF_NO, id))
+            .limit(1);
 
         if (!header.length) return res.status(404).json({ msg: "Expense not found" });
 
@@ -94,14 +97,14 @@ export const createExpense = async (req: Request, res: Response): Promise<Respon
     try {
         const result = await db.transaction(async (tx) => {
             const { header, items, audit } = req.body;
- 
+
             // 0. Check for existing expense with same PO Reference (Prevent Duplicates)
             if (header.poRefNo) {
                 const existing = await tx.select({ ref: TBL_EXPENSE_HDR.EXPENSE_REF_NO })
                     .from(TBL_EXPENSE_HDR)
                     .where(eq(TBL_EXPENSE_HDR.PO_REF_NO, header.poRefNo))
                     .limit(1);
-                    
+
                 if (existing.length > 0) {
                     throw new Error(`Expense already exists for PO: ${header.poRefNo} (Ref: ${existing[0].ref})`);
                 }
@@ -152,6 +155,21 @@ export const createExpense = async (req: Request, res: Response): Promise<Respon
 
             await tx.insert(TBL_EXPENSE_HDR).values(hValues as any);
 
+            // Step 3: Record in Multi-Currency Transaction Table
+            if (header.currencyId && header.currencyId !== 1) { // Assuming 1 is Base
+                await multiCurrencyController.recordMCTransaction({
+                    companyId: header.companyId,
+                    docType: 'EXPENSE',
+                    docNumber: expenseRefNo,
+                    docDate: hValues.EXPENSE_DATE,
+                    currencyId: header.currencyId,
+                    amount: Number(header.totalExpenseAmount) || 0,
+                    exchangeRate: Number(header.exchangeRate) || 1,
+                    baseAmount: Number(hValues.TOTAL_EXPENSE_AMOUNT_LC),
+                    createdBy: audit?.user || "System"
+                });
+            }
+
             if (items && items.length > 0) {
                 const dValues = items.map((item: any) => ({
                     EXPENSE_REF_NO: expenseRefNo,
@@ -191,8 +209,8 @@ export const createExpense = async (req: Request, res: Response): Promise<Respon
             // OR find/create a ledger with the same name.
             const expenseAccount = await tx.select().from(TBL_ACCOUNTS_HEAD_MASTER).where(eq(TBL_ACCOUNTS_HEAD_MASTER.ACCOUNT_HEAD_ID, header.accountHeadId)).limit(1);
             const expenseLedgerId = await getSystemLedger(tx, header.companyId, expenseAccount[0]?.ACCOUNT_HEAD_NAME || "General Expense", "Expense");
-            
-            const supplierLedgerId = header.expenseSupplierId 
+
+            const supplierLedgerId = header.expenseSupplierId
                 ? await getLedgerForSupplier(tx, header.expenseSupplierId, header.companyId)
                 : await getSystemLedger(tx, header.companyId, "Cash in Hand", "Asset"); // Default to Cash if no supplier
 
@@ -221,6 +239,38 @@ export const createExpense = async (req: Request, res: Response): Promise<Respon
                 ipAddress: req.ip
             }, journalDetails);
 
+            // 5. Cost Center Allocation
+            if (header.costCenterId) {
+                await tx.insert(TBL_COST_CENTER_ALLOCATION).values({
+                    Company_ID: header.companyId,
+                    COST_CENTER_ID: header.costCenterId,
+                    SOURCE_TABLE: 'TBL_EXPENSE_HDR',
+                    SOURCE_REF_NO: expenseRefNo,
+                    EXPENSE_DATE: hValues.EXPENSE_DATE,
+                    EXPENSE_CATEGORY: header.expenseCategory || 'OTHER',
+                    CURRENCY_ID: header.currencyId || 1,
+                    EXPENSE_AMOUNT: String(header.totalExpenseAmount),
+                    LC_AMOUNT: String(hValues.TOTAL_EXPENSE_AMOUNT_LC),
+                    ALLOCATION_PERCENTAGE: '100',
+                    ALLOCATED_AMOUNT: String(hValues.TOTAL_EXPENSE_AMOUNT_LC),
+                    APPROVAL_STATUS: 'APPROVED',
+                    STATUS_ENTRY: 'Active',
+                    CREATED_BY: audit?.user || "System",
+                    CREATED_DATE: new Date(),
+                });
+
+                // Update Budget actuals
+                await tx.update(TBL_COST_CENTER_BUDGET)
+                    .set({
+                        ACTUAL_EXPENSE: sql`CAST(${TBL_COST_CENTER_BUDGET.ACTUAL_EXPENSE} AS NUMERIC) + ${hValues.TOTAL_EXPENSE_AMOUNT_LC}`
+                    })
+                    .where(and(
+                        eq(TBL_COST_CENTER_BUDGET.COST_CENTER_ID, header.costCenterId),
+                        lte(TBL_COST_CENTER_BUDGET.PERIOD_START_DATE, hValues.EXPENSE_DATE.toISOString().split('T')[0]),
+                        gte(TBL_COST_CENTER_BUDGET.PERIOD_END_DATE, hValues.EXPENSE_DATE.toISOString().split('T')[0])
+                    ));
+            }
+
             return { msg: "Expense created successfully", expenseRefNo };
         });
 
@@ -236,7 +286,7 @@ export const updateExpense = async (req: Request, res: Response): Promise<Respon
         const id = decodeURIComponent(req.params.id as string);
         const result = await db.transaction(async (tx) => {
             const { header, items, audit } = req.body;
-            
+
             // 0. Check for duplicate PO Reference on other records
             if (header.poRefNo) {
                 const existing = await tx.select({ ref: TBL_EXPENSE_HDR.EXPENSE_REF_NO })
@@ -268,6 +318,29 @@ export const updateExpense = async (req: Request, res: Response): Promise<Respon
             };
 
             await tx.update(TBL_EXPENSE_HDR).set(hUpdates as any).where(eq(TBL_EXPENSE_HDR.EXPENSE_REF_NO, id));
+
+            // Fetch old header for Cost Center rollback
+            const oldHeader = await tx.select().from(TBL_EXPENSE_HDR).where(eq(TBL_EXPENSE_HDR.EXPENSE_REF_NO, id)).limit(1);
+
+            if (oldHeader.length > 0 && oldHeader[0].COST_CENTER_ID) {
+                // 1. Revert old budget actuals
+                await tx.update(TBL_COST_CENTER_BUDGET)
+                    .set({
+                        ACTUAL_EXPENSE: sql`CAST(${TBL_COST_CENTER_BUDGET.ACTUAL_EXPENSE} AS NUMERIC) - ${Number(oldHeader[0].TOTAL_EXPENSE_AMOUNT_LC)}`
+                    })
+                    .where(and(
+                        eq(TBL_COST_CENTER_BUDGET.COST_CENTER_ID, oldHeader[0].COST_CENTER_ID),
+                        lte(TBL_COST_CENTER_BUDGET.PERIOD_START_DATE, oldHeader[0].EXPENSE_DATE!.toISOString().split('T')[0]),
+                        gte(TBL_COST_CENTER_BUDGET.PERIOD_END_DATE, oldHeader[0].EXPENSE_DATE!.toISOString().split('T')[0])
+                    ));
+
+                // 2. Delete old allocation
+                await tx.delete(TBL_COST_CENTER_ALLOCATION)
+                    .where(and(
+                        eq(TBL_COST_CENTER_ALLOCATION.SOURCE_REF_NO, id),
+                        eq(TBL_COST_CENTER_ALLOCATION.SOURCE_TABLE, 'TBL_EXPENSE_HDR')
+                    ));
+            }
 
             await tx.delete(TBL_EXPENSE_DTL).where(eq(TBL_EXPENSE_DTL.EXPENSE_REF_NO, id));
             if (items && items.length > 0) {
@@ -310,7 +383,7 @@ export const updateExpense = async (req: Request, res: Response): Promise<Respon
             const oldJournals = await tx.select({ journalRefNo: TBL_JOURNAL_HDR.JOURNAL_REF_NO })
                 .from(TBL_JOURNAL_HDR)
                 .where(and(eq(TBL_JOURNAL_HDR.MODULE_REF_NO, id), eq(TBL_JOURNAL_HDR.MODULE_NAME, "EXPENSE")));
-            
+
             for (const j of oldJournals) {
                 await tx.delete(TBL_JOURNAL_DTL).where(eq(TBL_JOURNAL_DTL.JOURNAL_REF_NO, j.journalRefNo));
                 await tx.delete(TBL_JOURNAL_HDR).where(eq(TBL_JOURNAL_HDR.JOURNAL_REF_NO, j.journalRefNo));
@@ -319,8 +392,8 @@ export const updateExpense = async (req: Request, res: Response): Promise<Respon
             // 2. Create new entry
             const expenseAccount = await tx.select().from(TBL_ACCOUNTS_HEAD_MASTER).where(eq(TBL_ACCOUNTS_HEAD_MASTER.ACCOUNT_HEAD_ID, header.accountHeadId)).limit(1);
             const expenseLedgerId = await getSystemLedger(tx, header.companyId, expenseAccount[0]?.ACCOUNT_HEAD_NAME || "General Expense", "Expense");
-            
-            const supplierLedgerId = header.expenseSupplierId 
+
+            const supplierLedgerId = header.expenseSupplierId
                 ? await getLedgerForSupplier(tx, header.expenseSupplierId, header.companyId)
                 : await getSystemLedger(tx, header.companyId, "Cash in Hand", "Asset");
 
@@ -339,6 +412,7 @@ export const updateExpense = async (req: Request, res: Response): Promise<Respon
                 }
             ];
 
+
             await createJournalEntry(tx, {
                 journalDate: hUpdates.EXPENSE_DATE || new Date(),
                 companyId: hUpdates.COMPANY_ID!,
@@ -348,6 +422,41 @@ export const updateExpense = async (req: Request, res: Response): Promise<Respon
                 createdBy: audit?.user || "System",
                 ipAddress: req.ip
             }, journalDetails);
+
+            // 3. Create new Cost Center Allocation
+            if (header.costCenterId) {
+                const expDate = header.expenseDate ? new Date(header.expenseDate) : (oldHeader[0]?.EXPENSE_DATE || new Date());
+                const totalAmountLc = Number(header.totalExpenseAmount) * (Number(header.exchangeRate) || 1);
+
+                await tx.insert(TBL_COST_CENTER_ALLOCATION).values({
+                    Company_ID: header.companyId,
+                    COST_CENTER_ID: header.costCenterId,
+                    SOURCE_TABLE: 'TBL_EXPENSE_HDR',
+                    SOURCE_REF_NO: id,
+                    EXPENSE_DATE: expDate,
+                    EXPENSE_CATEGORY: header.expenseCategory || 'OTHER',
+                    CURRENCY_ID: header.currencyId || 1,
+                    EXPENSE_AMOUNT: String(header.totalExpenseAmount),
+                    LC_AMOUNT: String(totalAmountLc),
+                    ALLOCATION_PERCENTAGE: '100',
+                    ALLOCATED_AMOUNT: String(totalAmountLc),
+                    APPROVAL_STATUS: 'APPROVED',
+                    STATUS_ENTRY: 'Active',
+                    CREATED_BY: audit?.user || "System",
+                    CREATED_DATE: new Date(),
+                });
+
+                // Update Budget actuals
+                await tx.update(TBL_COST_CENTER_BUDGET)
+                    .set({
+                        ACTUAL_EXPENSE: sql`CAST(${TBL_COST_CENTER_BUDGET.ACTUAL_EXPENSE} AS NUMERIC) + ${totalAmountLc}`
+                    })
+                    .where(and(
+                        eq(TBL_COST_CENTER_BUDGET.COST_CENTER_ID, header.costCenterId),
+                        lte(TBL_COST_CENTER_BUDGET.PERIOD_START_DATE, expDate.toISOString().split('T')[0]),
+                        gte(TBL_COST_CENTER_BUDGET.PERIOD_END_DATE, expDate.toISOString().split('T')[0])
+                    ));
+            }
 
             return { msg: "Expense updated successfully" };
         });
@@ -367,13 +476,37 @@ export const deleteExpense = async (req: Request, res: Response): Promise<Respon
             const oldJournals = await tx.select({ journalRefNo: TBL_JOURNAL_HDR.JOURNAL_REF_NO })
                 .from(TBL_JOURNAL_HDR)
                 .where(and(eq(TBL_JOURNAL_HDR.MODULE_REF_NO, id), eq(TBL_JOURNAL_HDR.MODULE_NAME, "EXPENSE")));
-            
+
             for (const j of oldJournals) {
                 await tx.delete(TBL_JOURNAL_DTL).where(eq(TBL_JOURNAL_DTL.JOURNAL_REF_NO, j.journalRefNo));
                 await tx.delete(TBL_JOURNAL_HDR).where(eq(TBL_JOURNAL_HDR.JOURNAL_REF_NO, j.journalRefNo));
             }
 
             await tx.delete(TBL_EXPENSE_DTL).where(eq(TBL_EXPENSE_DTL.EXPENSE_REF_NO, id));
+
+            // Fetch old header for Cost Center rollback
+            const oldHeader = await tx.select().from(TBL_EXPENSE_HDR).where(eq(TBL_EXPENSE_HDR.EXPENSE_REF_NO, id)).limit(1);
+
+            if (oldHeader.length > 0 && oldHeader[0].COST_CENTER_ID) {
+                // Revert budget actuals
+                await tx.update(TBL_COST_CENTER_BUDGET)
+                    .set({
+                        ACTUAL_EXPENSE: sql`CAST(${TBL_COST_CENTER_BUDGET.ACTUAL_EXPENSE} AS NUMERIC) - ${Number(oldHeader[0].TOTAL_EXPENSE_AMOUNT_LC)}`
+                    })
+                    .where(and(
+                        eq(TBL_COST_CENTER_BUDGET.COST_CENTER_ID, oldHeader[0].COST_CENTER_ID),
+                        lte(TBL_COST_CENTER_BUDGET.PERIOD_START_DATE, oldHeader[0].EXPENSE_DATE!.toISOString().split('T')[0]),
+                        gte(TBL_COST_CENTER_BUDGET.PERIOD_END_DATE, oldHeader[0].EXPENSE_DATE!.toISOString().split('T')[0])
+                    ));
+
+                // Delete allocation
+                await tx.delete(TBL_COST_CENTER_ALLOCATION)
+                    .where(and(
+                        eq(TBL_COST_CENTER_ALLOCATION.SOURCE_REF_NO, id),
+                        eq(TBL_COST_CENTER_ALLOCATION.SOURCE_TABLE, 'TBL_EXPENSE_HDR')
+                    ));
+            }
+
             await tx.delete(TBL_EXPENSE_HDR).where(eq(TBL_EXPENSE_HDR.EXPENSE_REF_NO, id));
         });
         return res.status(200).json({ msg: "Expense deleted successfully" });

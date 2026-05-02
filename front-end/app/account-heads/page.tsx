@@ -10,7 +10,7 @@ export default function AccountHeadsPage() {
     domain="account-heads" title="Account Heads" description="Manage your account heads" idPrefix="ACH" fields={[
       { key: "accountHeadName", label: "Account Head Name", type: "text", required: true },
       { key: "remarks", label: "Remarks", type: "textarea" },
-      { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
+      { key: "statusEntry", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
     ]} initialData={accountHeads} columns={[
       { key: "accountHeadName", label: "Account Head" },
       { key: "remarks", label: "Remarks" },

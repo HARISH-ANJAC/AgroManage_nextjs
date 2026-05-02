@@ -22,6 +22,7 @@ import {
     TBL_TAX_INVOICE_DTL,
     TBL_SALES_PROFORMA_DTL
 } from "../db/schema/index.js";
+import * as multiCurrencyController from "./multiCurrencyController.js";
 import { eq, and, sql, like, desc, getTableColumns, inArray } from "drizzle-orm";
 import { sendEmail, getBaseTemplate } from "../utils/emailService.js";
 import { TBL_SUPPLIER_MASTER } from "../db/schema/StoMaster.js";
@@ -122,7 +123,7 @@ export const createPurchaseOrder = async (req: Request, res: Response): Promise<
                 PAYMENT_TERM_ID: header.paymentTermId,
                 MODE_OF_PAYMENT: header.modeOfPayment,
                 CURRENCY_ID: header.currencyId,
-                SUPLIER_PROFORMA_NUMBER: header.proformaNo,
+                SUPPLIER_PROFORMA_NUMBER: header.proformaNo,
                 SHIPMENT_MODE: header.shipmentMode,
                 PRICE_TERMS: header.priceTerms,
                 ESTIMATED_SHIPMENT_DATE: header.estShipmentDate ? new Date(header.estShipmentDate) : null,
@@ -139,6 +140,21 @@ export const createPurchaseOrder = async (req: Request, res: Response): Promise<
             };
 
             await tx.insert(TBL_PURCHASE_ORDER_HDR).values(hValues as any);
+
+            // Step 3: Record in Multi-Currency Transaction Table
+            if (header.currencyId && header.currencyId !== 1) { // Assuming 1 is Base
+                await multiCurrencyController.recordMCTransaction({
+                    companyId: header.companyId,
+                    docType: 'PURCHASE_ORDER',
+                    docNumber: finalPoRefNo,
+                    docDate: hValues.PO_DATE,
+                    currencyId: header.currencyId,
+                    amount: header.finalAmount || 0,
+                    exchangeRate: header.exchangeRate || 1,
+                    baseAmount: (header.finalAmount || 0) * (header.exchangeRate || 1),
+                    createdBy: audit.user
+                });
+            }
 
             // 2. Insert Details
             if (items && items.length > 0) {
@@ -334,7 +350,7 @@ export const updatePurchaseOrder = async (req: Request, res: Response): Promise<
                 PAYMENT_TERM_ID: header.paymentTermId,
                 MODE_OF_PAYMENT: header.modeOfPayment,
                 CURRENCY_ID: header.currencyId,
-                SUPLIER_PROFORMA_NUMBER: header.proformaNo,
+                SUPPLIER_PROFORMA_NUMBER: header.proformaNo,
                 SHIPMENT_MODE: header.shipmentMode,
                 PRICE_TERMS: header.priceTerms,
                 ESTIMATED_SHIPMENT_DATE: header.estShipmentDate ? new Date(header.estShipmentDate) : null,

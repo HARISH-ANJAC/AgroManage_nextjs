@@ -151,9 +151,9 @@ function CreateInvoiceContent() {
             uom: item.uom || "Unit",
             rate: item.rate || 0,
             amount: (item.deliveryQty || 0) * (item.rate || 0),
-            vatPercent: item.vatPercent || 18, // Default VAT 15% if not provided
-            vatAmount: ((item.deliveryQty || 0) * (item.rate || 0)) * (18 / 100),
-            finalAmount: ((item.deliveryQty || 0) * (item.rate || 0)) * 1.15,
+            vatPercent: item.vatPercent || 18,
+            vatAmount: ((item.deliveryQty || 0) * (item.rate || 0)) * ((item.vatPercent || 18) / 100),
+            finalAmount: ((item.deliveryQty || 0) * (item.rate || 0)) * (1 + (item.vatPercent || 18) / 100),
             deliveryNoteDtlSno: item.id
           })));
         }

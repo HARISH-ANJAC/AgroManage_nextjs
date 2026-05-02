@@ -3,19 +3,19 @@
 import { useState, useMemo } from "react";
 import { useJournalStore } from "@/hooks/useJournalStore";
 import { toast } from "sonner";
-import { 
-  Search, 
-  FileText, 
-  Eye, 
-  Trash2, 
-  CheckCircle2, 
-  XCircle, 
-  ChevronLeft, 
-  ChevronRight, 
-  Calendar, 
-  User, 
-  ArrowRightLeft, 
-  Filter, 
+import {
+  Search,
+  FileText,
+  Eye,
+  Trash2,
+  CheckCircle2,
+  XCircle,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  User,
+  ArrowRightLeft,
+  Filter,
   Download,
   BookOpen,
   Info,
@@ -28,13 +28,13 @@ import {
 
 // ── Module badge colors (Light Theme Optimized) ──────────────────────────────
 const MODULE_COLORS: Record<string, { bg: string; text: string; dot: string; border: string }> = {
-  PURCHASE_INVOICE:  { bg: "bg-indigo-50", text: "text-indigo-700", dot: "bg-indigo-500", border: "border-indigo-100" },
-  TAX_INVOICE:       { bg: "bg-emerald-50",text: "text-emerald-700",dot: "bg-emerald-500",border: "border-emerald-100" },
-  SALES_ORDER:       { bg: "bg-teal-50",   text: "text-teal-700",   dot: "bg-teal-500",   border: "border-teal-100" },
-  SALES_PROFORMA:    { bg: "bg-cyan-50",   text: "text-cyan-700",   dot: "bg-cyan-500",   border: "border-cyan-100" },
-  CUSTOMER_RECEIPT:  { bg: "bg-green-50",  text: "text-green-700",  dot: "bg-green-500",  border: "border-green-100" },
-  EXPENSE:           { bg: "bg-rose-50",   text: "text-rose-700",   dot: "bg-rose-500",   border: "border-rose-100" },
-  OPENING_BALANCE:   { bg: "bg-amber-50",  text: "text-amber-700",  dot: "bg-amber-500",  border: "border-amber-100" },
+  PURCHASE_INVOICE: { bg: "bg-indigo-50", text: "text-indigo-700", dot: "bg-indigo-500", border: "border-indigo-100" },
+  TAX_INVOICE: { bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500", border: "border-emerald-100" },
+  SALES_ORDER: { bg: "bg-teal-50", text: "text-teal-700", dot: "bg-teal-500", border: "border-teal-100" },
+  SALES_PROFORMA: { bg: "bg-cyan-50", text: "text-cyan-700", dot: "bg-cyan-500", border: "border-cyan-100" },
+  CUSTOMER_RECEIPT: { bg: "bg-green-50", text: "text-green-700", dot: "bg-green-500", border: "border-green-100" },
+  EXPENSE: { bg: "bg-rose-50", text: "text-rose-700", dot: "bg-rose-500", border: "border-rose-100" },
+  OPENING_BALANCE: { bg: "bg-amber-50", text: "text-amber-700", dot: "bg-amber-500", border: "border-amber-100" },
 };
 
 const DEFAULT_COLOR = { bg: "bg-slate-50", text: "text-slate-700", dot: "bg-slate-500", border: "border-slate-100" };
@@ -69,9 +69,9 @@ function JournalDrawer({ refNo, onClose, onDelete }: { refNo: string; onClose: (
     getJournalById(refNo).then((d) => { setDetail(d); setLoading(false); });
   });
 
-  const totalDebit  = detail?.details?.reduce((s: number, d: any) => s + Number(d.debit), 0) ?? 0;
+  const totalDebit = detail?.details?.reduce((s: number, d: any) => s + Number(d.debit), 0) ?? 0;
   const totalCredit = detail?.details?.reduce((s: number, d: any) => s + Number(d.credit), 0) ?? 0;
-  const isBalanced  = Math.abs(totalDebit - totalCredit) < 0.01;
+  const isBalanced = Math.abs(totalDebit - totalCredit) < 0.01;
 
   return (
     <div className="fixed inset-0 z-50 flex animate-in fade-in duration-200">
@@ -126,10 +126,10 @@ function JournalDrawer({ refNo, onClose, onDelete }: { refNo: string; onClose: (
             {/* Meta Cards */}
             <div className="grid grid-cols-2 gap-4">
               {[
-                { label: "Date",         value: fmt(detail.header.JOURNAL_DATE), icon: Calendar },
-                { label: "Module",       value: <ModuleBadge module={detail.header.MODULE_NAME ?? ""} />, icon: Layers },
-                { label: "Source Ref",   value: detail.header.MODULE_REF_NO ?? "—", icon: FileText },
-                { label: "Created By",   value: detail.header.CREATED_BY ?? "—", icon: User },
+                { label: "Date", value: fmt(detail.header.JOURNAL_DATE), icon: Calendar },
+                { label: "Module", value: <ModuleBadge module={detail.header.MODULE_NAME ?? ""} />, icon: Layers },
+                { label: "Source Ref", value: detail.header.MODULE_REF_NO ?? "—", icon: FileText },
+                { label: "Created By", value: detail.header.CREATED_BY ?? "—", icon: User },
               ].map(({ label, value, icon: Icon }) => (
                 <div key={label} className="bg-slate-50/50 rounded-2xl p-4 border border-slate-100 flex items-start gap-3">
                   <div className="p-2 rounded-xl bg-white border border-slate-100 text-slate-400 shadow-sm">
@@ -145,7 +145,7 @@ function JournalDrawer({ refNo, onClose, onDelete }: { refNo: string; onClose: (
 
             {/* Narration */}
             {detail.header.NARRATION && (
-              <div className="bg-primary/[0.03] border border-primary/10 rounded-2xl p-5 relative overflow-hidden">
+              <div className="bg-primary/3 border border-primary/10 rounded-2xl p-5 relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-1 h-full bg-primary/20" />
                 <div className="flex items-center gap-2 mb-2">
                   <Info size={14} className="text-primary" />
@@ -268,14 +268,14 @@ export default function JournalsPage() {
             </p>
           </div>
           <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-sm">
-             <div className="text-center px-4 border-r border-slate-200">
-               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Total Postings</p>
-               <p className="text-2xl font-black text-slate-800">{(journals as any[]).length}</p>
-             </div>
-             <div className="text-center px-4">
-               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Active Filters</p>
-               <p className="text-2xl font-black text-primary">{moduleFilter === 'ALL' ? 'None' : '1'}</p>
-             </div>
+            <div className="text-center px-4 border-r border-slate-200">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Total Postings</p>
+              <p className="text-2xl font-black text-slate-800">{(journals as any[]).length}</p>
+            </div>
+            <div className="text-center px-4">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Active Filters</p>
+              <p className="text-2xl font-black text-primary">{moduleFilter === 'ALL' ? 'None' : '1'}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -291,11 +291,10 @@ export default function JournalsPage() {
               <button
                 key={m}
                 onClick={() => { setModuleFilter(m); setPage(1); }}
-                className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all border shadow-sm ${
-                  isSelected 
-                    ? "bg-slate-900 text-white border-slate-900 scale-105" 
-                    : "bg-white text-slate-600 border-slate-200 hover:border-primary/30 hover:bg-slate-50"
-                }`}
+                className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all border shadow-sm ${isSelected
+                  ? "bg-slate-900 text-white border-slate-900 scale-105"
+                  : "bg-white text-slate-600 border-slate-200 hover:border-primary/30 hover:bg-slate-50"
+                  }`}
               >
                 {m === "ALL" ? <Filter size={14} /> : <div className={`w-2 h-2 rounded-full ${MODULE_COLORS[m]?.dot || "bg-slate-400"}`} />}
                 {m === "ALL" ? "All Entries" : m.replace(/_/g, " ")}
@@ -327,11 +326,11 @@ export default function JournalsPage() {
         </div>
 
         {/* Entries Table */}
-        <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-4xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-50/80 text-slate-400 text-[10px] font-bold uppercase tracking-[0.1em] border-b border-slate-200">
+                <tr className="bg-slate-50/80 text-slate-400 text-[10px] font-bold uppercase tracking-widest border-b border-slate-200">
                   <th className="text-left px-8 py-5">Reference</th>
                   <th className="text-left px-8 py-5">Date</th>
                   <th className="text-left px-8 py-5">Originating Module</th>
@@ -422,9 +421,9 @@ export default function JournalsPage() {
                 Viewing {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, filtered.length)} of {filtered.length} entries
               </p>
               <div className="flex items-center gap-2">
-                <button 
-                  disabled={page === 1} 
-                  onClick={() => setPage(p => p - 1)} 
+                <button
+                  disabled={page === 1}
+                  onClick={() => setPage(p => p - 1)}
                   className="p-2 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed shadow-sm transition-all"
                 >
                   <ChevronLeft size={18} />
@@ -434,9 +433,9 @@ export default function JournalsPage() {
                     const pg = Math.max(1, Math.min(page - 2, totalPages - 4)) + i;
                     if (pg > totalPages) return null;
                     return (
-                      <button 
-                        key={pg} 
-                        onClick={() => setPage(pg)} 
+                      <button
+                        key={pg}
+                        onClick={() => setPage(pg)}
                         className={`w-9 h-9 rounded-xl text-xs font-black transition-all ${pg === page ? "bg-primary text-white shadow-lg shadow-primary/30" : "bg-white text-slate-400 border border-slate-200 hover:bg-slate-50"}`}
                       >
                         {pg}
@@ -444,9 +443,9 @@ export default function JournalsPage() {
                     );
                   })}
                 </div>
-                <button 
-                  disabled={page === totalPages} 
-                  onClick={() => setPage(p => p + 1)} 
+                <button
+                  disabled={page === totalPages}
+                  onClick={() => setPage(p => p + 1)}
                   className="p-2 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed shadow-sm transition-all"
                 >
                   <ChevronRight size={18} />

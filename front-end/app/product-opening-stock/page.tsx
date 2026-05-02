@@ -8,7 +8,7 @@ export default function ProductOpeningStockPage() {
   const { data: companies } = useMasterData("companies");
   const { data: stores } = useMasterData("stores");
   const { data: mainCategories } = useMasterData("categories");
-  const { data: subCategories } = useMasterData("subcategories");
+  const { data: subCategories } = useMasterData("sub-categories");
   const { data: products } = useMasterData("products");
 
   const companyOptions = companies?.map((c: any) => ({ value: c.id, label: c.companyName })) || [];
@@ -20,11 +20,12 @@ export default function ProductOpeningStockPage() {
       { key: "openingStockDate", label: "Opening Stock Date", type: "date", required: true },
       { key: "companyId", label: "Company", type: "select", options: companyOptions },
       { key: "storeId", label: "Store", type: "select", options: storeOptions },
-      { key: "mainCategoryId", label: "Main Category", type: "select", options: mainCategoryOptions },
+      { key: "mainCategoryId", label: "Main Category", type: "select", required: true, options: mainCategoryOptions },
       { 
         key: "subCategoryId", 
         label: "Sub Category", 
         type: "select", 
+        required: true,
         dependsOn: "mainCategoryId",
         options: (form) => {
           if (!form.mainCategoryId) return [];
@@ -42,14 +43,28 @@ export default function ProductOpeningStockPage() {
         options: (form) => {
           if (!form.subCategoryId) return [];
           return products
-            ?.filter((p: any) => String(p.subCategoryId) === String(form.subCategoryId))
+            ?.filter((p: any) =>
+              String(p.mainCategoryId) === String(form.mainCategoryId) &&
+              String(p.subCategoryId) === String(form.subCategoryId)
+            )
             ?.map((p: any) => ({ value: p.id, label: p.productName })) || [];
         }
       },
       { key: "totalQty", label: "Total Qty", type: "number", required: true },
       { key: "remarks", label: "Remarks", type: "textarea" },
       { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
-    ]} initialData={stocks ? stocks.map((s: any) => ({ ...s, openingStockDate: s.openingStockDate ? new Date(s.openingStockDate).toISOString().split('T')[0] : '' })) : []} columns={[
-      { key: "productName", label: "Product" }, { key: "storeName", label: "Store" }, { key: "totalQty", label: "Qty" }, { key: "openingStockDate", label: "Date" }, { key: "statusMaster", label: "Status" },
+    ]} initialData={stocks ?? []} columns={[
+      { key: "productId", label: "Product" },
+      { key: "storeId", label: "Store" },
+      { key: "totalQty", label: "Qty" },
+      { 
+        key: "openingStockDate", 
+        label: "Date",
+        render: (val: any) => {
+          if (!val) return "—";
+          try { return new Date(val).toLocaleDateString(); } catch { return String(val); }
+        }
+      },
+      { key: "statusMaster", label: "Status" },
     ]} />;
 }

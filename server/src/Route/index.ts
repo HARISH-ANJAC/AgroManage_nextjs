@@ -21,6 +21,10 @@ import { purchaseApprovalRoute } from "./purchaseApprovalRoute.js";
 import { schedulerRoute } from "./schedulerRoute.js";
 import accountingRoute from "./accountingRoute.js";
 import inventoryRoute from "./inventoryRoute.js";
+import multiCurrencyRoute from "./multiCurrencyRoute.js";
+import costCenterRoute from "./costCenterRoute.js";
+
+import profitCenterRoute from "./profitCenterRoute.js";
 
 const Router = express.Router();
 
@@ -58,6 +62,9 @@ Router.use("/customer-receipts", customerReceiptRoute);
 Router.use("/expenses", expenseRoute);
 Router.use("/accounting", accountingRoute);
 Router.use("/scheduler", schedulerRoute);
+Router.use("/multi-currency", multiCurrencyRoute);
+Router.use("/cost-centers", costCenterRoute);
+Router.use("/profit-centers", profitCenterRoute);
 
 // Master routes are top-level because domain names are unique (companies, stores, etc.)
 Router.use("/", masterRoute);

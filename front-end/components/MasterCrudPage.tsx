@@ -31,6 +31,7 @@ export interface MasterField {
   label: string;
   type: "text" | "number" | "select" | "textarea" | "date" | "password" | "image";
   required?: boolean;
+  disabled?: boolean; // renders as a locked read-only field (system-computed values)
   options?: (string | { value: string | number; label: string })[] | ((form: Record<string, any>) => (string | { value: string | number; label: string })[]);
   placeholder?: string;
   maxLength?: number;
@@ -116,7 +117,7 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
     const statuses = new Set<string>();
     if (Array.isArray(data)) {
       data.forEach((d: Record<string, any>) => {
-        const status = d.status || d.statusMaster;
+        const status = d.status || d.statusMaster || d.statusEntry;
         if (status) statuses.add(String(status));
       });
     }
@@ -129,7 +130,7 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
       const searchable = columns.map((c) => String(getNestedValue(d, c.key) || "").toLowerCase()).join(" ");
       const matchesSearch = searchable.includes(search.toLowerCase());
 
-      const itemStatus = getNestedValue(d, "status") || getNestedValue(d, "header.status") || d.statusMaster;
+      const itemStatus = getNestedValue(d, "status") || getNestedValue(d, "header.status") || d.statusMaster || d.statusEntry;
       const matchesStatus = statusFilter === "ALL" || String(itemStatus) === statusFilter;
 
       return matchesSearch && matchesStatus;
@@ -216,6 +217,16 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
       // Apply formatters to loaded values so fields like phone numbers display correctly
       const formData = { ...item };
       fields.forEach((field) => {
+        // Auto-format date fields: <input type="date"> requires "YYYY-MM-DD"
+        if (field.type === "date" && formData[field.key] != null) {
+          const raw = formData[field.key];
+          try {
+            const d = new Date(raw);
+            if (!isNaN(d.getTime())) {
+              formData[field.key] = d.toISOString().split("T")[0];
+            }
+          } catch (_) {}
+        }
         if (field.formatter && formData[field.key] !== undefined && formData[field.key] !== null) {
           formData[field.key] = field.formatter(String(formData[field.key]));
         }
@@ -541,21 +552,37 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
               {fields.map((field) => (
                 <div key={field.key} className={field.type === "textarea" ? "col-span-2" : ""}>
                   <Label className="text-xs">{field.label} {field.required && <span className="text-destructive">*</span>}</Label>
-                  {field.type === "select" ? (
+                  {field.disabled ? (
+                    <div className="flex h-9 w-full items-center rounded-md border border-input bg-muted/50 px-3 py-1 text-sm text-muted-foreground cursor-not-allowed select-none">
+                      {form[field.key] !== undefined && form[field.key] !== null
+                        ? String(form[field.key])
+                        : <span className="italic opacity-50">Auto-calculated</span>}
+                    </div>
+                  ) : field.type === "select" ? (
                     <Select
                       value={form[field.key] !== undefined && form[field.key] !== null ? String(form[field.key]) : ""}
-                        onValueChange={(v) => {
-                          if (customStoreOverrides?.onFieldChange) {
-                            const handled = customStoreOverrides.onFieldChange(field.key, v, setForm, form);
-                            if (handled) return;
-                          }
-                          const update: Record<string, any> = { ...form, [field.key]: v };
-                          // Reset any dependent fields when this value changes
-                          fields.forEach((f) => { if (f.dependsOn === field.key) update[f.key] = ""; });
-                          setForm(update);
-                        }}
+                      onValueChange={(v) => {
+                        if (customStoreOverrides?.onFieldChange) {
+                          const handled = customStoreOverrides.onFieldChange(field.key, v, setForm, form);
+                          if (handled) return;
+                        }
+                        const update: Record<string, any> = { ...form, [field.key]: v };
+                        // Recursively reset all dependent fields
+                        const resetDependents = (parentKey: string) => {
+                          fields.forEach((f) => {
+                            if (f.dependsOn === parentKey) {
+                              update[f.key] = "";
+                              resetDependents(f.key);
+                            }
+                          });
+                        };
+                        resetDependents(field.key);
+                        setForm(update);
+                      }}
                     >
-                      <SelectTrigger><SelectValue placeholder={field.placeholder || `Select ${field.label}`} /></SelectTrigger>
+                      <SelectTrigger disabled={field.dependsOn ? !form[field.dependsOn] : false}>
+                        <SelectValue placeholder={field.placeholder || `Select ${field.label}`} />
+                      </SelectTrigger>
                       <SelectContent>
                         {(() => {
                           const seen = new Set();
@@ -614,6 +641,8 @@ export default function MasterCrudPage({ title, description, idPrefix, domain, f
                       placeholder={field.placeholder}
                       value={form[field.key] ?? ""}
                       maxLength={field.maxLength}
+                      disabled={field.disabled}
+                      className={field.disabled ? "bg-muted/50 cursor-not-allowed text-muted-foreground" : ""}
                       onChange={(e) => {
                         let val: any = e.target.value;
                         if (field.type === "number") val = Number(val);

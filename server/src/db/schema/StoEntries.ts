@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { pgSchema, integer, serial, bigint, bigserial, varchar, text, numeric, timestamp, customType } from "drizzle-orm/pg-core";
+import { pgSchema, integer, bigint, varchar, text, numeric, timestamp, customType } from "drizzle-orm/pg-core";
 import * as StoMasterSchema from "./StoMaster.js";
 
 import { bytea } from "./StoMaster.js";
@@ -7,7 +7,7 @@ import { bytea } from "./StoMaster.js";
 export const StoEntriesSchema = pgSchema("stoentries");
 
 export const TBL_PURCHASE_ORDER_HDR = StoEntriesSchema.table("TBL_PURCHASE_ORDER_HDR", {
-  SNO: serial("SNO"),
+  SNO: integer("SNO").notNull().generatedAlwaysAsIdentity(),
   PO_REF_NO: varchar("PO_REF_NO", { length: 50 }).primaryKey(),
   PO_DATE: timestamp("PO_DATE", { mode: "date" }),
   PURCHASE_TYPE: varchar("PURCHASE_TYPE", { length: 20 }),
@@ -17,7 +17,7 @@ export const TBL_PURCHASE_ORDER_HDR = StoEntriesSchema.table("TBL_PURCHASE_ORDER
   PAYMENT_TERM_ID: integer("PAYMENT_TERM_ID").references(() => StoMasterSchema.TBL_PAYMENT_TERM_MASTER.PAYMENT_TERM_ID),
   MODE_OF_PAYMENT: varchar("MODE_OF_PAYMENT", { length: 25 }),
   CURRENCY_ID: integer("CURRENCY_ID").references(() => StoMasterSchema.TBL_CURRENCY_MASTER.CURRENCY_ID),
-  SUPLIER_PROFORMA_NUMBER: varchar("SUPLIER_PROFORMA_NUMBER", { length: 100 }),
+  SUPPLIER_PROFORMA_NUMBER: varchar("SUPPLIER_PROFORMA_NUMBER", { length: 100 }),
   SHIPMENT_MODE: varchar("SHIPMENT_MODE", { length: 100 }),
   PRICE_TERMS: varchar("PRICE_TERMS", { length: 150 }),
   ESTIMATED_SHIPMENT_DATE: timestamp("ESTIMATED_SHIPMENT_DATE", { mode: "date" }),
@@ -69,7 +69,7 @@ export const TBL_PURCHASE_ORDER_HDR = StoEntriesSchema.table("TBL_PURCHASE_ORDER
 });
 
 export const TBL_PURCHASE_ORDER_DTL = StoEntriesSchema.table("TBL_PURCHASE_ORDER_DTL", {
-  SNO: serial("SNO").primaryKey(),
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
   PO_REF_NO: varchar("PO_REF_NO", { length: 50 }),
   REQUEST_STORE_ID: integer("REQUEST_STORE_ID").references(() => StoMasterSchema.TBL_STORE_MASTER.Store_Id),
   MAIN_CATEGORY_ID: integer("MAIN_CATEGORY_ID").references(() => StoMasterSchema.TBL_PRODUCT_MAIN_CATEGORY_MASTER.MAIN_CATEGORY_ID),
@@ -101,7 +101,7 @@ export const TBL_PURCHASE_ORDER_DTL = StoEntriesSchema.table("TBL_PURCHASE_ORDER
 });
 
 export const TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS = StoEntriesSchema.table("TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS", {
-  SNO: serial("SNO").primaryKey(),
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
   PO_REF_NO: varchar("PO_REF_NO", { length: 50 }),
   ADDITIONAL_COST_TYPE_ID: integer("ADDITIONAL_COST_TYPE_ID").references(() => StoMasterSchema.TBL_ADDITIONAL_COST_TYPE_MASTER.ADDITIONAL_COST_TYPE_ID),
   ADDITIONAL_COST_AMOUNT: numeric("ADDITIONAL_COST_AMOUNT", { precision: 30, scale: 4 }),
@@ -116,7 +116,7 @@ export const TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS = StoEntriesSchema.table
 });
 
 export const TBL_PURCHASE_ORDER_FILES_UPLOAD = StoEntriesSchema.table("TBL_PURCHASE_ORDER_FILES_UPLOAD", {
-  SNO: serial("SNO").primaryKey(),
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
   PO_REF_NO: varchar("PO_REF_NO", { length: 50 }),
   DOCUMENT_TYPE: varchar("DOCUMENT_TYPE", { length: 50 }),
   DESCRIPTION_DETAILS: varchar("DESCRIPTION_DETAILS", { length: 100 }),
@@ -134,7 +134,7 @@ export const TBL_PURCHASE_ORDER_FILES_UPLOAD = StoEntriesSchema.table("TBL_PURCH
 });
 
 export const TBL_PURCHASE_ORDER_CONVERSATION_DTL = StoEntriesSchema.table("TBL_PURCHASE_ORDER_CONVERSATION_DTL", {
-  SNO: serial("SNO").primaryKey(),
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
   PO_REF_NO: varchar("PO_REF_NO", { length: 50 }),
   RESPOND_PERSON: varchar("RESPOND_PERSON", { length: 50 }),
   DISCUSSION_DETAILS: text("DISCUSSION_DETAILS"),
@@ -150,7 +150,7 @@ export const TBL_PURCHASE_ORDER_CONVERSATION_DTL = StoEntriesSchema.table("TBL_P
 });
 
 export const TBL_GOODS_INWARD_GRN_HDR = StoEntriesSchema.table("TBL_GOODS_INWARD_GRN_HDR", {
-  SNO: serial("SNO"),
+  SNO: integer("SNO").notNull().generatedAlwaysAsIdentity(),
   GRN_REF_NO: varchar("GRN_REF_NO", { length: 50 }).primaryKey(),
   GRN_DATE: timestamp("GRN_DATE", { mode: "date" }),
   COMPANY_ID: integer("COMPANY_ID").references(() => StoMasterSchema.TBL_COMPANY_MASTER.Company_Id),
@@ -178,7 +178,7 @@ export const TBL_GOODS_INWARD_GRN_HDR = StoEntriesSchema.table("TBL_GOODS_INWARD
 });
 
 export const TBL_GOODS_INWARD_GRN_DTL = StoEntriesSchema.table("TBL_GOODS_INWARD_GRN_DTL", {
-  SNO: serial("SNO").primaryKey(),
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
   GRN_REF_NO: varchar("GRN_REF_NO", { length: 50 }).references(() => TBL_GOODS_INWARD_GRN_HDR.GRN_REF_NO),
   PO_DTL_SNO: integer("PO_DTL_SNO"),
   MAIN_CATEGORY_ID: integer("MAIN_CATEGORY_ID").references(() => StoMasterSchema.TBL_PRODUCT_MAIN_CATEGORY_MASTER.MAIN_CATEGORY_ID),
@@ -200,7 +200,7 @@ export const TBL_GOODS_INWARD_GRN_DTL = StoEntriesSchema.table("TBL_GOODS_INWARD
 });
 
 export const TBL_PURCHASE_INVOICE_HDR = StoEntriesSchema.table("TBL_PURCHASE_INVOICE_HDR", {
-  SNO: serial("SNO"),
+  SNO: integer("SNO").notNull().generatedAlwaysAsIdentity(),
   PURCHASE_INVOICE_REF_NO: varchar("PURCHASE_INVOICE_REF_NO", { length: 50 }).primaryKey(),
   COMPANY_ID: integer("COMPANY_ID").references(() => StoMasterSchema.TBL_COMPANY_MASTER.Company_Id),
   INVOICE_NO: varchar("INVOICE_NO", { length: 100 }),
@@ -249,10 +249,11 @@ export const TBL_PURCHASE_INVOICE_HDR = StoEntriesSchema.table("TBL_PURCHASE_INV
   MODIFIED_BY: varchar("MODIFIED_BY", { length: 50 }),
   MODIFIED_DATE: timestamp("MODIFIED_DATE", { mode: "date" }),
   MODIFIED_IP_ADDRESS: varchar("MODIFIED_IP_ADDRESS", { length: 50 }),
+  COST_CENTER_ID: integer("COST_CENTER_ID").references(() => StoMasterSchema.TBL_COST_CENTER_MASTER.COST_CENTER_ID),
 });
 
 export const TBL_PURCHASE_INVOICE_DTL = StoEntriesSchema.table("TBL_PURCHASE_INVOICE_DTL", {
-  SNO: serial("SNO").primaryKey(),
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
   PURCHASE_INVOICE_REF_NO: varchar("PURCHASE_INVOICE_REF_NO", { length: 50 }).references(() => TBL_PURCHASE_INVOICE_HDR.PURCHASE_INVOICE_REF_NO),
   GRN_REF_NO: varchar("GRN_REF_NO", { length: 50 }).references(() => TBL_GOODS_INWARD_GRN_HDR.GRN_REF_NO),
   MAIN_CATEGORY_ID: integer("MAIN_CATEGORY_ID").references(() => StoMasterSchema.TBL_PRODUCT_MAIN_CATEGORY_MASTER.MAIN_CATEGORY_ID),
@@ -284,7 +285,7 @@ export const TBL_PURCHASE_INVOICE_DTL = StoEntriesSchema.table("TBL_PURCHASE_INV
 });
 
 export const TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS = StoEntriesSchema.table("TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS", {
-  SNO: serial("SNO").primaryKey(),
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
   PURCHASE_INVOICE_NO: varchar("PURCHASE_INVOICE_NO", { length: 50 }).references(() => TBL_PURCHASE_INVOICE_HDR.PURCHASE_INVOICE_REF_NO),
   ADDITIONAL_COST_TYPE_ID: integer("ADDITIONAL_COST_TYPE_ID").references(() => StoMasterSchema.TBL_ADDITIONAL_COST_TYPE_MASTER.ADDITIONAL_COST_TYPE_ID),
   ADDITIONAL_COST_AMOUNT: numeric("ADDITIONAL_COST_AMOUNT", { precision: 30, scale: 4 }),
@@ -299,7 +300,7 @@ export const TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS = StoEntriesSchema.tab
 });
 
 export const TBL_PURCHASE_INVOICE_FILES_UPLOAD = StoEntriesSchema.table("TBL_PURCHASE_INVOICE_FILES_UPLOAD", {
-  SNO: serial("SNO").primaryKey(),
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
   PURCHASE_INVOICE_REF_NO: varchar("PURCHASE_INVOICE_REF_NO", { length: 50 }).references(() => TBL_PURCHASE_INVOICE_HDR.PURCHASE_INVOICE_REF_NO),
   DOCUMENT_TYPE: varchar("DOCUMENT_TYPE", { length: 50 }),
   DESCRIPTION_DETAILS: varchar("DESCRIPTION_DETAILS", { length: 100 }),
@@ -317,7 +318,7 @@ export const TBL_PURCHASE_INVOICE_FILES_UPLOAD = StoEntriesSchema.table("TBL_PUR
 });
 
 export const TBL_EXPENSE_HDR = StoEntriesSchema.table("TBL_EXPENSE_HDR", {
-  SNO: serial("SNO"),
+  SNO: integer("SNO").notNull().generatedAlwaysAsIdentity(),
   EXPENSE_REF_NO: varchar("EXPENSE_REF_NO", { length: 50 }).primaryKey(),
   EXPENSE_DATE: timestamp("EXPENSE_DATE", { mode: "date" }),
   COMPANY_ID: integer("COMPANY_ID").references(() => StoMasterSchema.TBL_COMPANY_MASTER.Company_Id),
@@ -339,13 +340,14 @@ export const TBL_EXPENSE_HDR = StoEntriesSchema.table("TBL_EXPENSE_HDR", {
   MODIFIED_BY: varchar("MODIFIED_BY", { length: 50 }),
   MODIFIED_DATE: timestamp("MODIFIED_DATE", { mode: "date" }),
   MODIFIED_IP_ADDRESS: varchar("MODIFIED_IP_ADDRESS", { length: 50 }),
+  COST_CENTER_ID: integer("COST_CENTER_ID").references(() => StoMasterSchema.TBL_COST_CENTER_MASTER.COST_CENTER_ID),
   SUBMITTED_BY: varchar("SUBMITTED_BY", { length: 50 }),
   SUBMITTED_DATE: timestamp("SUBMITTED_DATE", { mode: "date" }),
   SUBMITTED_IP_ADDRESS: varchar("SUBMITTED_IP_ADDRESS", { length: 50 }),
 });
 
 export const TBL_EXPENSE_DTL = StoEntriesSchema.table("TBL_EXPENSE_DTL", {
-  SNO: serial("SNO").primaryKey(),
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
   EXPENSE_REF_NO: varchar("EXPENSE_REF_NO", { length: 50 }).references(() => TBL_EXPENSE_HDR.EXPENSE_REF_NO),
   PO_REF_NO: varchar("PO_REF_NO", { length: 50 }),
   PO_DTL_SNO: integer("PO_DTL_SNO"),
@@ -363,7 +365,7 @@ export const TBL_EXPENSE_DTL = StoEntriesSchema.table("TBL_EXPENSE_DTL", {
 });
 
 export const TBL_SALES_ORDER_HDR = StoEntriesSchema.table("TBL_SALES_ORDER_HDR", {
-  SNO: serial("SNO"),
+  SNO: integer("SNO").notNull().generatedAlwaysAsIdentity(),
   SALES_ORDER_REF_NO: varchar("SALES_ORDER_REF_NO", { length: 50 }).primaryKey(),
   SALES_ORDER_DATE: timestamp("SALES_ORDER_DATE", { mode: "date" }).notNull(),
   SALES_PROFORMA_REF_NO: varchar("SALES_PROFORMA_REF_NO", { length: 50 }).references(() => TBL_SALES_PROFORMA_HDR.SALES_PROFORMA_REF_NO).notNull(),
@@ -396,7 +398,7 @@ export const TBL_SALES_ORDER_HDR = StoEntriesSchema.table("TBL_SALES_ORDER_HDR",
 });
 
 export const TBL_SALES_ORDER_DTL = StoEntriesSchema.table("TBL_SALES_ORDER_DTL", {
-  SNO: serial("SNO").primaryKey(),
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
   SALES_ORDER_REF_NO: varchar("SALES_ORDER_REF_NO", { length: 50 }).references(() => TBL_SALES_ORDER_HDR.SALES_ORDER_REF_NO),
   MAIN_CATEGORY_ID: integer("MAIN_CATEGORY_ID").references(() => StoMasterSchema.TBL_PRODUCT_MAIN_CATEGORY_MASTER.MAIN_CATEGORY_ID),
   SUB_CATEGORY_ID: integer("SUB_CATEGORY_ID").references(() => StoMasterSchema.TBL_PRODUCT_SUB_CATEGORY_MASTER.SUB_CATEGORY_ID),
@@ -430,7 +432,7 @@ export const TBL_SALES_ORDER_DTL = StoEntriesSchema.table("TBL_SALES_ORDER_DTL",
 });
 
 export const TBL_DELIVERY_NOTE_HDR = StoEntriesSchema.table("TBL_DELIVERY_NOTE_HDR", {
-  SNO: serial("SNO"),
+  SNO: integer("SNO").notNull().generatedAlwaysAsIdentity(),
   DELIVERY_NOTE_REF_NO: varchar("DELIVERY_NOTE_REF_NO", { length: 50 }).primaryKey(),
   DELIVERY_DATE: timestamp("DELIVERY_DATE", { mode: "date" }),
   COMPANY_ID: integer("COMPANY_ID").references(() => StoMasterSchema.TBL_COMPANY_MASTER.Company_Id),
@@ -466,7 +468,7 @@ export const TBL_DELIVERY_NOTE_HDR = StoEntriesSchema.table("TBL_DELIVERY_NOTE_H
 });
 
 export const TBL_DELIVERY_NOTE_DTL = StoEntriesSchema.table("TBL_DELIVERY_NOTE_DTL", {
-  SNO: serial("SNO").primaryKey(),
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
   DELIVERY_NOTE_REF_NO: varchar("DELIVERY_NOTE_REF_NO", { length: 50 }).references(() => TBL_DELIVERY_NOTE_HDR.DELIVERY_NOTE_REF_NO),
   SALES_ORDER_DTL_SNO: integer("SALES_ORDER_DTL_SNO"),
   PO_DTL_SNO: integer("PO_DTL_SNO"),
@@ -499,7 +501,7 @@ export const TBL_DELIVERY_NOTE_DTL = StoEntriesSchema.table("TBL_DELIVERY_NOTE_D
 });
 
 export const TBL_TAX_INVOICE_HDR = StoEntriesSchema.table("TBL_TAX_INVOICE_HDR", {
-  SNO: serial("SNO"),
+  SNO: integer("SNO").notNull().generatedAlwaysAsIdentity(),
   TAX_INVOICE_REF_NO: varchar("TAX_INVOICE_REF_NO", { length: 50 }).primaryKey(),
   INVOICE_DATE: timestamp("INVOICE_DATE", { mode: "date" }),
   COMPANY_ID: integer("COMPANY_ID").references(() => StoMasterSchema.TBL_COMPANY_MASTER.Company_Id),
@@ -526,10 +528,11 @@ export const TBL_TAX_INVOICE_HDR = StoEntriesSchema.table("TBL_TAX_INVOICE_HDR",
   SUBMITTED_BY: varchar("SUBMITTED_BY", { length: 50 }),
   SUBMITTED_DATE: timestamp("SUBMITTED_DATE", { mode: "date" }),
   SUBMITTED_MAC_ADDRESS: varchar("SUBMITTED_MAC_ADDRESS", { length: 50 }),
+  PROFIT_CENTER_ID: integer("PROFIT_CENTER_ID").references(() => StoMasterSchema.TBL_PROFIT_CENTER_MASTER.PROFIT_CENTER_ID),
 });
 
 export const TBL_TAX_INVOICE_DTL = StoEntriesSchema.table("TBL_TAX_INVOICE_DTL", {
-  SNO: serial("SNO").primaryKey(),
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
   TAX_INVOICE_REF_NO: varchar("TAX_INVOICE_REF_NO", { length: 50 }).references(() => TBL_TAX_INVOICE_HDR.TAX_INVOICE_REF_NO),
   DELIVERY_NOTE_DTL_SNO: integer("DELIVERY_NOTE_DTL_SNO"),
   PO_DTL_SNO: integer("PO_DTL_SNO"),
@@ -561,7 +564,7 @@ export const TBL_TAX_INVOICE_DTL = StoEntriesSchema.table("TBL_TAX_INVOICE_DTL",
 });
 
 export const TBL_CUSTOMER_RECEIPT_HDR = StoEntriesSchema.table("TBL_CUSTOMER_RECEIPT_HDR", {
-  SNO: bigserial("SNO", { mode: "number" }),
+  SNO: bigint("SNO", { mode: "number" }).notNull().generatedAlwaysAsIdentity(),
   RECEIPT_REF_NO: varchar("RECEIPT_REF_NO", { length: 50 }).primaryKey(),
   RECEIPT_DATE: timestamp("RECEIPT_DATE", { mode: "date" }),
   PAYMENT_TYPE: varchar("PAYMENT_TYPE", { length: 50 }),
@@ -595,7 +598,7 @@ export const TBL_CUSTOMER_RECEIPT_HDR = StoEntriesSchema.table("TBL_CUSTOMER_REC
 });
 
 export const TBL_CUSTOMER_RECEIPT_INVOICE_DTL = StoEntriesSchema.table("TBL_CUSTOMER_RECEIPT_INVOICE_DTL", {
-  SNO: bigserial("SNO", { mode: "number" }).primaryKey(),
+  SNO: bigint("SNO", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
   RECEIPT_REF_NO: varchar("RECEIPT_REF_NO", { length: 50 }).references(() => TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_REF_NO),
   TAX_INVOICE_REF_NO: varchar("TAX_INVOICE_REF_NO", { length: 50 }).references(() => TBL_TAX_INVOICE_HDR.TAX_INVOICE_REF_NO),
   ACTUAL_INVOICE_AMOUNT: numeric("ACTUAL_INVOICE_AMOUNT", { precision: 30, scale: 2 }),
@@ -896,7 +899,7 @@ export const TBL_CUSTOMER_RECEIPT_FILES_UPLOAD = StoEntriesSchema.table("TBL_CUS
 });
 
 export const TBL_SALES_PROFORMA_HDR = StoEntriesSchema.table("TBL_SALES_PROFORMA_HDR", {
-  SNO: serial("SNO"),
+  SNO: integer("SNO").notNull().generatedAlwaysAsIdentity(),
   SALES_PROFORMA_REF_NO: varchar("SALES_PROFORMA_REF_NO", { length: 50 }).primaryKey(),
   SALES_PROFORMA_DATE: timestamp("SALES_PROFORMA_DATE", { mode: "date" }),
   COMPANY_ID: integer("COMPANY_ID").references(() => StoMasterSchema.TBL_COMPANY_MASTER.Company_Id),
@@ -925,7 +928,7 @@ export const TBL_SALES_PROFORMA_HDR = StoEntriesSchema.table("TBL_SALES_PROFORMA
 });
 
 export const TBL_SALES_PROFORMA_DTL = StoEntriesSchema.table("TBL_SALES_PROFORMA_DTL", {
-  SNO: serial("SNO").primaryKey(),
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
   SALES_PROFORMA_REF_NO: varchar("SALES_PROFORMA_REF_NO", { length: 50 }).references(() => TBL_SALES_PROFORMA_HDR.SALES_PROFORMA_REF_NO),
   MAIN_CATEGORY_ID: integer("MAIN_CATEGORY_ID").references(() => StoMasterSchema.TBL_PRODUCT_MAIN_CATEGORY_MASTER.MAIN_CATEGORY_ID),
   SUB_CATEGORY_ID: integer("SUB_CATEGORY_ID").references(() => StoMasterSchema.TBL_PRODUCT_SUB_CATEGORY_MASTER.SUB_CATEGORY_ID),
@@ -977,7 +980,7 @@ export const TBL_SALES_PROFORMA_FILES_UPLOAD = StoEntriesSchema.table("TBL_SALES
 });
 
 export const TBL_JOURNAL_HDR = StoEntriesSchema.table("TBL_JOURNAL_HDR", {
-  SNO: serial("SNO"),
+  SNO: integer("SNO").notNull().generatedAlwaysAsIdentity(),
   JOURNAL_REF_NO: varchar("JOURNAL_REF_NO", { length: 50 }).primaryKey(),
   JOURNAL_DATE: timestamp("JOURNAL_DATE", { mode: "date" }).notNull(),
   COMPANY_ID: integer("COMPANY_ID").references(() => StoMasterSchema.TBL_COMPANY_MASTER.Company_Id),
@@ -1000,11 +1003,41 @@ export const TBL_JOURNAL_HDR = StoEntriesSchema.table("TBL_JOURNAL_HDR", {
 });
 
 export const TBL_JOURNAL_DTL = StoEntriesSchema.table("TBL_JOURNAL_DTL", {
-  SNO: serial("SNO").primaryKey(),
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
   JOURNAL_REF_NO: varchar("JOURNAL_REF_NO", { length: 50 }).references(() => TBL_JOURNAL_HDR.JOURNAL_REF_NO),
   LEDGER_ID: integer("LEDGER_ID").references(() => StoMasterSchema.TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_ID),
   DEBIT: numeric("DEBIT", { precision: 30, scale: 2 }).default("0"),
   CREDIT: numeric("CREDIT", { precision: 30, scale: 2 }).default("0"),
+  REMARKS: varchar("REMARKS", { length: 255 }),
+});
+
+export const TBL_TRIAL_BALANCE_HDR = StoEntriesSchema.table("TBL_TRIAL_BALANCE_HDR", {
+  SNO: integer("SNO").notNull().generatedAlwaysAsIdentity(),
+  TB_REF_NO: varchar("TB_REF_NO", { length: 50 }).primaryKey(),
+  AS_OF_DATE: timestamp("AS_OF_DATE", { mode: "date" }).notNull(),
+  COMPANY_ID: integer("COMPANY_ID").references(() => StoMasterSchema.TBL_COMPANY_MASTER.Company_Id),
+  FINANCIAL_YEAR: varchar("FINANCIAL_YEAR", { length: 50 }),
+  TOTAL_DEBIT: numeric("TOTAL_DEBIT", { precision: 30, scale: 2 }).default("0"),
+  TOTAL_CREDIT: numeric("TOTAL_CREDIT", { precision: 30, scale: 2 }).default("0"),
+  STATUS_ENTRY: varchar("STATUS_ENTRY", { length: 20 }),
+  CREATED_BY: varchar("CREATED_BY", { length: 50 }),
+  CREATED_DATE: timestamp("CREATED_DATE", { mode: "date" }).defaultNow(),
+  CREATED_IP_ADDRESS: varchar("CREATED_IP_ADDRESS", { length: 50 }),
+  MODIFIED_BY: varchar("MODIFIED_BY", { length: 50 }),
+  MODIFIED_DATE: timestamp("MODIFIED_DATE", { mode: "date" }),
+  MODIFIED_IP_ADDRESS: varchar("MODIFIED_IP_ADDRESS", { length: 50 }),
+});
+
+export const TBL_TRIAL_BALANCE_DTL = StoEntriesSchema.table("TBL_TRIAL_BALANCE_DTL", {
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
+  TB_REF_NO: varchar("TB_REF_NO", { length: 50 }).references(() => TBL_TRIAL_BALANCE_HDR.TB_REF_NO),
+  LEDGER_ID: integer("LEDGER_ID").references(() => StoMasterSchema.TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_ID),
+  OPENING_DEBIT: numeric("OPENING_DEBIT", { precision: 30, scale: 2 }).default("0"),
+  OPENING_CREDIT: numeric("OPENING_CREDIT", { precision: 30, scale: 2 }).default("0"),
+  PERIOD_DEBIT: numeric("PERIOD_DEBIT", { precision: 30, scale: 2 }).default("0"),
+  PERIOD_CREDIT: numeric("PERIOD_CREDIT", { precision: 30, scale: 2 }).default("0"),
+  CLOSING_DEBIT: numeric("CLOSING_DEBIT", { precision: 30, scale: 2 }).default("0"),
+  CLOSING_CREDIT: numeric("CLOSING_CREDIT", { precision: 30, scale: 2 }).default("0"),
   REMARKS: varchar("REMARKS", { length: 255 }),
 });
 
@@ -1067,3 +1100,12 @@ export const TBL_JOURNAL_DTLRelations = relations(TBL_JOURNAL_DTL, ({ one }) => 
 }));
 
 
+export const TBL_TRIAL_BALANCE_HDRRelations = relations(TBL_TRIAL_BALANCE_HDR, ({ one, many }) => ({
+  company_master: one(StoMasterSchema.TBL_COMPANY_MASTER, { fields: [TBL_TRIAL_BALANCE_HDR.COMPANY_ID], references: [StoMasterSchema.TBL_COMPANY_MASTER.Company_Id] }),
+  details: many(TBL_TRIAL_BALANCE_DTL),
+}));
+
+export const TBL_TRIAL_BALANCE_DTLRelations = relations(TBL_TRIAL_BALANCE_DTL, ({ one }) => ({
+  trial_balance_hdr: one(TBL_TRIAL_BALANCE_HDR, { fields: [TBL_TRIAL_BALANCE_DTL.TB_REF_NO], references: [TBL_TRIAL_BALANCE_HDR.TB_REF_NO] }),
+  ledger_master: one(StoMasterSchema.TBL_ACCOUNTS_LEDGER_MASTER, { fields: [TBL_TRIAL_BALANCE_DTL.LEDGER_ID], references: [StoMasterSchema.TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_ID] }),
+}));

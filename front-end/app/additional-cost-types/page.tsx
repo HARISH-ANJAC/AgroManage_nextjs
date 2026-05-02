@@ -10,7 +10,7 @@ export default function AdditionalCostTypesPage() {
     domain="additional-cost-types" title="Additional Cost Types" description="Manage your additional cost types" idPrefix="ACT" fields={[
       { key: "additionalCostTypeName", label: "Cost Type Name", type: "text", required: true },
       { key: "remarks", label: "Remarks", type: "textarea" },
-      { key: "statusMaster", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
+      { key: "statusEntry", label: "Status", type: "select", required: true, options: ["Active", "Inactive"], defaultValue: "Active" },
     ]} initialData={additionalCostTypes || []} columns={[
       { key: "additionalCostTypeName", label: "Cost Type" },
       { key: "remarks", label: "Remarks" },

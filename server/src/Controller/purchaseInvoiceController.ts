@@ -8,9 +8,12 @@ import {
     TBL_PURCHASE_ORDER_DTL,
     TBL_GOODS_INWARD_GRN_DTL,
     TBL_JOURNAL_HDR,
-    TBL_JOURNAL_DTL
+    TBL_JOURNAL_DTL,
+    TBL_COST_CENTER_ALLOCATION,
+    TBL_COST_CENTER_BUDGET,
+    TBL_COST_CENTER_MASTER
 } from "../db/schema/index.js";
-import { eq, inArray, and } from "drizzle-orm";
+import { eq, inArray, and, lte, gte } from "drizzle-orm";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -248,6 +251,39 @@ export const createPurchaseInvoice = async (req: Request, res: Response): Promis
                 ipAddress: req.ip
             }, journalDetails);
 
+            // 6. Cost Center Allocation
+            if (header.costCenterId) {
+                const totalAmountLc = Number(header.finalAmount) * exRate;
+                await tx.insert(TBL_COST_CENTER_ALLOCATION).values({
+                    Company_ID: hValues.COMPANY_ID!,
+                    COST_CENTER_ID: header.costCenterId,
+                    SOURCE_TABLE: 'TBL_PURCHASE_INVOICE_HDR',
+                    SOURCE_REF_NO: header.purchaseInvoiceRefNo,
+                    EXPENSE_DATE: hValues.INVOICE_DATE,
+                    EXPENSE_CATEGORY: header.expenseCategory || 'PURCHASE',
+                    CURRENCY_ID: header.currencyId || 1,
+                    EXPENSE_AMOUNT: String(header.finalAmount),
+                    LC_AMOUNT: String(totalAmountLc),
+                    ALLOCATION_PERCENTAGE: '100',
+                    ALLOCATED_AMOUNT: String(totalAmountLc),
+                    APPROVAL_STATUS: 'APPROVED',
+                    STATUS_ENTRY: 'Active',
+                    CREATED_BY: audit?.user || "System",
+                    CREATED_DATE: new Date(),
+                });
+
+                // Update Budget actuals
+                await tx.update(TBL_COST_CENTER_BUDGET)
+                    .set({
+                        ACTUAL_EXPENSE: sql`CAST(${TBL_COST_CENTER_BUDGET.ACTUAL_EXPENSE} AS NUMERIC) + ${totalAmountLc}`
+                    })
+                    .where(and(
+                        eq(TBL_COST_CENTER_BUDGET.COST_CENTER_ID, header.costCenterId),
+                        lte(TBL_COST_CENTER_BUDGET.PERIOD_START_DATE, hValues.INVOICE_DATE.toISOString().split('T')[0]),
+                        gte(TBL_COST_CENTER_BUDGET.PERIOD_END_DATE, hValues.INVOICE_DATE.toISOString().split('T')[0])
+                    ));
+            }
+
             return { msg: "Purchase Invoice created successfully", id: header.purchaseInvoiceRefNo };
         } catch (error: any) {
             console.error(error);
@@ -301,6 +337,29 @@ export const updatePurchaseInvoice = async (req: Request, res: Response): Promis
                 MODIFIED_DATE: new Date(),
                 MODIFIED_IP_ADDRESS: req.ip || "127.0.0.1"
             };
+
+            // Fetch old header for Cost Center rollback
+            const oldHeader = await tx.select().from(TBL_PURCHASE_INVOICE_HDR).where(eq(TBL_PURCHASE_INVOICE_HDR.PURCHASE_INVOICE_REF_NO, id)).limit(1);
+
+            if (oldHeader.length > 0 && oldHeader[0].COST_CENTER_ID) {
+                // 1. Revert old budget actuals
+                await tx.update(TBL_COST_CENTER_BUDGET)
+                    .set({
+                        ACTUAL_EXPENSE: sql`CAST(${TBL_COST_CENTER_BUDGET.ACTUAL_EXPENSE} AS NUMERIC) - ${Number(oldHeader[0].FINAL_PURCHASE_INVOICE_AMOUNT_LC)}`
+                    })
+                    .where(and(
+                        eq(TBL_COST_CENTER_BUDGET.COST_CENTER_ID, oldHeader[0].COST_CENTER_ID),
+                        lte(TBL_COST_CENTER_BUDGET.PERIOD_START_DATE, oldHeader[0].INVOICE_DATE!.toISOString().split('T')[0]),
+                        gte(TBL_COST_CENTER_BUDGET.PERIOD_END_DATE, oldHeader[0].INVOICE_DATE!.toISOString().split('T')[0])
+                    ));
+
+                // 2. Delete old allocation
+                await tx.delete(TBL_COST_CENTER_ALLOCATION)
+                    .where(and(
+                        eq(TBL_COST_CENTER_ALLOCATION.SOURCE_REF_NO, id),
+                        eq(TBL_COST_CENTER_ALLOCATION.SOURCE_TABLE, 'TBL_PURCHASE_INVOICE_HDR')
+                    ));
+            }
 
             await tx.update(TBL_PURCHASE_INVOICE_HDR).set(hUpdates as any).where(eq(TBL_PURCHASE_INVOICE_HDR.PURCHASE_INVOICE_REF_NO, id));
 
@@ -507,6 +566,30 @@ export const deletePurchaseInvoice = async (req: Request, res: Response): Promis
             await tx.delete(TBL_PURCHASE_INVOICE_DTL).where(eq(TBL_PURCHASE_INVOICE_DTL.PURCHASE_INVOICE_REF_NO, id));
             await tx.delete(TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS).where(eq(TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS.PURCHASE_INVOICE_NO, id));
             await tx.delete(TBL_PURCHASE_INVOICE_FILES_UPLOAD).where(eq(TBL_PURCHASE_INVOICE_FILES_UPLOAD.PURCHASE_INVOICE_REF_NO, id));
+
+            // Fetch old header for Cost Center rollback
+            const oldHeader = await tx.select().from(TBL_PURCHASE_INVOICE_HDR).where(eq(TBL_PURCHASE_INVOICE_HDR.PURCHASE_INVOICE_REF_NO, id)).limit(1);
+
+            if (oldHeader.length > 0 && oldHeader[0].COST_CENTER_ID) {
+                // Revert budget actuals
+                await tx.update(TBL_COST_CENTER_BUDGET)
+                    .set({
+                        ACTUAL_EXPENSE: sql`CAST(${TBL_COST_CENTER_BUDGET.ACTUAL_EXPENSE} AS NUMERIC) - ${Number(oldHeader[0].FINAL_PURCHASE_INVOICE_AMOUNT_LC)}`
+                    })
+                    .where(and(
+                        eq(TBL_COST_CENTER_BUDGET.COST_CENTER_ID, oldHeader[0].COST_CENTER_ID),
+                        lte(TBL_COST_CENTER_BUDGET.PERIOD_START_DATE, oldHeader[0].INVOICE_DATE!.toISOString().split('T')[0]),
+                        gte(TBL_COST_CENTER_BUDGET.PERIOD_END_DATE, oldHeader[0].INVOICE_DATE!.toISOString().split('T')[0])
+                    ));
+
+                // Delete allocation
+                await tx.delete(TBL_COST_CENTER_ALLOCATION)
+                    .where(and(
+                        eq(TBL_COST_CENTER_ALLOCATION.SOURCE_REF_NO, id),
+                        eq(TBL_COST_CENTER_ALLOCATION.SOURCE_TABLE, 'TBL_PURCHASE_INVOICE_HDR')
+                    ));
+            }
+
             await tx.delete(TBL_PURCHASE_INVOICE_HDR).where(eq(TBL_PURCHASE_INVOICE_HDR.PURCHASE_INVOICE_REF_NO, id));
         });
         return res.status(200).json({ msg: "Purchase Invoice deleted successfully" });

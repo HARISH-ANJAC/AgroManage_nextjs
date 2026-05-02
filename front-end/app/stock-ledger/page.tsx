@@ -4,14 +4,14 @@ import { useState, useMemo, useEffect } from "react";
 import { useInventoryStore } from "@/hooks/useInventoryStore";
 import { useMasterData } from "@/hooks/useMasterData";
 import { toast } from "sonner";
-import { 
-  Search, 
-  Package, 
-  Warehouse, 
-  ArrowUpRight, 
-  ArrowDownLeft, 
-  Calendar, 
-  Filter, 
+import {
+  Search,
+  Package,
+  Warehouse,
+  ArrowUpRight,
+  ArrowDownLeft,
+  Calendar,
+  Filter,
   Download,
   Info,
   Clock,
@@ -20,12 +20,12 @@ import {
   History,
   FileSpreadsheet
 } from "lucide-react";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
@@ -42,7 +42,7 @@ export default function StockLedgerPage() {
   const { getStockLedger } = useInventoryStore();
   const { data: stores = [] } = useMasterData("stores");
   const { data: products = [] } = useMasterData("products");
-  
+
   const [selectedStoreId, setSelectedStoreId] = useState<string>("");
   const [selectedProductId, setSelectedProductId] = useState<string>("all");
   const [reportData, setReportData] = useState<any[]>([]);
@@ -69,7 +69,7 @@ export default function StockLedgerPage() {
   const filtered = useMemo(() => {
     if (!search.trim()) return reportData;
     const q = search.toLowerCase();
-    return reportData.filter(r => 
+    return reportData.filter(r =>
       (r.refNo ?? "").toLowerCase().includes(q) ||
       (r.remarks ?? "").toLowerCase().includes(q) ||
       (r.type ?? "").toLowerCase().includes(q)
@@ -110,7 +110,7 @@ export default function StockLedgerPage() {
               Track item-wise inventory movements across different stores and warehouses.
             </p>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
             <div className="w-full sm:w-64">
               <Select value={selectedStoreId} onValueChange={setSelectedStoreId}>
@@ -127,7 +127,7 @@ export default function StockLedgerPage() {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="w-full sm:w-64">
               <Select value={selectedProductId} onValueChange={setSelectedProductId}>
                 <SelectTrigger className="h-12 rounded-2xl border-slate-200 bg-slate-50 font-bold text-slate-700 shadow-sm">
@@ -185,7 +185,7 @@ export default function StockLedgerPage() {
             </div>
 
             {/* Toolbar */}
-            <div className="bg-white rounded-[2rem] p-4 shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center">
+            <div className="bg-white rounded-4xl p-4 shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center">
               <div className="relative flex-1 w-full">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
                 <input
@@ -208,7 +208,7 @@ export default function StockLedgerPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-slate-50/80 text-slate-400 text-[10px] font-bold uppercase tracking-[0.1em] border-b border-slate-200">
+                    <tr className="bg-slate-50/80 text-slate-400 text-[10px] font-bold uppercase tracking-widest border-b border-slate-200">
                       <th className="text-left px-8 py-5">Date</th>
                       <th className="text-left px-8 py-5">Ref No</th>
                       <th className="text-left px-8 py-5">Transaction Type</th>
@@ -247,10 +247,9 @@ export default function StockLedgerPage() {
                           </td>
                           <td className="px-8 py-6">
                             <div className="flex flex-col">
-                              <span className={`text-[10px] font-bold uppercase w-fit px-2 py-0.5 rounded ${
-                                t.type.includes('Inward') ? 'bg-emerald-50 text-emerald-600' : 
+                              <span className={`text-[10px] font-bold uppercase w-fit px-2 py-0.5 rounded ${t.type.includes('Inward') ? 'bg-emerald-50 text-emerald-600' :
                                 t.type.includes('Outward') ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-600'
-                              }`}>
+                                }`}>
                                 {t.type}
                               </span>
                               {t.remarks && <p className="text-[10px] text-slate-400 mt-1 italic max-w-[200px] truncate">{t.remarks}</p>}
@@ -263,7 +262,7 @@ export default function StockLedgerPage() {
                             {Number(t.outQty) > 0 ? `-${fmtQty(t.outQty)}` : "—"}
                           </td>
                           <td className="px-8 py-6 text-right">
-                             <span className="font-mono font-black text-slate-900">{fmtQty(t.runningBalance)}</span>
+                            <span className="font-mono font-black text-slate-900">{fmtQty(t.runningBalance)}</span>
                           </td>
                         </tr>
                       ))

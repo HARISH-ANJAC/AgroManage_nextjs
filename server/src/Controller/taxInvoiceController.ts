@@ -10,9 +10,13 @@ import {
     TBL_COMPANY_MASTER,
     TBL_CUSTOMER_RECEIPT_INVOICE_DTL,
     TBL_JOURNAL_HDR,
-    TBL_JOURNAL_DTL
+    TBL_JOURNAL_DTL,
+    TBL_PROFIT_CENTER_ALLOCATION,
+    TBL_PROFIT_CENTER_TARGET,
+    TBL_PROFIT_CENTER_MASTER
 } from "../db/schema/index.js";
-import { eq, desc, like, sql, inArray, and } from "drizzle-orm";
+import * as multiCurrencyController from "./multiCurrencyController.js";
+import { eq, desc, like, sql, inArray, and, lte, gte } from "drizzle-orm";
 import { createJournalEntry, getSystemLedger, getLedgerForCustomer } from "../utils/accountingUtils.js";
 import { sendEmail, getBaseTemplate } from "../utils/emailService.js";
 import { generatePdfFromHtml } from "../utils/pdfGenerator.js";
@@ -127,8 +131,8 @@ export const createTaxInvoice = async (req: Request, res: Response): Promise<Res
             let finalRefNo = header.taxInvoiceRefNo;
 
             // Ref No Generation
-            if (!finalRefNo || finalRefNo.startsWith("TEMP-")) {
-                const now = new Date();
+            if (!finalRefNo || finalRefNo.startsWith("TEMP-") || finalRefNo === "NEW") {
+                const now = header.invoiceDate ? new Date(header.invoiceDate) : new Date();
                 const yearStr = now.getFullYear().toString().slice(-2);
                 const mStr = (now.getMonth() + 1).toString().padStart(2, '0');
                 const searchPrefix = `INV/${yearStr}/${mStr}/%`;
@@ -151,24 +155,42 @@ export const createTaxInvoice = async (req: Request, res: Response): Promise<Res
             const hValues = {
                 TAX_INVOICE_REF_NO: finalRefNo,
                 INVOICE_DATE: header.invoiceDate ? new Date(header.invoiceDate) : new Date(),
-                COMPANY_ID: header.companyId,
-                FROM_STORE_ID: header.fromStoreId,
+                COMPANY_ID: Number(header.companyId),
+                FROM_STORE_ID: Number(header.fromStoreId),
                 INVOICE_TYPE: header.invoiceType || "Standard",
                 DELIVERY_NOTE_REF_NO: header.deliveryNoteRefNo,
-                CUSTOMER_ID: header.customerId,
-                CURRENCY_ID: header.currencyId || 1,
-                EXCHANGE_RATE: header.exchangeRate || 1,
-                TOTAL_PRODUCT_AMOUNT: header.totalProductAmount,
-                VAT_AMOUNT: header.vatAmount,
-                FINAL_SALES_AMOUNT: header.finalSalesAmount,
+                CUSTOMER_ID: Number(header.customerId),
+                CURRENCY_ID: Number(header.currencyId) || 1,
+                EXCHANGE_RATE: Number(header.exchangeRate) || 1,
+                TOTAL_PRODUCT_AMOUNT: String(header.totalProductAmount || 0),
+                VAT_AMOUNT: String(header.vatAmount || 0),
+                FINAL_SALES_AMOUNT: String(header.finalSalesAmount || 0),
+                TOTAL_PRODUCT_AMOUNT_LC: String(Number(header.totalProductAmount || 0) * (Number(header.exchangeRate) || 1)),
+                FINAL_SALES_AMOUNT_LC: String(Number(header.finalSalesAmount || 0) * (Number(header.exchangeRate) || 1)),
                 STATUS_ENTRY: header.status || "Open",
                 REMARKS: header.remarks,
+                PROFIT_CENTER_ID: header.profitCenterId || null,
                 CREATED_BY: audit?.user || "System",
                 CREATED_MAC_ADDRESS: req.ip || "127.0.0.1",
                 CREATED_DATE: new Date()
             };
 
             await tx.insert(TBL_TAX_INVOICE_HDR).values(hValues as any);
+
+            // Step 3: Record in Multi-Currency Transaction Table
+            if (header.currencyId && header.currencyId !== 1) { // Assuming 1 is Base
+                await multiCurrencyController.recordMCTransaction({
+                    companyId: header.companyId,
+                    docType: 'TAX_INVOICE',
+                    docNumber: finalRefNo,
+                    docDate: hValues.INVOICE_DATE,
+                    currencyId: header.currencyId,
+                    amount: header.finalSalesAmount || 0,
+                    exchangeRate: header.exchangeRate || 1,
+                    baseAmount: (header.finalSalesAmount || 0) * (header.exchangeRate || 1),
+                    createdBy: audit?.user || "System"
+                });
+            }
 
             if (items && items.length > 0) {
                 const dValues = items.map((item: any) => ({
@@ -209,30 +231,30 @@ export const createTaxInvoice = async (req: Request, res: Response): Promise<Res
             }
 
             // 5. Generate Accounting Journal Entry
-            const salesLedgerId = await getSystemLedger(tx, header.companyId, "Sales Account", "Direct Income");
-            const customerLedgerId = await getLedgerForCustomer(tx, header.customerId, header.companyId);
-            const vatOutputLedgerId = await getSystemLedger(tx, header.companyId, "VAT Output Account", "Liability");
+            const salesLedgerId = await getSystemLedger(tx, hValues.COMPANY_ID, "Sales Account", "Revenue");
+            const customerLedgerId = await getLedgerForCustomer(tx, hValues.CUSTOMER_ID, hValues.COMPANY_ID);
+            const vatOutputLedgerId = await getSystemLedger(tx, hValues.COMPANY_ID, "VAT Output Account", "Liability");
 
             const journalDetails = [
                 {
                     ledgerId: salesLedgerId,
                     debit: 0,
-                    credit: Number(header.totalProductAmount),
+                    credit: Number(hValues.TOTAL_PRODUCT_AMOUNT),
                     remarks: `Sales - ${finalRefNo}`
                 },
                 {
                     ledgerId: customerLedgerId,
-                    debit: Number(header.finalSalesAmount),
+                    debit: Number(hValues.FINAL_SALES_AMOUNT),
                     credit: 0,
                     remarks: `Invoice - ${finalRefNo}`
                 }
             ];
 
-            if (Number(header.vatAmount) > 0) {
+            if (Number(hValues.VAT_AMOUNT) > 0) {
                 journalDetails.push({
                     ledgerId: vatOutputLedgerId,
                     debit: 0,
-                    credit: Number(header.vatAmount),
+                    credit: Number(hValues.VAT_AMOUNT),
                     remarks: `VAT Output - ${finalRefNo}`
                 });
             }
@@ -247,12 +269,45 @@ export const createTaxInvoice = async (req: Request, res: Response): Promise<Res
                 ipAddress: req.ip
             }, journalDetails);
 
+            // 6. Profit Center Allocation
+            if (header.profitCenterId) {
+                await tx.insert(TBL_PROFIT_CENTER_ALLOCATION).values({
+                    Company_ID: header.companyId,
+                    PROFIT_CENTER_ID: header.profitCenterId,
+                    SOURCE_TABLE: 'TBL_TAX_INVOICE_HDR',
+                    SOURCE_REF_NO: finalRefNo,
+                    REVENUE_DATE: hValues.INVOICE_DATE,
+                    REVENUE_CATEGORY: header.revenueCategory || 'SALES',
+                    CURRENCY_ID: header.currencyId || 1,
+                    REVENUE_AMOUNT: String(header.finalSalesAmount),
+                    LC_AMOUNT: String(Number(header.finalSalesAmount) * (header.exchangeRate || 1)),
+                    ALLOCATION_PERCENTAGE: '100',
+                    ALLOCATED_AMOUNT: String(Number(header.finalSalesAmount) * (header.exchangeRate || 1)),
+                    STATUS_ENTRY: 'Active',
+                    CREATED_BY: audit?.user || "System",
+                    CREATED_DATE: new Date(),
+                });
+
+                // Update Revenue Targets
+                await tx.update(TBL_PROFIT_CENTER_TARGET)
+                    .set({
+                        ACTUAL_REVENUE: sql`CAST(${TBL_PROFIT_CENTER_TARGET.ACTUAL_REVENUE} AS NUMERIC) + ${Number(header.finalSalesAmount) * (header.exchangeRate || 1)}`
+                    })
+                    .where(and(
+                        eq(TBL_PROFIT_CENTER_TARGET.PROFIT_CENTER_ID, header.profitCenterId),
+                        lte(TBL_PROFIT_CENTER_TARGET.PERIOD_START_DATE, hValues.INVOICE_DATE.toISOString().split('T')[0]),
+                        gte(TBL_PROFIT_CENTER_TARGET.PERIOD_END_DATE, hValues.INVOICE_DATE.toISOString().split('T')[0])
+                    ));
+            }
+
             const invoiceResult = { msg: "Tax Invoice created successfully", taxInvoiceRefNo: finalRefNo };
 
             // Send Email to Customer
             try {
-                const customer = (await tx.select().from(TBL_CUSTOMER_MASTER).where(eq(TBL_CUSTOMER_MASTER.Customer_Id, header.customerId as number)).limit(1))[0];
-                const company = (await tx.select().from(TBL_COMPANY_MASTER).where(eq(TBL_COMPANY_MASTER.Company_Id, header.companyId as number)).limit(1))[0];
+                const customerId = hValues.CUSTOMER_ID;
+                const companyId = hValues.COMPANY_ID;
+                const customer = (await tx.select().from(TBL_CUSTOMER_MASTER).where(eq(TBL_CUSTOMER_MASTER.Customer_Id, customerId)).limit(1))[0];
+                const company = (await tx.select().from(TBL_COMPANY_MASTER).where(eq(TBL_COMPANY_MASTER.Company_Id, companyId)).limit(1))[0];
                 const bankAccounts = await tx.select({
                     label: TBL_BANK_MASTER.BANK_NAME,
                     details: sql`CONCAT(${TBL_COMPANY_BANK_ACCOUNT_MASTER.Account_Number}, ', ', ${TBL_COMPANY_BANK_ACCOUNT_MASTER.Bank_Branch_Name})`,
@@ -260,10 +315,10 @@ export const createTaxInvoice = async (req: Request, res: Response): Promise<Res
                 })
                     .from(TBL_COMPANY_BANK_ACCOUNT_MASTER)
                     .leftJoin(TBL_BANK_MASTER, eq(TBL_COMPANY_BANK_ACCOUNT_MASTER.Bank_Id, TBL_BANK_MASTER.BANK_ID))
-                    .where(eq(TBL_COMPANY_BANK_ACCOUNT_MASTER.Company_id, header.companyId as number));
+                    .where(eq(TBL_COMPANY_BANK_ACCOUNT_MASTER.Company_id, companyId));
 
                 // Fetch Product Images for Invoice
-                const productIds = items.map((i: any) => i.productId).filter((id: any) => id != null);
+                const productIds = (items || []).map((i: any) => i.productId).filter((id: any) => id != null);
                 const fetchedProducts = productIds.length > 0 
                     ? await tx.select({
                         id: TBL_PRODUCT_MASTER.PRODUCT_ID,
@@ -361,6 +416,29 @@ export const updateTaxInvoice = async (req: Request, res: Response): Promise<Res
                 MODIFIED_DATE: new Date()
             };
 
+            // Fetch old header for Profit Center rollback
+            const oldHeader = await tx.select().from(TBL_TAX_INVOICE_HDR).where(eq(TBL_TAX_INVOICE_HDR.TAX_INVOICE_REF_NO, decodedId)).limit(1);
+            
+            if (oldHeader.length > 0 && oldHeader[0].PROFIT_CENTER_ID) {
+                // 1. Revert old target actuals
+                await tx.update(TBL_PROFIT_CENTER_TARGET)
+                    .set({
+                        ACTUAL_REVENUE: sql`CAST(${TBL_PROFIT_CENTER_TARGET.ACTUAL_REVENUE} AS NUMERIC) - ${Number(oldHeader[0].FINAL_SALES_AMOUNT) * (Number(oldHeader[0].EXCHANGE_RATE) || 1)}`
+                    })
+                    .where(and(
+                        eq(TBL_PROFIT_CENTER_TARGET.PROFIT_CENTER_ID, oldHeader[0].PROFIT_CENTER_ID),
+                        lte(TBL_PROFIT_CENTER_TARGET.PERIOD_START_DATE, oldHeader[0].INVOICE_DATE!.toISOString().split('T')[0]),
+                        gte(TBL_PROFIT_CENTER_TARGET.PERIOD_END_DATE, oldHeader[0].INVOICE_DATE!.toISOString().split('T')[0])
+                    ));
+                
+                // 2. Delete old allocation
+                await tx.delete(TBL_PROFIT_CENTER_ALLOCATION)
+                    .where(and(
+                        eq(TBL_PROFIT_CENTER_ALLOCATION.SOURCE_REF_NO, decodedId),
+                        eq(TBL_PROFIT_CENTER_ALLOCATION.SOURCE_TABLE, 'TBL_TAX_INVOICE_HDR')
+                    ));
+            }
+
             await tx.update(TBL_TAX_INVOICE_HDR).set(hUpdates as any).where(eq(TBL_TAX_INVOICE_HDR.TAX_INVOICE_REF_NO, decodedId));
 
             await tx.delete(TBL_TAX_INVOICE_DTL).where(eq(TBL_TAX_INVOICE_DTL.TAX_INVOICE_REF_NO, decodedId));
@@ -422,26 +500,27 @@ export const updateTaxInvoice = async (req: Request, res: Response): Promise<Res
             const journalDetails = [
                 {
                     ledgerId: customerLedgerId,
-                    debit: Number(header.finalInvoiceAmount),
+                    debit: Number(header.finalSalesAmount),
                     credit: 0,
-                    remarks: `Invoice Update: ${id}`
+                    remarks: `Invoice Update: ${decodedId}`
                 },
                 {
                     ledgerId: salesLedgerId,
                     debit: 0,
                     credit: Number(header.totalProductAmount),
-                    remarks: `Sales Items (Updated) - ${id}`
+                    remarks: `Sales Items (Updated) - ${decodedId}`
                 }
             ];
 
-            if (Number(header.totalVatAmount) > 0) {
+            if (Number(header.vatAmount) > 0) {
                 journalDetails.push({
                     ledgerId: vatLedgerId,
                     debit: 0,
-                    credit: Number(header.totalVatAmount),
-                    remarks: `VAT Output (Updated) - ${id}`
+                    credit: Number(header.vatAmount),
+                    remarks: `VAT Output (Updated) - ${decodedId}`
                 });
             }
+
 
             await createJournalEntry(tx, {
                 journalDate: hUpdates.INVOICE_DATE || new Date(),
@@ -452,6 +531,38 @@ export const updateTaxInvoice = async (req: Request, res: Response): Promise<Res
                 createdBy: audit?.user || "System",
                 ipAddress: req.ip
             }, journalDetails);
+
+            // 3. Create new Profit Center Allocation
+            if (header.profitCenterId) {
+                const invDate = header.invoiceDate ? new Date(header.invoiceDate) : (oldHeader[0]?.INVOICE_DATE || new Date());
+                await tx.insert(TBL_PROFIT_CENTER_ALLOCATION).values({
+                    Company_ID: header.companyId,
+                    PROFIT_CENTER_ID: header.profitCenterId,
+                    SOURCE_TABLE: 'TBL_TAX_INVOICE_HDR',
+                    SOURCE_REF_NO: header.taxInvoiceRefNo,
+                    REVENUE_DATE: header.invoiceDate ? new Date(header.invoiceDate) : new Date(),
+                    REVENUE_CATEGORY: header.revenueCategory || 'SALES',
+                    CURRENCY_ID: header.currencyId || 1,
+                    REVENUE_AMOUNT: String(header.finalSalesAmount),
+                    LC_AMOUNT: String(Number(header.finalSalesAmount) * (header.exchangeRate || 1)),
+                    ALLOCATION_PERCENTAGE: '100',
+                    ALLOCATED_AMOUNT: String(Number(header.finalSalesAmount) * (header.exchangeRate || 1)),
+                    STATUS_ENTRY: 'Active',
+                    CREATED_BY: audit?.user || "System",
+                    CREATED_DATE: new Date(),
+                });
+
+                // Update Revenue Targets
+                await tx.update(TBL_PROFIT_CENTER_TARGET)
+                    .set({
+                        ACTUAL_REVENUE: sql`CAST(${TBL_PROFIT_CENTER_TARGET.ACTUAL_REVENUE} AS NUMERIC) + ${Number(header.finalSalesAmount) * (header.exchangeRate || 1)}`
+                    })
+                    .where(and(
+                        eq(TBL_PROFIT_CENTER_TARGET.PROFIT_CENTER_ID, header.profitCenterId),
+                        lte(TBL_PROFIT_CENTER_TARGET.PERIOD_START_DATE, invDate.toISOString().split('T')[0]),
+                        gte(TBL_PROFIT_CENTER_TARGET.PERIOD_END_DATE, invDate.toISOString().split('T')[0])
+                    ));
+            }
 
             return { msg: "Tax Invoice updated successfully" };
         } catch (error) {
@@ -487,6 +598,28 @@ export const deleteTaxInvoice = async (req: Request, res: Response): Promise<Res
             await tx.delete(TBL_TAX_INVOICE_FILES_UPLOAD).where(eq(TBL_TAX_INVOICE_FILES_UPLOAD.TAX_INVOICE_REF_NO, decodedId));
 
             // 3. Delete items and header
+            const oldHeader = await tx.select().from(TBL_TAX_INVOICE_HDR).where(eq(TBL_TAX_INVOICE_HDR.TAX_INVOICE_REF_NO, decodedId)).limit(1);
+            
+            if (oldHeader.length > 0 && oldHeader[0].PROFIT_CENTER_ID) {
+                // Revert target actuals
+                await tx.update(TBL_PROFIT_CENTER_TARGET)
+                    .set({
+                        ACTUAL_REVENUE: sql`CAST(${TBL_PROFIT_CENTER_TARGET.ACTUAL_REVENUE} AS NUMERIC) - ${Number(oldHeader[0].FINAL_SALES_AMOUNT) * (Number(oldHeader[0].EXCHANGE_RATE) || 1)}`
+                    })
+                    .where(and(
+                        eq(TBL_PROFIT_CENTER_TARGET.PROFIT_CENTER_ID, oldHeader[0].PROFIT_CENTER_ID),
+                        lte(TBL_PROFIT_CENTER_TARGET.PERIOD_START_DATE, oldHeader[0].INVOICE_DATE!.toISOString().split('T')[0]),
+                        gte(TBL_PROFIT_CENTER_TARGET.PERIOD_END_DATE, oldHeader[0].INVOICE_DATE!.toISOString().split('T')[0])
+                    ));
+                
+                // Delete allocation
+                await tx.delete(TBL_PROFIT_CENTER_ALLOCATION)
+                    .where(and(
+                        eq(TBL_PROFIT_CENTER_ALLOCATION.SOURCE_REF_NO, decodedId),
+                        eq(TBL_PROFIT_CENTER_ALLOCATION.SOURCE_TABLE, 'TBL_TAX_INVOICE_HDR')
+                    ));
+            }
+
             await tx.delete(TBL_TAX_INVOICE_DTL).where(eq(TBL_TAX_INVOICE_DTL.TAX_INVOICE_REF_NO, decodedId));
             await tx.delete(TBL_TAX_INVOICE_HDR).where(eq(TBL_TAX_INVOICE_HDR.TAX_INVOICE_REF_NO, decodedId));
         });

@@ -45,13 +45,17 @@ import {
   CircleDollarSign,
   Coins,
   Hash,
+  TrendingUp,
   ChevronDown,
   CheckSquare,
   User,
   History,
   ClipboardList,
   Clock,
-  Calculator
+  Calculator,
+  Target,
+  TrendingDown,
+  Activity
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -225,6 +229,16 @@ const navigation = [
       { name: 'Expenses', href: '/expenses', icon: CreditCard },
       { name: 'Journals', href: '/journals', icon: BookOpen },
       { name: 'General Ledger', href: '/ledgers', icon: Calculator },
+      { name: 'Multi-Currency', href: '/multi-currency', icon: ArrowRightLeft },
+      { name: 'Cost Center Master', href: '/cost-center-master', icon: Target },
+      { name: 'Cost Center Budgets', href: '/cost-center-budget', icon: Wallet },
+      { name: 'Cost Center Analysis', href: '/cost-center-dashboard', icon: TrendingDown },
+      { name: 'Profit Center Master', href: '/profit-center-master', icon: Layers },
+      { name: 'Profit Center Targets', href: '/profit-center-target', icon: Target },
+      { name: 'Profitability Analysis', href: '/profit-center-dashboard', icon: TrendingUp },
+      { name: 'Trial Balances', href: '/trial-balances', icon: FileText },
+      { name: 'Cash Book', href: '/cash-book', icon: Wallet },
+      { name: 'Cash Flow', href: '/cash-flow', icon: Activity },
     ]
   },
   {
