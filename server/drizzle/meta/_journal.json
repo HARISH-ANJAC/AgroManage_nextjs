@@ -71,6 +71,13 @@
       "when": 1777703270921,
       "tag": "0009_brown_magus",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1777979492332,
+      "tag": "0010_loose_miek",
+      "breakpoints": true
     }
   ]
 }

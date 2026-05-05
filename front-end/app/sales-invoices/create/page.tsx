@@ -394,6 +394,7 @@ function CreateInvoiceContent() {
                         <td className="px-4 py-4">
                           <Input
                             type="number"
+                            disabled
                             value={item.invoiceQty}
                             onChange={(e) => updateItem(item.id, "invoiceQty", e.target.value)}
                             max={item.deliveryQty} // Logical limit
@@ -411,6 +412,7 @@ function CreateInvoiceContent() {
                         <td className="px-4 py-4">
                           <Input
                             type="number"
+                            disabled
                             value={item.vatPercent}
                             onChange={(e) => updateItem(item.id, "vatPercent", e.target.value)}
                             className="text-center font-medium bg-[#F1F5F9] border-[#E2E8F0] rounded-lg h-9"
@@ -487,7 +489,7 @@ function CreateInvoiceContent() {
                 {storesLoading ? (
                   <Skeleton className="h-10 w-full rounded-xl" />
                 ) : (
-                  <Select value={String(header.fromStoreId)} onValueChange={(v) => setHeader({ ...header, fromStoreId: Number(v) })}>
+                  <Select value={header.fromStoreId ? String(header.fromStoreId) : undefined} onValueChange={(v) => setHeader({ ...header, fromStoreId: Number(v) })}>
                     <SelectTrigger className="h-10 rounded-xl font-bold bg-[#F8FAFC]">
                       <SelectValue />
                     </SelectTrigger>

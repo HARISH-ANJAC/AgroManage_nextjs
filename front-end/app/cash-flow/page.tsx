@@ -67,7 +67,7 @@ export default function CashFlowPage() {
 
   const investingTotal = cashFlow?.investing.reduce((s: number, i: any) => s + i.amount, 0) || 0;
   const financingTotal = cashFlow?.financing.reduce((s: number, f: any) => s + f.amount, 0) || 0;
-  const netIncrease = operatingTotal + investingTotal + financingTotal;
+  const netIncrease = cashFlow?.summary?.netIncrease ?? (operatingTotal + investingTotal + financingTotal);
 
   const handleExportPDF = async () => {
     if (!cashFlow) {
@@ -349,7 +349,7 @@ export default function CashFlowPage() {
             <div className="space-y-4">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-slate-500 font-medium">Opening Balance</span>
-                <span className="font-bold text-slate-900">$250,000.00</span>
+                <span className="font-bold text-slate-900">{fmt(cashFlow?.summary?.openingBalance || 0)}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-slate-500 font-medium">Net Cash Change</span>
@@ -359,7 +359,7 @@ export default function CashFlowPage() {
               </div>
               <div className="pt-3 border-t border-slate-100 flex justify-between items-center">
                 <span className="text-slate-900 font-bold text-xs uppercase">Closing Balance</span>
-                <span className="text-xl font-bold text-primary">$260,200.00</span>
+                <span className="text-xl font-bold text-primary">{fmt(cashFlow?.summary?.closingBalance || 0)}</span>
               </div>
             </div>
           </div>

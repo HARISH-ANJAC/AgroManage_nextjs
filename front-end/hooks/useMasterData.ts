@@ -177,7 +177,12 @@ export function useMasterData(domain: string, initialData: any[] = [], idPrefix:
       });
       if (!response.ok) {
         handleAuthError(response.status);
-        throw new Error('Failed to delete');
+        let errMsg = 'Failed to delete';
+        try {
+          const errBody = await response.json();
+          errMsg = errBody?.msg || errBody?.message || errMsg;
+        } catch {}
+        throw new Error(errMsg);
       }
       return id;
     },
@@ -200,7 +205,12 @@ export function useMasterData(domain: string, initialData: any[] = [], idPrefix:
       });
       if (!response.ok) {
         handleAuthError(response.status);
-        throw new Error('Failed to bulk delete');
+        let errMsg = 'Failed to bulk delete';
+        try {
+          const errBody = await response.json();
+          errMsg = errBody?.msg || errBody?.message || errMsg;
+        } catch {}
+        throw new Error(errMsg);
       }
       return ids;
     },

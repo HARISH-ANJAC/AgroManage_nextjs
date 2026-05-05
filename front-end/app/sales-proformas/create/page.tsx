@@ -103,7 +103,7 @@ function CreateProformaContent(): JSX.Element {
   const { data: uoms = [] } = useUoms();
   const { data: billingLocations = [], isLoading: billingLocationsLoading } = useBillingLocations();
   const { bookings: purchaseInvoices, isLoading: invoicesLoading, getBookingById: getPIById } = usePurchaseBookingStore();
-  const { expenses } = useExpenseStore();
+  const { expenses, getExpenseById } = useExpenseStore();
 
   const [header, setHeader] = useState({
     salesProformaDate: today,
@@ -193,9 +193,28 @@ function CreateProformaContent(): JSX.Element {
   }, [editId, companies, stores, currencies, salesPersons, billingLocations]);
 
   const recalcItem = (item: LineItem): LineItem => {
-    const totalProductAmount = item.totalQty * item.salesRatePerQty;
-    const vatAmount = totalProductAmount * (item.vatPercentage / 100);
-    return { ...item, totalProductAmount, vatAmount, finalSalesAmount: totalProductAmount + vatAmount };
+    const qty = Number(item.totalQty) || 0;
+    const rate = Number(item.salesRatePerQty) || 0;
+    const vatP = Number(item.vatPercentage) || 0;
+    const pRate = Number(item.purchaseRate) || 0;
+    const eRate = Number(item.expenseRate) || 0;
+
+    const totalProductAmount = qty * rate;
+    const vatAmount = totalProductAmount * (vatP / 100);
+    const costPrice = pRate + eRate;
+
+    return {
+      ...item,
+      totalQty: qty,
+      salesRatePerQty: rate,
+      vatPercentage: vatP,
+      purchaseRate: pRate,
+      expenseRate: eRate,
+      totalProductAmount,
+      vatAmount,
+      finalSalesAmount: totalProductAmount + vatAmount,
+      costPrice
+    };
   };
 
   const updateItem = (id: string | number, field: string, value: any) => {
@@ -222,6 +241,84 @@ function CreateProformaContent(): JSX.Element {
       if (item.id !== id) return item;
       return recalcItem({ ...item, ...fields });
     }));
+  };
+
+  const linkPItoItem = async (itemId: string | number, piRef: string, productId?: string | number) => {
+    if (!piRef || piRef === "none") {
+      updateItemFields(itemId, {
+        selectedPiNo: "",
+        poRefNo: "",
+        poDtlSno: null,
+        purchaseRate: 0,
+        expenseRate: 0,
+        costPrice: 0
+      });
+      return;
+    }
+
+    const pId = productId || items.find(i => i.id === itemId)?.productId;
+    if (!pId) return;
+
+    toast.loading("Linking PI and calculating expenses...", { id: `pi-${itemId}` });
+    const pi = await getPIById(piRef);
+    toast.dismiss(`pi-${itemId}`);
+
+    if (pi && pi.items) {
+      const piItem = pi.items.find((i: any) => Number(i.productId || i.PRODUCT_ID) === Number(pId));
+      if (piItem) {
+        const qty = Number(piItem.receivedQty || piItem.totalQty || piItem.TOTAL_QTY || 0);
+        const uom = piItem.uom || piItem.UOM || "";
+        const pRate = Number(piItem.ratePerQty || piItem.RATE_PER_QTY || 0);
+
+        const poRef = String(pi.header?.PO_REF_NO || pi.header?.poRefNo || pi.PO_REF_NO || pi.poRefNo || "").trim();
+        const piRef = String(pi.header?.PURCHASE_INVOICE_REF_NO || pi.header?.purchaseInvoiceRefNo || pi.PURCHASE_INVOICE_REF_NO || pi.purchaseInvoiceRefNo || "").trim();
+
+        const poExpenses = (expenses || []).filter((e: any) => {
+          const expRef = String(e.poRefNo || e.PO_REF_NO || e.header?.poRefNo || e.header?.PO_REF_NO || "").trim();
+          if (!expRef) return false;
+
+          // Match against either PO Ref or PI Ref for maximum compatibility
+          const matchPO = poRef && expRef === poRef;
+          const matchPI = piRef && expRef === piRef;
+          return matchPO || matchPI;
+        });
+
+        let totalProductExp = 0;
+        for (const exp of poExpenses) {
+          try {
+            const expId = exp.expenseRefNo || exp.id || String(exp.SNO);
+            const fullExp = await getExpenseById(expId);
+            if (fullExp && fullExp.items) {
+              const match = fullExp.items.find((it: any) => {
+                const itProdId = String(it.productId || it.PRODUCT_ID || "").trim();
+                const targetProdId = String(pId).trim();
+                return itProdId && itProdId === targetProdId;
+              });
+              if (match) {
+                totalProductExp += Number(match.EXPENSE_AMOUNT || match.allocatedAmount || match.allocated_amount || 0);
+              }
+            }
+          } catch (e) {
+            console.error("Error fetching expense detail:", e);
+          }
+        }
+
+        const eRate = qty > 0 ? totalProductExp / qty : 0;
+        const cPrice = pRate + eRate;
+
+        updateItemFields(itemId, {
+          selectedPiNo: piRef,
+          poRefNo: piRef,
+          poDtlSno: piItem.sno || piItem.SNO || piItem.poDtlSno || null,
+          totalQty: qty,
+          storeStockPcs: qty,
+          uom: uom || undefined,
+          purchaseRate: pRate,
+          expenseRate: eRate,
+          costPrice: cPrice
+        });
+      }
+    }
   };
 
   const removeItem = (id: string | number) => setItems(items.filter(i => i.id !== id));
@@ -656,7 +753,7 @@ function CreateProformaContent(): JSX.Element {
 
             <div className="mt-10 pt-8 border-t border-white/10">
               <p className="text-[10px] uppercase font-black tracking-[0.2em] text-white/30 mb-2">Grand Total</p>
-              <p className="text-5xl font-black tracking-tighter tabular-nums mb-1">{formatAmount(grandTotal)}</p>
+              <p className="text-2xl font-black tracking-tighter tabular-nums mb-1">{formatAmount(grandTotal)}</p>
               <p className="text-[10px] text-white/40 font-medium italic">Amount in {selectedCurrency}</p>
 
               <Button
@@ -744,14 +841,30 @@ function CreateProformaContent(): JSX.Element {
                                 </div>
                               )}
                               <div className="min-w-0 flex-1">
-                                <Select value={item.productName} onValueChange={(v) => {
-                                    updateItem(item.id, "productName", v);
+                                <Select value={item.productName} onValueChange={async (v) => {
+                                  updateItem(item.id, "productName", v);
+
+                                  const p = productsData.find((pr: any) => pr.productName === v);
+                                  if (p) {
+                                    const pId = p.id || p.PRODUCT_ID;
+                                    // Auto-link PI
+                                    const relatedPIs = (purchaseInvoices || []).filter((inv: any) =>
+                                      inv.items?.some((i: any) => Number(i.productId || i.PRODUCT_ID) === Number(pId))
+                                    );
+                                    if (relatedPIs.length > 0) {
+                                      const latestPI = relatedPIs[0];
+                                      const refNo = latestPI.PURCHASE_INVOICE_REF_NO || String(latestPI.id);
+                                      await linkPItoItem(item.id, refNo, pId);
+                                    }
+                                  }
                                 }}>
                                   <SelectTrigger className="h-10 w-full border-0 bg-transparent px-0 text-left font-semibold text-slate-900 shadow-none focus:ring-0">
                                     <SelectValue placeholder="Select Product" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {productsData.map((p: any, i: number) => <SelectItem key={p.id || i} value={p.productName}>{p.productName}</SelectItem>)}
+                                    {productsData.filter((p: any) => !items.some(oi => oi.productName === p.productName && oi.id !== item.id)).map((p: any, i: number) => (
+                                      <SelectItem key={p.id || i} value={p.productName}>{p.productName}</SelectItem>
+                                    ))}
                                   </SelectContent>
                                 </Select>
                                 {item.mainCategoryId && <p className="px-0.5 text-[10px] uppercase tracking-tight text-slate-400">Cat: {item.mainCategoryId}</p>}
@@ -759,11 +872,26 @@ function CreateProformaContent(): JSX.Element {
                             </div>
                           </div>
 
-                          <div className="flex flex-wrap gap-2 text-xs text-slate-500">
-                            <span className="rounded-full border border-slate-200 bg-white px-3 py-1">UOM: {item.uom || "-"}</span>
-                            <span className="rounded-full border border-slate-200 bg-white px-3 py-1">Pack: {item.qtyPerPacking || 0} {item.alternateUom || item.uom}</span>
-                            <span className="rounded-full border border-slate-200 bg-white px-3 py-1">Total Packs: {totalPacking.toFixed(2)}</span>
-                            <span className="rounded-full border border-slate-200 bg-white px-3 py-1">Stock: {Number(item.storeStockPcs || 0).toLocaleString("en-US")}</span>
+                          <div className="flex flex-wrap gap-2 text-[11px] font-bold">
+                            <div className="flex items-center gap-1.5 rounded-lg border border-blue-100 bg-blue-50/50 px-2.5 py-1 text-blue-700 shadow-sm">
+                              <span className="opacity-60 uppercase tracking-tighter">Uom:</span>
+                              <span>{item.uom || "-"}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 rounded-lg border border-emerald-100 bg-emerald-50/50 px-2.5 py-1 text-emerald-700 shadow-sm">
+                              <span className="opacity-60 uppercase tracking-tighter">Pack:</span>
+                              <span>{item.qtyPerPacking || 0} {item.alternateUom || item.uom}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 rounded-lg border border-violet-100 bg-violet-50/50 px-2.5 py-1 text-violet-700 shadow-sm">
+                              <span className="opacity-60 uppercase tracking-tighter">Tot Packs:</span>
+                              <span>{totalPacking.toFixed(2)}</span>
+                            </div>
+                            <div className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 shadow-sm ${Number(item.storeStockPcs || 0) <= 0
+                              ? "border-rose-100 bg-rose-50/50 text-rose-700"
+                              : "border-amber-100 bg-amber-50/50 text-amber-700"
+                              }`}>
+                              <span className="opacity-60 uppercase tracking-tighter">Stock:</span>
+                              <span>{Number(item.storeStockPcs || 0).toLocaleString("en-US")}</span>
+                            </div>
                           </div>
                         </div>
 
@@ -784,9 +912,9 @@ function CreateProformaContent(): JSX.Element {
                       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
                         <div className="space-y-2">
                           <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">PO Link</Label>
-                          <Select 
+                          <Select
                             key={item.id + (item.selectedPiNo || "none")}
-                            value={item.selectedPiNo || "none"} 
+                            value={item.selectedPiNo || "none"}
                             onValueChange={async (v) => {
                               const refNo = v === "none" ? "" : v;
                               updateItem(item.id, "selectedPiNo", refNo);
@@ -808,12 +936,23 @@ function CreateProformaContent(): JSX.Element {
                                       return expPo && poRef && String(expPo).trim() === String(poRef).trim();
                                     }) || [];
 
-                                    const totalExp = poExpenses.reduce((sum: number, e: any) => {
-                                      const amount = Number(e.totalExpenseAmount || e.TOTAL_EXPENSE_AMOUNT || e.totalExpenseAmountLc || e.amount || e.AMOUNT || 0);
-                                      return sum + amount;
-                                    }, 0);
+                                    // Fetch full details for each expense to get the exact product-wise allocation
+                                    let totalProductExp = 0;
+                                    for (const exp of poExpenses) {
+                                      try {
+                                        const fullExp = await getExpenseById(exp.expenseRefNo || exp.id || String(exp.SNO));
+                                        if (fullExp && fullExp.items) {
+                                          const match = fullExp.items.find((it: any) =>
+                                            String(it.productId || it.PRODUCT_ID).trim() === String(item.productId).trim()
+                                          );
+                                          if (match) {
+                                            totalProductExp += Number(match.EXPENSE_AMOUNT || match.allocatedAmount || 0);
+                                          }
+                                        }
+                                      } catch (e) { console.error("Error fetching expense details:", e); }
+                                    }
 
-                                    const eRate = qty > 0 ? totalExp / qty : 0;
+                                    const eRate = qty > 0 ? totalProductExp / qty : 0;
                                     const cPrice = pRate + eRate;
 
                                     updateItemFields(item.id, {
@@ -865,7 +1004,7 @@ function CreateProformaContent(): JSX.Element {
                           </Select>
                         </div>
 
-                        <div className="space-y-2">
+                        {/* <div className="space-y-2">
                           <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Store Stock</Label>
                           <Input
                             readOnly
@@ -874,7 +1013,7 @@ function CreateProformaContent(): JSX.Element {
                             value={item.storeStockPcs || 0}
                             className="h-11 rounded-xl border-slate-200 bg-slate-50 text-center font-bold opacity-70 cursor-not-allowed"
                           />
-                        </div>
+                        </div> */}
 
                         <div className="space-y-2">
                           <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Quantity</Label>
@@ -920,11 +1059,11 @@ function CreateProformaContent(): JSX.Element {
                         <div className="space-y-2">
                           <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Expense Rate</Label>
                           <Input
-                            readOnly
-                            disabled
                             type="number"
-                            value={item.expenseRate || 0}
-                            className="h-11 rounded-xl border-slate-200 bg-slate-50 text-center font-bold opacity-70 cursor-not-allowed"
+                            step="any"
+                            value={Number(item.expenseRate || 0).toFixed(2)}
+                            onChange={e => updateItem(item.id, "expenseRate", e.target.value)}
+                            className="h-11 rounded-xl border-slate-200 bg-white text-center font-bold"
                           />
                         </div>
 
@@ -934,7 +1073,8 @@ function CreateProformaContent(): JSX.Element {
                             readOnly
                             disabled
                             type="number"
-                            value={item.costPrice || 0}
+                            step="any"
+                            value={Number(item.costPrice || 0).toFixed(2)}
                             className="h-11 rounded-xl border-slate-200 bg-slate-50 text-center font-bold opacity-70 cursor-not-allowed"
                           />
                         </div>

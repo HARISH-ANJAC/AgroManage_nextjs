@@ -114,7 +114,8 @@ export default function CustomerReceiptsPage() {
         ...n,
         id: n.receiptRefNo || n.SNO,
         formattedDate: n.receiptDate ? new Date(n.receiptDate).toLocaleDateString() : "-",
-        formattedAmount: `TZS ${(n.receiptAmount || 0).toLocaleString()}`,
+        formattedAmount: `${n.currencyName || "TZS"} ${(n.receiptAmount || 0).toLocaleString()}`,
+        formattedAmountLc: `TZS ${(n.receiptAmountLc || 0).toLocaleString()}`,
       })),
       add: async () => {}, // Handled by separate page
       update: async () => {}, // Handled by separate page
@@ -124,9 +125,10 @@ export default function CustomerReceiptsPage() {
     columns={[
       { key: "receiptRefNo", label: "Receipt Ref" },
       { key: "formattedDate", label: "Date" },
+      { key: "companyName", label: "Company" },
       { key: "customerName", label: "Customer" },
-      { key: "paymentModeName", label: "Payment Method" },
-      { key: "transactionRefNo", label: "Txn Ref" },
+      { key: "paymentModeName", label: "Method" },
+      { key: "currencyName", label: "Cur" },
       { key: "formattedAmount", label: "Amount" },
       { key: "status", label: "Status" },
     ]}

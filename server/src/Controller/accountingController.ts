@@ -491,6 +491,8 @@ export const getCashBook = async (req: Request, res: Response): Promise<Response
         const startDate = req.query.startDate ? new Date(req.query.startDate as string) : null;
         const endDate = req.query.endDate ? new Date(req.query.endDate as string) : null;
 
+        if (!companyId) return res.status(400).json({ msg: "Company ID is required" });
+
         // 1. Identify Cash and Bank Ledgers
         const ledgers = await db.select({
             id: TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_ID,
@@ -581,47 +583,134 @@ export const getCashFlowStatement = async (req: Request, res: Response): Promise
         const startDate = req.query.startDate ? new Date(req.query.startDate as string) : null;
         const endDate = req.query.endDate ? new Date(req.query.endDate as string) : null;
 
-        // Simplified logic for an Indirect Cash Flow:
-        // 1. Net Profit = Total Revenue - Total Expense (from journal entries)
-        const revenueResult = await db.select({ total: sql<string>`SUM(${TBL_JOURNAL_DTL.CREDIT} - ${TBL_JOURNAL_DTL.DEBIT})` })
-            .from(TBL_JOURNAL_DTL)
-            .innerJoin(TBL_ACCOUNTS_LEDGER_MASTER, eq(TBL_JOURNAL_DTL.LEDGER_ID, TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_ID))
-            .where(and(eq(TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_TYPE, "Revenue"), companyId ? eq(TBL_ACCOUNTS_LEDGER_MASTER.Company_id, companyId) : undefined));
-        
-        const expenseResult = await db.select({ total: sql<string>`SUM(${TBL_JOURNAL_DTL.DEBIT} - ${TBL_JOURNAL_DTL.CREDIT})` })
-            .from(TBL_JOURNAL_DTL)
-            .innerJoin(TBL_ACCOUNTS_LEDGER_MASTER, eq(TBL_JOURNAL_DTL.LEDGER_ID, TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_ID))
-            .where(and(eq(TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_TYPE, "Expense"), companyId ? eq(TBL_ACCOUNTS_LEDGER_MASTER.Company_id, companyId) : undefined));
+        if (!companyId) return res.status(400).json({ msg: "Company ID is required" });
 
-        const netProfit = Number(revenueResult[0]?.total || 0) - Number(expenseResult[0]?.total || 0);
-
-        // 2. Adjustments (Non-cash items like Depreciation)
-        const depreciation = await db.select({ total: sql<string>`SUM(${TBL_JOURNAL_DTL.DEBIT})` })
+        // 1. Get Net Profit for the period (Revenue - Expense)
+        const profitQuery = db.select({
+            type: TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_TYPE,
+            totalDebit: sql<string>`SUM(CASE WHEN ${TBL_JOURNAL_HDR.JOURNAL_DATE} BETWEEN ${startDate} AND ${endDate} THEN ${TBL_JOURNAL_DTL.DEBIT} ELSE 0 END)`,
+            totalCredit: sql<string>`SUM(CASE WHEN ${TBL_JOURNAL_HDR.JOURNAL_DATE} BETWEEN ${startDate} AND ${endDate} THEN ${TBL_JOURNAL_DTL.CREDIT} ELSE 0 END)`
+        })
             .from(TBL_JOURNAL_DTL)
+            .innerJoin(TBL_JOURNAL_HDR, eq(TBL_JOURNAL_DTL.JOURNAL_REF_NO, TBL_JOURNAL_HDR.JOURNAL_REF_NO))
             .innerJoin(TBL_ACCOUNTS_LEDGER_MASTER, eq(TBL_JOURNAL_DTL.LEDGER_ID, TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_ID))
-            .where(and(like(TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_NAME, "%Depreciation%"), companyId ? eq(TBL_ACCOUNTS_LEDGER_MASTER.Company_id, companyId) : undefined));
+            .where(
+                and(
+                    eq(TBL_ACCOUNTS_LEDGER_MASTER.Company_id, companyId),
+                    sql`${TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_TYPE} IN ('Revenue', 'Expense')`
+                )
+            )
+            .groupBy(TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_TYPE);
 
-        // 3. Changes in Working Capital (placeholder logic - usually requires comparing two periods)
-        // Here we'll return a structured response that the UI can represent.
+        const profitData = await profitQuery;
+        const revenue = profitData.find(p => p.type === 'Revenue');
+        const expense = profitData.find(p => p.type === 'Expense');
+
+        const totalRevenue = Number(revenue?.totalCredit || 0) - Number(revenue?.totalDebit || 0);
+        const totalExpense = Number(expense?.totalDebit || 0) - Number(expense?.totalCredit || 0);
+        const netProfit = totalRevenue - totalExpense;
+
+        // 2. Adjustments (Depreciation)
+        const depreciationResult = await db.select({ total: sql<string>`SUM(${TBL_JOURNAL_DTL.DEBIT})` })
+            .from(TBL_JOURNAL_DTL)
+            .innerJoin(TBL_JOURNAL_HDR, eq(TBL_JOURNAL_DTL.JOURNAL_REF_NO, TBL_JOURNAL_HDR.JOURNAL_REF_NO))
+            .innerJoin(TBL_ACCOUNTS_LEDGER_MASTER, eq(TBL_JOURNAL_DTL.LEDGER_ID, TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_ID))
+            .where(
+                and(
+                    eq(TBL_ACCOUNTS_LEDGER_MASTER.Company_id, companyId),
+                    like(TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_NAME, "%Depreciation%"),
+                    startDate && endDate ? sql`${TBL_JOURNAL_HDR.JOURNAL_DATE} BETWEEN ${startDate} AND ${endDate}` : undefined
+                )
+            );
+
+        const depreciation = Number(depreciationResult[0]?.total || 0);
+
+        // 3. Working Capital, Investing, and Financing
+        // We look at the net change in Asset/Liability/Equity accounts (excluding Cash/Bank)
+        const movements = await db.select({
+            ledgerId: TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_ID,
+            ledgerName: TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_NAME,
+            ledgerType: TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_TYPE,
+            netChange: sql<string>`SUM(${TBL_JOURNAL_DTL.DEBIT} - ${TBL_JOURNAL_DTL.CREDIT})`
+        })
+            .from(TBL_JOURNAL_DTL)
+            .innerJoin(TBL_JOURNAL_HDR, eq(TBL_JOURNAL_DTL.JOURNAL_REF_NO, TBL_JOURNAL_HDR.JOURNAL_REF_NO))
+            .innerJoin(TBL_ACCOUNTS_LEDGER_MASTER, eq(TBL_JOURNAL_DTL.LEDGER_ID, TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_ID))
+            .where(
+                and(
+                    eq(TBL_ACCOUNTS_LEDGER_MASTER.Company_id, companyId),
+                    sql`${TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_TYPE} IN ('Asset', 'Liability', 'Equity')`,
+                    sql`NOT (${TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_TYPE} ILIKE '%Cash%' OR ${TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_TYPE} ILIKE '%Bank%' OR ${TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_NAME} ILIKE '%Cash%' OR ${TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_NAME} ILIKE '%Bank%')`,
+                    startDate && endDate ? sql`${TBL_JOURNAL_HDR.JOURNAL_DATE} BETWEEN ${startDate} AND ${endDate}` : undefined
+                )
+            )
+            .groupBy(TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_ID, TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_NAME, TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_TYPE);
+
+        const workingCapital: any[] = [];
+        const investing: any[] = [];
+        const financing: any[] = [];
+
+        movements.forEach(m => {
+            const amount = Number(m.netChange);
+            if (amount === 0) return;
+
+            // Simple categorization logic
+            if (m.ledgerType === 'Asset') {
+                // Asset increase (positive netChange) is a cash outflow (negative amount for CF)
+                const isFixedAsset = (m.ledgerName || "").toLowerCase().match(/fixed|equipment|machinery|building|land|vehicle|furniture|computer/);
+                if (isFixedAsset) {
+                    investing.push({ label: m.ledgerName, amount: -amount });
+                } else {
+                    workingCapital.push({ label: m.ledgerName, amount: -amount });
+                }
+            } else if (m.ledgerType === 'Liability' || m.ledgerType === 'Equity') {
+                // Liability increase (negative netChange because Credit > Debit) is a cash inflow
+                // netChange is (Debit - Credit), so increase is negative.
+                // We want inflow to be positive.
+                if ((m.ledgerName || "").toLowerCase().includes('loan') || m.ledgerType === 'Equity' || (m.ledgerName || "").toLowerCase().includes('capital')) {
+                    financing.push({ label: m.ledgerName, amount: -amount });
+                } else {
+                    workingCapital.push({ label: m.ledgerName, amount: -amount });
+                }
+            }
+        });
+
+        // 4. Cash Balances (Opening/Closing)
+        const cashQuery = await db.select({
+            openingDebit: sql<string>`SUM(CASE WHEN ${TBL_JOURNAL_HDR.JOURNAL_DATE} < ${startDate} THEN ${TBL_JOURNAL_DTL.DEBIT} ELSE 0 END)`,
+            openingCredit: sql<string>`SUM(CASE WHEN ${TBL_JOURNAL_HDR.JOURNAL_DATE} < ${startDate} THEN ${TBL_JOURNAL_DTL.CREDIT} ELSE 0 END)`,
+            periodDebit: sql<string>`SUM(CASE WHEN ${TBL_JOURNAL_HDR.JOURNAL_DATE} BETWEEN ${startDate} AND ${endDate} THEN ${TBL_JOURNAL_DTL.DEBIT} ELSE 0 END)`,
+            periodCredit: sql<string>`SUM(CASE WHEN ${TBL_JOURNAL_HDR.JOURNAL_DATE} BETWEEN ${startDate} AND ${endDate} THEN ${TBL_JOURNAL_DTL.CREDIT} ELSE 0 END)`
+        })
+            .from(TBL_JOURNAL_DTL)
+            .innerJoin(TBL_JOURNAL_HDR, eq(TBL_JOURNAL_DTL.JOURNAL_REF_NO, TBL_JOURNAL_HDR.JOURNAL_REF_NO))
+            .innerJoin(TBL_ACCOUNTS_LEDGER_MASTER, eq(TBL_JOURNAL_DTL.LEDGER_ID, TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_ID))
+            .where(
+                and(
+                    eq(TBL_ACCOUNTS_LEDGER_MASTER.Company_id, companyId),
+                    sql`(${TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_TYPE} ILIKE '%Cash%' OR ${TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_TYPE} ILIKE '%Bank%' OR ${TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_NAME} ILIKE '%Cash%' OR ${TBL_ACCOUNTS_LEDGER_MASTER.LEDGER_NAME} ILIKE '%Bank%')`
+                )
+            );
+
+        const openingBalance = Number(cashQuery[0]?.openingDebit || 0) - Number(cashQuery[0]?.openingCredit || 0);
+        const netMovement = Number(cashQuery[0]?.periodDebit || 0) - Number(cashQuery[0]?.periodCredit || 0);
+        const closingBalance = openingBalance + netMovement;
 
         return res.status(200).json({
             operating: {
                 netProfit,
                 adjustments: [
-                    { label: "Depreciation", amount: Number(depreciation[0]?.total || 0) }
+                    { label: "Depreciation (Non-cash)", amount: depreciation }
                 ],
-                workingCapital: [
-                    { label: "Accounts Receivable", amount: 0 }, // Would require period comparison
-                    { label: "Accounts Payable", amount: 0 },
-                    { label: "Inventory", amount: 0 }
-                ]
+                workingCapital
             },
-            investing: [
-                { label: "Purchase of Fixed Assets", amount: 0 }
-            ],
-            financing: [
-                { label: "Proceeds from Loans", amount: 0 }
-            ]
+            investing,
+            financing,
+            summary: {
+                openingBalance,
+                closingBalance,
+                netIncrease: netMovement
+            }
         });
     } catch (error) {
         console.error("Cash Flow Error:", error);

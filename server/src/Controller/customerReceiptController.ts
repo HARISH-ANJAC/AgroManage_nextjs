@@ -28,11 +28,19 @@ export const getCustomerReceipts = async (req: Request, res: Response) => {
             companyId: TBL_CUSTOMER_RECEIPT_HDR.COMPANY_ID,
             customerId: TBL_CUSTOMER_RECEIPT_HDR.CUSTOMER_ID,
             paymentModeId: TBL_CUSTOMER_RECEIPT_HDR.PAYMENT_MODE_ID,
+            crBankCashId: TBL_CUSTOMER_RECEIPT_HDR.CR_BANK_CASH_ID,
+            crAccountId: TBL_CUSTOMER_RECEIPT_HDR.CR_ACCOUNT_ID,
+            drBankCashId: TBL_CUSTOMER_RECEIPT_HDR.DR_BANK_CASH_ID,
             receiptAmount: TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_AMOUNT,
             currencyId: TBL_CUSTOMER_RECEIPT_HDR.CURRENCY_ID,
+            exchangeRate: TBL_CUSTOMER_RECEIPT_HDR.EXCHANGE_RATE,
+            receiptAmountLc: TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_AMOUNT_LC,
             transactionRefNo: TBL_CUSTOMER_RECEIPT_HDR.TRANSACTION_REF_NO,
+            transactionDate: TBL_CUSTOMER_RECEIPT_HDR.TRANSACTION_DATE,
             status: TBL_CUSTOMER_RECEIPT_HDR.STATUS_ENTRY,
             remarks: TBL_CUSTOMER_RECEIPT_HDR.REMARKS,
+            tallyRefNo: TBL_CUSTOMER_RECEIPT_HDR.Tally_Ref_No,
+            tallySyncStatus: TBL_CUSTOMER_RECEIPT_HDR.Tally_Sync_Status,
             // Joins
             customerName: TBL_CUSTOMER_MASTER.Customer_Name,
             companyName: TBL_COMPANY_MASTER.Company_Name,
@@ -76,6 +84,11 @@ export const getCustomerReceiptById = async (req: Request, res: Response) => {
             status: TBL_CUSTOMER_RECEIPT_HDR.STATUS_ENTRY,
             remarks: TBL_CUSTOMER_RECEIPT_HDR.REMARKS,
             customerName: TBL_CUSTOMER_MASTER.Customer_Name,
+            submittedBy: TBL_CUSTOMER_RECEIPT_HDR.Submitted_By,
+            submittedDate: TBL_CUSTOMER_RECEIPT_HDR.Submitted_Date,
+            tallyRefNo: TBL_CUSTOMER_RECEIPT_HDR.Tally_Ref_No,
+            tallySyncStatus: TBL_CUSTOMER_RECEIPT_HDR.Tally_Sync_Status,
+            tallySyncDate: TBL_CUSTOMER_RECEIPT_HDR.Tally_Sync_Date
         })
         .from(TBL_CUSTOMER_RECEIPT_HDR)
         .leftJoin(TBL_CUSTOMER_MASTER, eq(TBL_CUSTOMER_RECEIPT_HDR.CUSTOMER_ID, TBL_CUSTOMER_MASTER.Customer_Id))
@@ -92,7 +105,8 @@ export const getCustomerReceiptById = async (req: Request, res: Response) => {
             alreadyPaidAmount: TBL_CUSTOMER_RECEIPT_INVOICE_DTL.ALREADY_PAID_AMOUNT,
             outstandingInvoiceAmount: TBL_CUSTOMER_RECEIPT_INVOICE_DTL.OUTSTANDING_INVOICE_AMOUNT,
             receiptInvoiceAdjustAmount: TBL_CUSTOMER_RECEIPT_INVOICE_DTL.RECEIPT_INVOICE_ADJUST_AMOUNT,
-            remarks: TBL_CUSTOMER_RECEIPT_INVOICE_DTL.REMARKS
+            remarks: TBL_CUSTOMER_RECEIPT_INVOICE_DTL.REMARKS,
+            status: TBL_CUSTOMER_RECEIPT_INVOICE_DTL.STATUS_ENTRY
         })
         .from(TBL_CUSTOMER_RECEIPT_INVOICE_DTL)
         .where(eq(TBL_CUSTOMER_RECEIPT_INVOICE_DTL.RECEIPT_REF_NO, id));
@@ -116,7 +130,6 @@ export const addCustomerReceipt = async (req: Request, res: Response) => {
             // 1. Generate Receipt Ref No
             const date = new Date();
             const yearStr = date.getFullYear().toString().slice(-2);
-            const monthStr = (date.getMonth() + 0).toString().padStart(2, '0'); // Fix: usually 0-indexed month plus 1 if you want calendar month, but let's stick to logic or improve
             const currentMonth = (date.getMonth() + 1).toString().padStart(2, '0');
             const prefix = `CR/${yearStr}/${currentMonth}/`;
 
@@ -157,9 +170,13 @@ export const addCustomerReceipt = async (req: Request, res: Response) => {
                 STATUS_ENTRY: header.status || "Closed",
                 CREATED_BY: audit?.user || "System",
                 CREATED_DATE: new Date(),
+                CREATED_MAC_ADDRESS: req.ip || "127.0.0.1",
+                Submitted_By: header.status === "Closed" ? audit?.user : null,
+                Submitted_Date: header.status === "Closed" ? new Date() : null,
+                Submitted_IP_Address: header.status === "Closed" ? (req.ip || "127.0.0.1") : null
             } as any);
 
-            // 3. Insert Details & Handle Realized Gain/Loss (linked invoices)
+            // 3. Insert Details & Handle Realized Gain/Loss
             if (items && items.length > 0) {
                 for (const item of items) {
                     await tx.insert(TBL_CUSTOMER_RECEIPT_INVOICE_DTL).values({
@@ -173,12 +190,11 @@ export const addCustomerReceipt = async (req: Request, res: Response) => {
                         STATUS_ENTRY: "Normal",
                         CREATED_BY: audit?.user || "System",
                         CREATED_DATE: new Date(),
+                        CREATED_MAC_ADDRESS: req.ip || "127.0.0.1"
                     });
 
-                    // Logic for Realized Gain/Loss (Step 4)
                     const settleAmount = Number(item.receiptInvoiceAdjustAmount || 0);
                     if (settleAmount > 0) {
-                        // Find original transaction
                         const origTx = await tx.select()
                             .from(TBL_MULTI_CURRENCY_TRANSACTIONS)
                             .where(and(
@@ -195,7 +211,7 @@ export const addCustomerReceipt = async (req: Request, res: Response) => {
                             if (currentRate !== originalRate) {
                                 const currentBase = settleAmount * currentRate;
                                 const originalBase = settleAmount * originalRate;
-                                const glDiff = currentBase - originalBase; // Positive diff on receipt (AR) is a GAIN
+                                const glDiff = currentBase - originalBase;
                                 
                                 await tx.insert(TBL_REALIZED_GAIN_LOSS).values({
                                     Company_ID: header.companyId,
@@ -212,7 +228,6 @@ export const addCustomerReceipt = async (req: Request, res: Response) => {
                                 });
                             }
 
-                            // Update settled amount in MC tracking
                             const newSettledTotal = Number(txData.SETTLED_AMOUNT || 0) + settleAmount;
                             await tx.update(TBL_MULTI_CURRENCY_TRANSACTIONS)
                                 .set({ 
@@ -244,9 +259,6 @@ export const addCustomerReceipt = async (req: Request, res: Response) => {
 
             // 4. Generate Accounting Journal Entry
             const customerLedgerId = await getLedgerForCustomer(tx, header.customerId, header.companyId);
-            
-            // Assume DR_BANK_CASH_ID is the ledger ID for the bank/cash account
-            // If it's a Bank Master ID, we should ideally map it, but for now we use it directly or lookup
             const bankLedgerId = header.drBankCashId; 
 
             if (bankLedgerId && customerLedgerId) {
@@ -288,7 +300,6 @@ export const deleteCustomerReceipt = async (req: Request, res: Response) => {
         const idParam = req.params.id as string;
         const id = decodeURIComponent(idParam);
         await db.transaction(async (tx) => {
-            // Delete Journal Entries
             const oldJournals = await tx.select({ journalRefNo: TBL_JOURNAL_HDR.JOURNAL_REF_NO })
                 .from(TBL_JOURNAL_HDR)
                 .where(and(eq(TBL_JOURNAL_HDR.MODULE_REF_NO, id), eq(TBL_JOURNAL_HDR.MODULE_NAME, "CUSTOMER_RECEIPT")));

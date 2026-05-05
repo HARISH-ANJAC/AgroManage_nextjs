@@ -10,10 +10,12 @@ import {
     TBL_JOURNAL_HDR,
     TBL_JOURNAL_DTL,
     TBL_COST_CENTER_ALLOCATION,
-    TBL_COST_CENTER_BUDGET
+    TBL_COST_CENTER_BUDGET,
+    TBL_PURCHASE_ORDER_DTL,
+    TBL_PRODUCT_MASTER
 } from "../db/schema/index.js";
 import * as multiCurrencyController from "./multiCurrencyController.js";
-import { eq, desc, sql, and, ne, lte, gte } from "drizzle-orm";
+import { eq, desc, sql, and, ne, lte, gte, getTableColumns } from "drizzle-orm";
 import { createJournalEntry, getSystemLedger, getLedgerForSupplier } from "../utils/accountingUtils.js";
 
 export const getExpenses = async (req: Request, res: Response): Promise<Response> => {
@@ -36,6 +38,7 @@ export const getExpenses = async (req: Request, res: Response): Promise<Response
             totalExpenseAmount: TBL_EXPENSE_HDR.TOTAL_EXPENSE_AMOUNT,
             status: TBL_EXPENSE_HDR.STATUS_ENTRY,
             remarks: TBL_EXPENSE_HDR.REMARKS,
+            costCenterId: TBL_EXPENSE_HDR.COST_CENTER_ID,
             createdBy: TBL_EXPENSE_HDR.CREATED_BY,
             createdDate: TBL_EXPENSE_HDR.CREATED_DATE
         })
@@ -72,6 +75,7 @@ export const getExpenseById = async (req: Request, res: Response): Promise<Respo
             totalExpenseAmountLc: TBL_EXPENSE_HDR.TOTAL_EXPENSE_AMOUNT_LC,
             remarks: TBL_EXPENSE_HDR.REMARKS,
             status: TBL_EXPENSE_HDR.STATUS_ENTRY,
+            costCenterId: TBL_EXPENSE_HDR.COST_CENTER_ID,
         })
             .from(TBL_EXPENSE_HDR)
             .where(eq(TBL_EXPENSE_HDR.EXPENSE_REF_NO, id))
@@ -79,7 +83,15 @@ export const getExpenseById = async (req: Request, res: Response): Promise<Respo
 
         if (!header.length) return res.status(404).json({ msg: "Expense not found" });
 
-        const items = await db.select().from(TBL_EXPENSE_DTL).where(eq(TBL_EXPENSE_DTL.EXPENSE_REF_NO, id));
+        const items = await db.select({
+            ...getTableColumns(TBL_EXPENSE_DTL),
+            PRODUCT_NAME: TBL_PRODUCT_MASTER.PRODUCT_NAME,
+            PO_QTY: TBL_PURCHASE_ORDER_DTL.TOTAL_QTY
+        })
+            .from(TBL_EXPENSE_DTL)
+            .leftJoin(TBL_PRODUCT_MASTER, eq(TBL_EXPENSE_DTL.PRODUCT_ID, TBL_PRODUCT_MASTER.PRODUCT_ID))
+            .leftJoin(TBL_PURCHASE_ORDER_DTL, eq(TBL_EXPENSE_DTL.PO_DTL_SNO, TBL_PURCHASE_ORDER_DTL.SNO))
+            .where(eq(TBL_EXPENSE_DTL.EXPENSE_REF_NO, id));
         const filesData = await db.select().from(TBL_EXPENSE_FILES_UPLOAD).where(eq(TBL_EXPENSE_FILES_UPLOAD.EXPENSE_REF_NO, id));
         const processedFiles = filesData.map(f => ({
             ...f,
@@ -148,6 +160,10 @@ export const createExpense = async (req: Request, res: Response): Promise<Respon
                 TOTAL_EXPENSE_AMOUNT_LC: String(Number(header.totalExpenseAmount) * (Number(header.exchangeRate) || 1)),
                 STATUS_ENTRY: header.status || "Closed",
                 REMARKS: header.remarks,
+                COST_CENTER_ID: header.costCenterId,
+                SUBMITTED_BY: header.status === "Submitted" ? (audit?.user || "System") : null,
+                SUBMITTED_DATE: header.status === "Submitted" ? new Date() : null,
+                SUBMITTED_IP_ADDRESS: header.status === "Submitted" ? (req.ip || "127.0.0.1") : null,
                 CREATED_BY: audit?.user || "System",
                 CREATED_DATE: new Date(),
                 CREATED_IP_ADDRESS: req.ip || "127.0.0.1"
@@ -312,6 +328,14 @@ export const updateExpense = async (req: Request, res: Response): Promise<Respon
                 TOTAL_EXPENSE_AMOUNT_LC: String(Number(header.totalExpenseAmount) * (Number(header.exchangeRate) || 1)),
                 STATUS_ENTRY: header.status,
                 REMARKS: header.remarks,
+                COST_CENTER_ID: header.costCenterId,
+                EXPENSE_TYPE: header.expenseType,
+                EXPENSE_AGAINST: header.expenseAgainst,
+                CURRENCY_ID: header.currencyId,
+                EXCHANGE_RATE: String(header.exchangeRate || 1),
+                SUBMITTED_BY: header.status === "Submitted" ? (audit?.user || "System") : undefined,
+                SUBMITTED_DATE: header.status === "Submitted" ? new Date() : undefined,
+                SUBMITTED_IP_ADDRESS: header.status === "Submitted" ? (req.ip || "127.0.0.1") : undefined,
                 MODIFIED_BY: audit?.user || "System",
                 MODIFIED_DATE: new Date(),
                 MODIFIED_IP_ADDRESS: req.ip || "127.0.0.1"

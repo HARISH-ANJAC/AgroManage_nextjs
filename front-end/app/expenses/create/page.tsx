@@ -52,20 +52,22 @@ function CreateExpenseContent() {
   const { data: accountHeads = [], isLoading: accountHeadsLoading } = useMasterData("account-heads");
   const { data: suppliers = [], isLoading: suppliersLoading } = useMasterData("suppliers");
   const { data: currencies = [], isLoading: currenciesLoading } = useMasterData("currencies");
+  const { data: costCenters = [], isLoading: costCentersLoading } = useMasterData("cost-centers");
 
   const today = new Date().toISOString().split("T")[0];
 
   const [header, setHeader] = useState({
     expenseDate: today,
-    companyId: 0,
+    companyId: undefined as number | undefined,
     poRefNo: "",
-    accountHeadId: 0,
-    expenseSupplierId: 0,
+    accountHeadId: undefined as number | undefined,
+    expenseSupplierId: undefined as number | undefined,
     expenseAgainst: "PO",
     expenseType: "General",
     traEfdReceiptNo: "",
-    currencyId: 1,
+    currencyId: 1, // Default to Base Currency (1)
     exchangeRate: 1,
+    costCenterId: undefined as number | undefined,
     status: "Draft",
     remarks: "",
   });
@@ -90,7 +92,7 @@ function CreateExpenseContent() {
     if (!editId && (companies as any[]).length > 0) {
       setHeader(prev => ({
         ...prev,
-        companyId: prev.companyId || ((companies as any[])[0]?.companyId || 0)
+        companyId: prev.companyId || ((companies as any[])[0]?.companyId || undefined)
       }));
     }
   }, [editId, companies]);
@@ -98,6 +100,11 @@ function CreateExpenseContent() {
   const totalAmount = useMemo(() =>
     allocations.reduce((sum, item) => sum + item.allocatedAmount, 0)
   , [allocations]);
+
+  const selectedCurrency = useMemo(() => {
+    const c = currencies.find((c: any) => Number(c.id || c.CURRENCY_ID) === Number(header.currencyId));
+    return c?.currencyCode || c?.CURRENCY_CODE || c?.currencyName || c?.CURRENCY_NAME || "TZS";
+  }, [header.currencyId, currencies]);
 
   // Load Initial Data for Edit
   useEffect(() => {
@@ -107,26 +114,27 @@ function CreateExpenseContent() {
         if (data && data.header) {
           setHeader({
             expenseDate: data.header.expenseDate ? new Date(data.header.expenseDate).toISOString().split('T')[0] : today,
-            companyId: data.header.companyId || 0,
+            companyId: data.header.companyId || undefined,
             poRefNo: data.header.poRefNo || "",
-            accountHeadId: data.header.accountHeadId || 0,
-            expenseSupplierId: data.header.expenseSupplierId || 0,
+            accountHeadId: data.header.accountHeadId || undefined,
+            expenseSupplierId: data.header.expenseSupplierId || undefined,
             expenseAgainst: data.header.expenseAgainst || "PO",
             expenseType: data.header.expenseType || "General",
             traEfdReceiptNo: data.header.traEfdReceiptNo || "",
             currencyId: data.header.currencyId || 1,
             exchangeRate: Number(data.header.exchangeRate) || 1,
+            costCenterId: data.header.costCenterId || undefined,
             status: data.header.status || "Draft",
             remarks: data.header.remarks || "",
           });
           if (data.items) {
             setAllocations(data.items.map((it: any) => ({
-              id: String(it.SNO || Math.random()),
-              productId: it.PRODUCT_ID,
-              productName: it.PRODUCT_NAME || "Product",
-              poQty: Number(it.PO_QTY || 0),
-              allocatedAmount: Number(it.EXPENSE_AMOUNT || 0),
-              poDtlSno: it.PO_DTL_SNO
+              id: String(it.SNO || it.sno || Math.random()),
+              productId: it.PRODUCT_ID || it.productId,
+              productName: it.productName || it.PRODUCT_NAME || "Product",
+              poQty: Number(it.PO_QTY || it.poQty || it.TOTAL_QTY || it.totalQty || 0),
+              allocatedAmount: Number(it.EXPENSE_AMOUNT || it.expenseAmount || 0),
+              poDtlSno: it.PO_DTL_SNO || it.poDtlSno
             })));
           }
           if (data.files) {
@@ -146,10 +154,10 @@ function CreateExpenseContent() {
       const fullPO = await getOrderById(ref);
       if (fullPO && fullPO.items) {
         setAllocations(fullPO.items.map((item: any) => ({
-          id: `temp-${item.SNO || Math.random()}`,
+          id: `temp-${item.SNO || item.sno || Math.random()}`,
           productId: item.productId || item.PRODUCT_ID,
           productName: item.productName || item.PRODUCT_NAME || "Product",
-          poQty: Number(item.TOTAL_QTY || item.totalQty || item.QTY || 0),
+          poQty: Number(item.TOTAL_QTY || item.totalQty || item.poQty || item.QTY || 0),
           allocatedAmount: 0,
           poDtlSno: item.SNO || item.sno
         })));
@@ -165,6 +173,8 @@ function CreateExpenseContent() {
     if (!header.poRefNo) { toast.error("Please select a PO Reference"); return; }
     if (!header.traEfdReceiptNo) { toast.error("TRA EFD Receipt No is mandatory"); return; }
     if (!header.accountHeadId) { toast.error("Please select an Account Head"); return; }
+    if (!header.costCenterId) { toast.error("Please select a Cost Center"); return; }
+    if (!header.expenseSupplierId) { toast.error("Please select a Service Provider (Supplier)"); return; }
 
     const payload = {
       header: { ...header, totalExpenseAmount: totalAmount, status: finalStatus },
@@ -241,13 +251,27 @@ function CreateExpenseContent() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Transaction Date*</Label>
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Transaction Date <span className="text-red-500">*</span></Label>
                   <Input type="date" value={header.expenseDate} onChange={(e) => setHeader({ ...header, expenseDate: e.target.value })} className="rounded-xl h-11" />
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">PO Reference*</Label>
-                  <Select value={header.poRefNo} onValueChange={handlePOChange} disabled={isPOListLoading}>
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Expense Against <span className="text-red-500">*</span></Label>
+                  <Select value={header.expenseAgainst} onValueChange={(v) => setHeader({ ...header, expenseAgainst: v, poRefNo: v === "PO" ? header.poRefNo : "" })}>
+                    <SelectTrigger className="rounded-xl h-11 font-bold">
+                      <SelectValue placeholder="Select Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PO">Purchase Order</SelectItem>
+                      <SelectItem value="Direct">Direct Expense</SelectItem>
+                      <SelectItem value="Petty Cash">Petty Cash</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">PO Reference {header.expenseAgainst === "PO" ? <span className="text-red-500">*</span> : "(Optional)"}</Label>
+                  <Select value={header.poRefNo} onValueChange={handlePOChange} disabled={isPOListLoading || header.expenseAgainst !== "PO"}>
                     <SelectTrigger className="rounded-xl h-11 font-bold">
                       <SelectValue placeholder={isPOListLoading ? "Synchronizing Orders..." : "Select Purchase Order"} />
                     </SelectTrigger>
@@ -265,13 +289,13 @@ function CreateExpenseContent() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Account Head*</Label>
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Account Head <span className="text-red-500">*</span></Label>
                   {accountHeadsLoading ? (
                     <Skeleton className="h-11 w-full rounded-xl" />
                   ) : (
-                    <Select value={String(header.accountHeadId)} onValueChange={(v) => setHeader({ ...header, accountHeadId: Number(v) })}>
+                    <Select value={header.accountHeadId ? String(header.accountHeadId) : ""} onValueChange={(v) => setHeader({ ...header, accountHeadId: Number(v) })}>
                       <SelectTrigger className="rounded-xl h-11 font-bold">
-                        <SelectValue placeholder="Select Category" />
+                        <SelectValue placeholder="Select Account Head" />
                       </SelectTrigger>
                       <SelectContent>
                         {accountHeads.map((ah: any, idx: number) => (
@@ -283,7 +307,43 @@ function CreateExpenseContent() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">TRA EFD Receipt No*</Label>
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Expense Type <span className="text-red-500">*</span></Label>
+                  <Select value={header.expenseType} onValueChange={(v) => setHeader({ ...header, expenseType: v })}>
+                    <SelectTrigger className="rounded-xl h-11 font-bold">
+                      <SelectValue placeholder="Select Expense Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="General">General</SelectItem>
+                      <SelectItem value="Administrative">Administrative</SelectItem>
+                      <SelectItem value="Operational">Operational</SelectItem>
+                      <SelectItem value="Marketing">Marketing</SelectItem>
+                      <SelectItem value="Maintenance">Maintenance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Cost Center <span className="text-red-500">*</span></Label>
+                  {costCentersLoading ? (
+                    <Skeleton className="h-11 w-full rounded-xl" />
+                  ) : (
+                    <Select value={header.costCenterId ? String(header.costCenterId) : ""} onValueChange={(v) => setHeader({ ...header, costCenterId: Number(v) })}>
+                      <SelectTrigger className="rounded-xl h-11 font-bold">
+                        <SelectValue placeholder="Select Cost Center" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {costCenters.map((cc: any, idx: number) => (
+                          <SelectItem key={`${cc.id || cc.costCenterId}-${idx}`} value={String(cc.id || cc.costCenterId)}>
+                            {cc.costCenterName} ({cc.costCenterCode})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">TRA EFD Receipt No <span className="text-red-500">*</span></Label>
                   <Input placeholder="Enter Receipt Number" value={header.traEfdReceiptNo} onChange={(e) => setHeader({ ...header, traEfdReceiptNo: e.target.value })} className="rounded-xl h-11 font-bold" />
                 </div>
               </div>
@@ -306,31 +366,43 @@ function CreateExpenseContent() {
                     <tr className="bg-[#F8FAFC] border-b border-[#F1F5F9]">
                       <th className="px-6 py-4 text-left text-[10px] font-black text-[#94A3B8] uppercase">Product Name</th>
                       <th className="px-6 py-4 text-center text-[10px] font-black text-[#94A3B8] uppercase">PO Qty</th>
+                      <th className="px-6 py-4 text-right text-[10px] font-black text-[#94A3B8] uppercase">Expense Rate</th>
                       <th className="px-6 py-4 text-right text-[10px] font-black text-[#94A3B8] uppercase">Allocated Amt</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#F1F5F9]">
                     {allocations.length === 0 ? (
-                      <tr key="empty"><td colSpan={3} className="px-6 py-12 text-center text-[#94A3B8] font-bold">Select a PO to allocate expenses</td></tr>
+                      <tr key="empty"><td colSpan={4} className="px-6 py-12 text-center text-[#94A3B8] font-bold">Select a PO to allocate expenses</td></tr>
                     ) : (
-                      allocations.map((item, idx) => (
-                        <tr key={`${item.id}-${idx}`}>
-                          <td className="px-6 py-4">
-                            <span className="text-sm font-bold text-[#0F172A]">{item.productName}</span>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <span className="px-2 py-1 bg-[#F1F5F9] rounded-lg text-xs font-bold text-[#64748B]">{item.poQty}</span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <Input 
-                              type="number" 
-                              value={item.allocatedAmount}
-                              onChange={(e) => setAllocations(allocations.map(a => a.id === item.id ? { ...a, allocatedAmount: Number(e.target.value) } : a))}
-                              className="text-right font-black rounded-lg h-9 border-blue-100 bg-blue-50/30 ml-auto w-32"
-                            />
-                          </td>
-                        </tr>
-                      ))
+                      allocations.map((item, idx) => {
+                        const expenseRate = item.poQty > 0 ? (item.allocatedAmount / item.poQty) : 0;
+                        return (
+                          <tr key={`${item.id}-${idx}`}>
+                            <td className="px-6 py-4">
+                              <span className="text-sm font-bold text-[#0F172A]">{item.productName}</span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              <span className="px-2 py-1 bg-[#F1F5F9] rounded-lg text-xs font-bold text-[#64748B]">{item.poQty}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <Input 
+                                readOnly
+                                disabled
+                                value={expenseRate === 0 ? "" : expenseRate.toFixed(2)}
+                                className="text-right font-black rounded-lg h-9 border-emerald-100 bg-emerald-50/10 ml-auto w-32 cursor-not-allowed opacity-70"
+                              />
+                            </td>
+                            <td className="px-6 py-4">
+                              <Input 
+                                type="number" 
+                                value={item.allocatedAmount === 0 ? "" : item.allocatedAmount}
+                                onChange={(e) => setAllocations(allocations.map(a => a.id === item.id ? { ...a, allocatedAmount: Number(e.target.value) } : a))}
+                                className="text-right font-black rounded-lg h-9 border-blue-100 bg-blue-50/30 ml-auto w-32"
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
@@ -353,9 +425,34 @@ function CreateExpenseContent() {
                   <span className="font-bold text-white">{header.poRefNo || "None"}</span>
                 </div>
                 <div className="h-px bg-white/10 my-4" />
+                
+                <div className="space-y-4">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Allocation Breakdown</span>
+                  {allocations.length === 0 ? (
+                    <p className="text-xs italic text-white/30">No products allocated yet.</p>
+                  ) : (
+                    allocations.map((a, idx) => {
+                      const rate = a.poQty > 0 ? (a.allocatedAmount / a.poQty) : 0;
+                      return (
+                        <div key={`${a.id}-${idx}`} className="flex flex-col gap-1 p-3 rounded-xl bg-white/5 border border-white/5">
+                          <div className="flex justify-between items-start">
+                            <span className="text-[11px] font-bold text-white/90 line-clamp-1 flex-1">{a.productName}</span>
+                            <span className="text-xs font-bold text-emerald-400">{(a.allocatedAmount || 0).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between items-center opacity-50 text-[10px]">
+                            <span>Rate: {rate.toFixed(2)} / unit</span>
+                            <span>Qty: {a.poQty}</span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                <div className="h-px bg-white/10 my-4" />
                 <div className="space-y-1">
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">Total Tax Invoice Amount</span>
-                  <div className="text-3xl font-black font-sans leading-none">{totalAmount.toLocaleString()} TZS</div>
+                  <div className="text-3xl font-black font-sans leading-none">{(totalAmount || 0).toLocaleString()} {selectedCurrency}</div>
                 </div>
               </div>
             </div>
@@ -366,7 +463,7 @@ function CreateExpenseContent() {
                 {companiesLoading ? (
                   <Skeleton className="h-11 w-full rounded-xl" />
                 ) : (
-                  <Select value={String(header.companyId)} onValueChange={(v) => setHeader({ ...header, companyId: Number(v) })}>
+                  <Select value={header.companyId ? String(header.companyId) : ""} onValueChange={(v) => setHeader({ ...header, companyId: Number(v) })}>
                     <SelectTrigger className="rounded-xl font-bold bg-[#F8FAFC]">
                       <SelectValue placeholder="Select Company" />
                     </SelectTrigger>
@@ -380,13 +477,13 @@ function CreateExpenseContent() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Service Provider (Supplier)</Label>
+                <Label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Service Provider (Supplier) <span className="text-red-500">*</span></Label>
                 {suppliersLoading ? (
                   <Skeleton className="h-11 w-full rounded-xl" />
                 ) : (
-                  <Select value={String(header.expenseSupplierId)} onValueChange={(v) => setHeader({ ...header, expenseSupplierId: Number(v) })}>
+                  <Select value={header.expenseSupplierId ? String(header.expenseSupplierId) : ""} onValueChange={(v) => setHeader({ ...header, expenseSupplierId: Number(v) })}>
                     <SelectTrigger className="rounded-xl font-bold bg-[#F8FAFC]">
-                      <SelectValue placeholder="Select Supplier" />
+                      <SelectValue placeholder="Select Service Provider" />
                     </SelectTrigger>
                     <SelectContent>
                       {suppliers.map((s: any, idx: number) => (
@@ -405,6 +502,41 @@ function CreateExpenseContent() {
                   className="min-h-[120px] rounded-xl bg-[#F8FAFC]"
                   placeholder="Note for audit purposes..."
                 />
+              </div>
+
+              <div className="h-px bg-border my-2" />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Currency</Label>
+                  {currenciesLoading ? (
+                    <Skeleton className="h-10 w-full rounded-xl" />
+                  ) : (
+                    <Select value={header.currencyId ? String(header.currencyId) : ""} onValueChange={(v) => setHeader({ ...header, currencyId: Number(v) })}>
+                      <SelectTrigger className="rounded-xl font-bold bg-[#F8FAFC]">
+                        <SelectValue placeholder={currenciesLoading ? "Loading..." : "Select Currency"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {currencies.map((curr: any) => (
+                          <SelectItem key={curr.id} value={String(curr.id)}>
+                            {curr.currencyName || curr.CURRENCY_NAME || curr.currencyCode || curr.CURRENCY_CODE || `Currency ${curr.id}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Exchange Rate</Label>
+                  <Input 
+                    type="number" 
+                    value={header.exchangeRate} 
+                    onChange={(e) => setHeader({ ...header, exchangeRate: Number(e.target.value) })}
+                    disabled={header.currencyId === 1}
+                    className="rounded-xl font-bold bg-[#F8FAFC]"
+                  />
+                </div>
               </div>
             </div>
           </div>

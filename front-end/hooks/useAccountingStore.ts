@@ -26,6 +26,11 @@ export interface CashFlowData {
   };
   investing: { label: string; amount: number }[];
   financing: { label: string; amount: number }[];
+  summary: {
+    openingBalance: number;
+    closingBalance: number;
+    netIncrease: number;
+  };
 }
 
 export function useAccountingStore(companyId?: number, startDate?: string, endDate?: string) {

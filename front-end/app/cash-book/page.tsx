@@ -40,10 +40,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 
-const fmt = (num: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+const fmt = (num: number) => {
+  const isNeg = num < 0;
+  const val = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Math.abs(num));
+  return isNeg ? `(${val})` : val;
+};
 const fmtDate = (date: any) => {
   if (!date) return "—";
-  return new Date(date).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+  return new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
 export default function CashBookPage() {

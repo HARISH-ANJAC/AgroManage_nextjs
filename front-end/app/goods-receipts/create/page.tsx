@@ -197,7 +197,7 @@ function CreateGRNContent() {
       });
 
       const rawItems: any[] = existing.items || [];
-      setItems(rawItems.map((item: any, idx: number) => ({
+      const grnItems = rawItems.map((item: any, idx: number) => ({
         id: idx + 1,
         poDtlSno: item.PO_DTL_SNO || item.poDtlSno || null,
         productId: item.PRODUCT_ID || item.productId || null,
@@ -209,7 +209,50 @@ function CreateGRNContent() {
         uom: item.UOM || item.uom || "KG",
         qtyPerPack: Number(item.QTY_PER_PACKING || item.qtyPerPack || 0),
         remarks: item.REMARKS || "",
-      })));
+      }));
+
+      // Merge with latest PO items to catch any new products added to the PO after GRN creation
+      if (eHeader.PO_REF_NO || eHeader.poRefNo) {
+        try {
+          const fullPo = await getOrderById(eHeader.PO_REF_NO || eHeader.poRefNo);
+          const latestPoItems: any[] = fullPo?.items || [];
+          
+          if (latestPoItems.length > 0) {
+            const mergedItems = [...grnItems];
+            let nextId = mergedItems.length + 1;
+
+            latestPoItems.forEach((poItem: any) => {
+              const poSno = poItem.SNO || poItem.poDtlSno;
+              const existsInGrn = grnItems.some(gi => gi.poDtlSno === poSno);
+              
+              if (!existsInGrn) {
+                // This is a new product added to the PO later
+                mergedItems.push({
+                  id: nextId++,
+                  poDtlSno: poSno || null,
+                  productId: poItem.PRODUCT_ID || poItem.productId || null,
+                  productName: poItem.PRODUCT_NAME || poItem.productName || "Product",
+                  mainCategoryId: poItem.MAIN_CATEGORY_ID || poItem.mainCategoryId || null,
+                  subCategoryId: poItem.SUB_CATEGORY_ID || poItem.subCategoryId || null,
+                  poQty: Number(poItem.TOTAL_QTY || poItem.totalQty || 0),
+                  receivedQty: 0, // Not yet received in this GRN
+                  uom: poItem.UOM || poItem.uom || "KG",
+                  qtyPerPack: Number(poItem.QTY_PER_PACKING || poItem.qtyPerPack || 0),
+                  remarks: "(New PO Item)",
+                });
+              }
+            });
+            setItems(mergedItems);
+          } else {
+            setItems(grnItems);
+          }
+        } catch (err) {
+          console.error("Failed to fetch latest PO items during merge:", err);
+          setItems(grnItems);
+        }
+      } else {
+        setItems(grnItems);
+      }
 
       if (existing.files) {
         setFiles(existing.files);

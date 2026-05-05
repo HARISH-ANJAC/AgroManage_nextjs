@@ -70,6 +70,7 @@ function CreatePurchaseBookingContent() {
     const { data: paymentTerms, isLoading: paymentTermsLoading } = useMasterData("payment-terms");
     const { data: costTypes, isLoading: costTypesLoading } = useMasterData("additional-cost-types");
     const { data: categories, isLoading: categoriesLoading } = useMasterData("categories");
+    const { data: productsData = [] } = useMasterData("products");
 
     // Enterprise Stores
     const { orders: pos, getOrderById: getPOById } = usePurchaseOrderStore();
@@ -273,13 +274,35 @@ function CreatePurchaseBookingContent() {
                 response2Status: h.RESPONSE_2_STATUS || "Pending",
                 finalResponseStatus: h.FINAL_RESPONSE_STATUS || "Pending"
             });
-            if (res.items) setItems(res.items.map((i: any, idx: number) => ({ ...i, id: idx, productId: i.PRODUCT_ID, productName: i.productName || "Product", qtyPerPacking: Number(i.QTY_PER_PACKING || 0), totalQty: Number(i.TOTAL_QTY || 0), uom: i.UOM || "KG", ratePerQty: Number(i.RATE_PER_QTY || 0), productAmount: Number(i.PRODUCT_AMOUNT || 0), discountPercentage: Number(i.DISCOUNT_PERCENTAGE || 0), discountAmount: Number(i.DISCOUNT_AMOUNT || 0), totalProductAmount: Number(i.TOTAL_PRODUCT_AMOUNT || 0), vatPercentage: Number(i.VAT_PERCENTAGE || 0), vatAmount: Number(i.VAT_AMOUNT || 0), finalProductAmount: Number(i.FINAL_PRODUCT_AMOUNT || 0), grnRefNo: i.GRN_REF_NO })));
+            if (res.items) {
+                setItems(res.items.map((i: any, idx: number) => {
+                    const p = productsData.find((pd: any) => Number(pd.id) === Number(i.PRODUCT_ID || i.productId));
+                    return { 
+                        ...i, 
+                        id: idx, 
+                        productId: i.PRODUCT_ID || i.productId, 
+                        productName: p?.productName || i.PRODUCT_NAME || i.productName || "Product", 
+                        qtyPerPacking: Number(i.QTY_PER_PACKING || i.qtyPerPacking || 0), 
+                        totalQty: Number(i.TOTAL_QTY || i.totalQty || 0), 
+                        uom: i.UOM || i.uom || "KG", 
+                        ratePerQty: Number(i.RATE_PER_QTY || i.ratePerQty || 0), 
+                        productAmount: Number(i.PRODUCT_AMOUNT || i.productAmount || 0), 
+                        discountPercentage: Number(i.DISCOUNT_PERCENTAGE || i.discountPercentage || 0), 
+                        discountAmount: Number(i.DISCOUNT_AMOUNT || i.discountAmount || 0), 
+                        totalProductAmount: Number(i.TOTAL_PRODUCT_AMOUNT || i.totalProductAmount || 0), 
+                        vatPercentage: Number(i.VAT_PERCENTAGE || i.vatPercentage || 0), 
+                        vatAmount: Number(i.VAT_AMOUNT || i.vatAmount || 0), 
+                        finalProductAmount: Number(i.FINAL_PRODUCT_AMOUNT || i.finalProductAmount || 0), 
+                        grnRefNo: i.GRN_REF_NO || i.grnRefNo 
+                    };
+                }));
+            }
             if (res.additionalCosts) setAdditionalCosts(res.additionalCosts.map((c: any, idx: number) => ({ id: idx, typeId: String(c.ADDITIONAL_COST_TYPE_ID), amount: Number(c.ADDITIONAL_COST_AMOUNT), remarks: c.REMARKS })));
             if (res.files) setFiles(res.files);
             setIsFetchingData(false);
         };
         load();
-    }, [editId, today]);
+    }, [editId, today, productsData]);
 
     if (isFetchingData) {
         return (
@@ -446,7 +469,7 @@ function CreatePurchaseBookingContent() {
                                                     id: Date.now() + dx,
                                                     grnRefNo: grnRef,
                                                     productId: i.PRODUCT_ID || i.productId,
-                                                    productName: i.productName || i.PRODUCT_NAME || "Product",
+                                                    productName: productsData.find((pd: any) => Number(pd.id) === Number(i.productId || i.PRODUCT_ID))?.productName || i.productName || i.PRODUCT_NAME || "Product",
                                                     mainCategoryId: i.MAIN_CATEGORY_ID || null,
                                                     subCategoryId: i.SUB_CATEGORY_ID || null,
                                                     qtyPerPacking: Number(i.QTY_PER_PACKING || 0),

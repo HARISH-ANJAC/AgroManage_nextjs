@@ -150,6 +150,7 @@ const navigation = [
     items: [
       { name: 'Companies', href: '/companies', icon: Building2 },
       { name: 'Stores', href: '/stores', icon: Store },
+      { name: 'Financial Years', href: '/financial-years', icon: Calendar },
       { name: 'Locations', href: '/locations', icon: MapPin },
       { name: 'Billing Locations', href: '/billing-locations', icon: MapPinned },
 

@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useCustomerReceiptStore } from "@/hooks/useCustomerReceiptStore";
 import { useCustomers, useCompanies, useCurrencies } from "@/hooks/useStoreData";
+import { useMasterData } from "@/hooks/useMasterData";
 import { getCurrentUser } from "@/lib/auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SupportingDoc } from "@/components/ui/Supporting-Doc";
@@ -38,12 +39,18 @@ function CreateReceiptContent() {
   const { data: customers = [], isLoading: customersLoading } = useCustomers();
   const { data: companies = [], isLoading: companiesLoading } = useCompanies();
   const { data: currencies = [], isLoading: currenciesLoading } = useCurrencies();
+  const { data: paymentModes = [] } = useMasterData("customer-payment-modes");
+  const { data: banks = [] } = useMasterData("banks");
+  const { data: accounts = [] } = useMasterData("company-bank-accounts");
 
   const [header, setHeader] = useState({
     receiptDate: today,
     companyId: 1,
     customerId: 0,
-    paymentModeId: 1, // Default regular
+    paymentModeId: 1,
+    crBankCashId: 0,
+    crAccountId: 0,
+    drBankCashId: 0,
     receiptAmount: 0,
     transactionRefNo: "",
     transactionDate: today,
@@ -82,6 +89,9 @@ function CreateReceiptContent() {
             companyId: h.companyId || 1,
             customerId: h.customerId || 0,
             paymentModeId: h.paymentModeId || 1,
+            crBankCashId: h.crBankCashId || 0,
+            crAccountId: h.crAccountId || 0,
+            drBankCashId: h.drBankCashId || 0,
             receiptAmount: Number(h.receiptAmount) || 0,
             transactionRefNo: h.transactionRefNo || "",
             transactionDate: h.transactionDate ? new Date(h.transactionDate).toISOString().split("T")[0] : today,
@@ -143,6 +153,10 @@ function CreateReceiptContent() {
     }
     if (header.receiptAmount <= 0) {
       toast.error("Receipt Amount must be greater than 0");
+      return;
+    }
+    if (!header.drBankCashId) {
+      toast.error("Please select a Deposit Bank (DR)");
       return;
     }
 
@@ -260,7 +274,7 @@ function CreateReceiptContent() {
                   {customersLoading ? (
                     <Skeleton className="h-11 w-full rounded-xl" />
                   ) : (
-                    <Select value={String(header.customerId)} onValueChange={(v) => setHeader({ ...header, customerId: Number(v) })}>
+                    <Select value={header.customerId ? String(header.customerId) : undefined} onValueChange={(v) => setHeader({ ...header, customerId: Number(v) })}>
                       <SelectTrigger className="rounded-xl h-11 font-bold">
                         <SelectValue placeholder="Select Customer" />
                       </SelectTrigger>
@@ -271,6 +285,49 @@ function CreateReceiptContent() {
                       </SelectContent>
                     </Select>
                   )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Payment Mode*</Label>
+                  <Select value={header.paymentModeId ? String(header.paymentModeId) : undefined} onValueChange={(v) => setHeader({ ...header, paymentModeId: Number(v) })}>
+                    <SelectTrigger className="rounded-xl h-11 font-bold">
+                      <SelectValue placeholder="Select Mode" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {paymentModes.map((pm: any) => (
+                        <SelectItem key={pm.id} value={String(pm.id)}>{pm.paymentModeName || pm.PAYMENT_MODE_NAME}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Currency*</Label>
+                  {currenciesLoading ? (
+                    <Skeleton className="h-11 w-full rounded-xl" />
+                  ) : (
+                    <Select value={header.currencyId ? String(header.currencyId) : undefined} onValueChange={(v) => setHeader({ ...header, currencyId: Number(v) })}>
+                      <SelectTrigger className="rounded-xl h-11 font-bold">
+                        <SelectValue placeholder="Select Currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {currencies.map((c: any) => (
+                          <SelectItem key={c.id} value={String(c.id)}>{c.currencyName || c.CURRENCY_NAME}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Exchange Rate</Label>
+                  <Input
+                    type="number"
+                    value={header.exchangeRate}
+                    onChange={(e) => setHeader({ ...header, exchangeRate: Number(e.target.value) })}
+                    className="rounded-xl h-11 font-bold"
+                    disabled={header.currencyId === 1}
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -291,6 +348,11 @@ function CreateReceiptContent() {
                     onChange={(e) => setHeader({ ...header, transactionRefNo: e.target.value })}
                     className="rounded-xl h-11"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Transaction Date</Label>
+                  <Input type="date" value={header.transactionDate} onChange={(e) => setHeader({ ...header, transactionDate: e.target.value })} className="rounded-xl h-11" />
                 </div>
               </div>
             </div>
@@ -346,9 +408,9 @@ function CreateReceiptContent() {
             </div>
 
             {/* Supporting Documents Section */}
-            <SupportingDoc 
-              files={files} 
-              onFilesChange={setFiles} 
+            <SupportingDoc
+              files={files}
+              onFilesChange={setFiles}
             />
           </div>
 
@@ -391,6 +453,48 @@ function CreateReceiptContent() {
                     </SelectContent>
                   </Select>
                 )}
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Deposit To Bank (DR)*</Label>
+                <Select value={header.drBankCashId ? String(header.drBankCashId) : undefined} onValueChange={(v) => setHeader({ ...header, drBankCashId: Number(v) })}>
+                  <SelectTrigger className="rounded-xl font-bold bg-[#F8FAFC]">
+                    <SelectValue placeholder="Select Deposit Bank" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {banks.map((b: any) => (
+                      <SelectItem key={b.id} value={String(b.id)}>{b.bankName || b.BANK_NAME}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Credit Bank/Cash (CR)</Label>
+                <Select value={header.crBankCashId ? String(header.crBankCashId) : undefined} onValueChange={(v) => setHeader({ ...header, crBankCashId: Number(v) })}>
+                  <SelectTrigger className="rounded-xl font-bold bg-[#F8FAFC]">
+                    <SelectValue placeholder="Select Credit Bank" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {banks.map((b: any) => (
+                      <SelectItem key={b.id} value={String(b.id)}>{b.bankName || b.BANK_NAME}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Credit Account (CR)</Label>
+                <Select value={header.crAccountId ? String(header.crAccountId) : undefined} onValueChange={(v) => setHeader({ ...header, crAccountId: Number(v) })}>
+                  <SelectTrigger className="rounded-xl font-bold bg-[#F8FAFC]">
+                    <SelectValue placeholder="Select Credit Account" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {accounts.filter((a: any) => a.companyId === header.companyId).map((a: any) => (
+                      <SelectItem key={a.id} value={String(a.id)}>{a.accountNo || a.ACCOUNT_NO} ({a.bankName})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">

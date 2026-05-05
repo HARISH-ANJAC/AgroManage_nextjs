@@ -283,11 +283,34 @@ export const deleteDeliveryNote = async (req: Request, res: Response): Promise<R
     const { id } = req.params;
     const decodedId = decodeURIComponent(id as string);
     try {
+        await db.delete(TBL_DELIVERY_FILES_UPLOAD).where(eq(TBL_DELIVERY_FILES_UPLOAD.DELIVERY_NOTE_REF_NO, decodedId));
         await db.delete(TBL_DELIVERY_NOTE_DTL).where(eq(TBL_DELIVERY_NOTE_DTL.DELIVERY_NOTE_REF_NO, decodedId));
         await db.delete(TBL_DELIVERY_NOTE_HDR).where(eq(TBL_DELIVERY_NOTE_HDR.DELIVERY_NOTE_REF_NO, decodedId));
         return res.status(200).json({ msg: "Delivery Note deleted successfully" });
     } catch (error) {
         console.error(error);
+        return res.status(500).json({ msg: "Internal server error" });
+    }
+};
+
+export const bulkDeleteDeliveryNotes = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const { ids } = req.body;
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ msg: "No IDs provided for deletion" });
+        }
+        
+        await db.transaction(async (tx) => {
+            for (const id of ids) {
+                await tx.delete(TBL_DELIVERY_FILES_UPLOAD).where(eq(TBL_DELIVERY_FILES_UPLOAD.DELIVERY_NOTE_REF_NO, id));
+                await tx.delete(TBL_DELIVERY_NOTE_DTL).where(eq(TBL_DELIVERY_NOTE_DTL.DELIVERY_NOTE_REF_NO, id));
+                await tx.delete(TBL_DELIVERY_NOTE_HDR).where(eq(TBL_DELIVERY_NOTE_HDR.DELIVERY_NOTE_REF_NO, id));
+            }
+        });
+
+        return res.status(200).json({ msg: `${ids.length} Delivery Notes deleted successfully` });
+    } catch (error) {
+        console.error("Bulk Delete Error:", error);
         return res.status(500).json({ msg: "Internal server error" });
     }
 };

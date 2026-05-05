@@ -45,7 +45,8 @@ import {
     TBL_TAX_MASTER,
     TBL_COST_CENTER_BUDGET,
     TBL_COST_CENTER_MASTER,
-    TBL_BILLING_LOCATION_WISE_PRODUCT_PRICE
+    TBL_BILLING_LOCATION_WISE_PRODUCT_PRICE,
+    TBL_FINANCIAL_YEAR_MASTER
 } from "../db/schema/index.js";
 import { eq, inArray, getTableColumns, getTableName } from "drizzle-orm";
 
@@ -55,6 +56,11 @@ const TABLE_MAP: Record<string, { table: any; pk: string; joins?: any[] }> = {
         table: TBL_COMPANY_MASTER,
         pk: "Company_Id",
         joins: [{ table: TBL_CURRENCY_MASTER, on: eq(TBL_COMPANY_MASTER.Currency_ID, TBL_CURRENCY_MASTER.CURRENCY_ID), prefix: "CURRENCY" }]
+    },
+    "financial-years": {
+        table: TBL_FINANCIAL_YEAR_MASTER,
+        pk: "Year_Id",
+        joins: [{ table: TBL_COMPANY_MASTER, on: eq(TBL_FINANCIAL_YEAR_MASTER.Company_Id, TBL_COMPANY_MASTER.Company_Id), prefix: "COMPANY" }]
     },
     "stores": {
         table: TBL_STORE_MASTER,
@@ -551,8 +557,18 @@ export const deleteOne = async (req: Request, res: Response): Promise<Response> 
         const targetId = isNaN(parsedId) ? id : parsedId;
         await db.delete(config.table).where(eq(config.table[config.pk], targetId as any));
         return res.status(200).json({ msg: `${domain} deleted successfully` });
-    } catch (error) {
+    } catch (error: any) {
         logError(`Master Controller Error [${req.method} ${req.url}]`, error);
+        const pgErrorCode = error.code || error.originalError?.code || error.cause?.code;
+        if (pgErrorCode === '23503') {
+            const detail = error.cause?.detail || error.detail || "";
+            const match = detail.match(/table "(.+)"/);
+            const tableName = match ? match[1] : "other modules";
+            return res.status(400).json({ 
+                msg: `Cannot delete this record because it is still referenced in ${tableName}. Please remove related entries first.`,
+                code: '23503' 
+            });
+        }
         return res.status(500).json({ msg: "Internal server error" });
     }
 };
@@ -572,8 +588,18 @@ export const bulkDelete = async (req: Request, res: Response): Promise<Response>
         });
         await db.delete(config.table).where(inArray(config.table[config.pk], targetIds as any[]));
         return res.status(200).json({ msg: `${ids.length} items deleted successfully from ${domain}` });
-    } catch (error) {
+    } catch (error: any) {
         logError(`Master Controller Error [${req.method} ${req.url}]`, error);
+        const pgErrorCode = error.code || error.originalError?.code || error.cause?.code;
+        if (pgErrorCode === '23503') {
+            const detail = error.cause?.detail || error.detail || "";
+            const match = detail.match(/table "(.+)"/);
+            const tableName = match ? match[1] : "other modules";
+            return res.status(400).json({ 
+                msg: `Some items cannot be deleted because they are still referenced in ${tableName}.`,
+                code: '23503' 
+            });
+        }
         return res.status(500).json({ msg: "Internal server error" });
     }
 };

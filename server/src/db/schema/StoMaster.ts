@@ -159,6 +159,22 @@ export const TBL_COMPANY_MASTER = StoMasterSchema.table("tbl_Company_Master", {
   Modified_Mac_Address: varchar("Modified_Mac_Address", { length: 50 }),
 });
 
+export const TBL_FINANCIAL_YEAR_MASTER = StoMasterSchema.table("TBL_FINANCIAL_YEAR_MASTER", {
+  Year_Id: integer("Year_Id").primaryKey().generatedAlwaysAsIdentity(),
+  Company_Id: integer("Company_Id").references(() => TBL_COMPANY_MASTER.Company_Id),
+  Financial_Year: varchar("Financial_Year", { length: 50 }), 
+  Start_Date: timestamp("Start_Date", { mode: "date" }),
+  End_Date: timestamp("End_Date", { mode: "date" }),
+  Is_Current: varchar("Is_Current", { length: 20 }).default("No"),
+  Status_Master: varchar("Status_Master", { length: 20 }).default("Active"),
+  Created_By: varchar("Created_By", { length: 50 }),
+  Created_Date: timestamp("Created_Date", { mode: "date" }),
+  Created_Mac_Address: varchar("Created_Mac_Address", { length: 50 }),
+  Modified_By: varchar("Modified_By", { length: 50 }),
+  Modified_Date: timestamp("Modified_Date", { mode: "date" }),
+  Modified_Mac_Address: varchar("Modified_Mac_Address", { length: 50 }),
+});
+
 export const TBL_EXCHANGE_RATE_MASTER = StoMasterSchema.table("TBL_EXCHANGE_RATE_MASTER", {
   SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
   Company_ID: integer("Company_ID").references(() => TBL_COMPANY_MASTER.Company_Id),

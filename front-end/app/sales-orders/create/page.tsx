@@ -107,7 +107,7 @@ function CreateSalesOrderContent(): JSX.Element {
   const { data: billingLocations = [], isLoading: billingLocationsLoading } = useBillingLocations();
   const { data: paymentTerms = [], isLoading: paymentTermsLoading } = usePaymentTerms();
   const { bookings: purchaseInvoices, isLoading: invoicesLoading, getBookingById } = usePurchaseBookingStore();
-  const { expenses } = useExpenseStore();
+  const { expenses, getExpenseById } = useExpenseStore();
 
   const [header, setHeader] = useState({
     salesOrderDate: today,
@@ -191,13 +191,13 @@ function CreateSalesOrderContent(): JSX.Element {
               // Aggressive PI auto-matching for Edit mode
               let piRef = itemData.selectedPiNo;
               if (!piRef && purchaseInvoices && purchaseInvoices.length > 0) {
-                const matchingPI = purchaseInvoices.find((inv: any) => 
+                const matchingPI = purchaseInvoices.find((inv: any) =>
                   inv.items?.some((i: any) => String(i.productId || i.PRODUCT_ID) === String(pId))
                 );
                 if (matchingPI) {
-                   piRef = matchingPI.PURCHASE_INVOICE_REF_NO || String(matchingPI.id || matchingPI.SNO);
-                   itemData.selectedPiNo = piRef;
-                   itemData.poRefNo = piRef;
+                  piRef = matchingPI.PURCHASE_INVOICE_REF_NO || String(matchingPI.id || matchingPI.SNO);
+                  itemData.selectedPiNo = piRef;
+                  itemData.poRefNo = piRef;
                 }
               }
 
@@ -205,22 +205,22 @@ function CreateSalesOrderContent(): JSX.Element {
                 try {
                   const pi = await getBookingById(piRef);
                   if (pi && pi.items) {
-                    const piItem = pi.items.find((i: any) => 
+                    const piItem = pi.items.find((i: any) =>
                       String(i.productId || i.PRODUCT_ID || i.id).trim() === String(pId).trim()
                     );
                     if (piItem) {
                       const qty = Number(piItem.receivedQty || piItem.totalQty || piItem.TOTAL_QTY || 1);
                       const pRate = Number(piItem.purchaseRatePerQty || piItem.ratePerQty || piItem.PURCHASE_RATE_PER_QTY || piItem.RATE_PER_QTY || 0);
                       const poRefHdr = pi.header?.PO_REF_NO || pi.header?.poRefNo || pi.PO_REF_NO || pi.poRefNo || "";
-                      
+
                       const poExpenses = (expenses || []).filter((e: any) => {
                         const expPo = e.poRefNo || e.PO_REF_NO || e.header?.poRefNo || e.header?.PO_REF_NO || "";
                         return expPo && poRefHdr && String(expPo).trim() === String(poRefHdr).trim();
                       });
-                      
+
                       const totalExp = poExpenses.reduce((sum: number, e: any) => sum + Number(e.totalExpenseAmount || e.amount || 0), 0);
                       const eRate = qty > 0 ? totalExp / qty : 0;
-                      
+
                       itemData = {
                         ...itemData,
                         poDtlSno: piItem.sno || piItem.SNO || piItem.poDtlSno || null,
@@ -319,12 +319,28 @@ function CreateSalesOrderContent(): JSX.Element {
   }, [header.customerId, customers]);
 
   const recalcItem = (item: LineItem): LineItem => {
-    const purchaseRate = Number(item.purchaseRate) || 0;
-    const expenseRate = Number(item.expenseRate) || 0;
-    const costPrice = purchaseRate + expenseRate;
-    const totalProductAmount = item.totalQty * item.salesRatePerQty;
-    const vatAmount = totalProductAmount * (item.vatPercentage / 100);
-    return { ...item, costPrice, totalProductAmount, vatAmount, finalSalesAmount: totalProductAmount + vatAmount };
+    const qty = Number(item.totalQty) || 0;
+    const sRate = Number(item.salesRatePerQty) || 0;
+    const vatP = Number(item.vatPercentage) || 0;
+    const pRate = Number(item.purchaseRate) || 0;
+    const eRate = Number(item.expenseRate) || 0;
+
+    const totalProductAmount = qty * sRate;
+    const vatAmount = totalProductAmount * (vatP / 100);
+    const costPrice = pRate + eRate;
+
+    return { 
+      ...item, 
+      totalQty: qty,
+      salesRatePerQty: sRate,
+      vatPercentage: vatP,
+      purchaseRate: pRate,
+      expenseRate: eRate,
+      costPrice, 
+      totalProductAmount, 
+      vatAmount, 
+      finalSalesAmount: totalProductAmount + vatAmount 
+    };
   };
 
   const updateItem = (id: string | number, field: string, value: any) => {
@@ -367,6 +383,80 @@ function CreateSalesOrderContent(): JSX.Element {
     }));
   };
 
+  const linkPItoItem = async (itemId: string | number, piRef: string, productId?: string | number) => {
+    if (!piRef || piRef === "none") {
+      updateItemFields(itemId, {
+        selectedPiNo: "",
+        poRefNo: "",
+        poDtlSno: null,
+        purchaseRate: 0,
+        expenseRate: 0,
+        costPrice: 0
+      });
+      return;
+    }
+
+    // Use passed productId or find it from current items
+    const pId = productId || items.find(i => i.id === itemId)?.productId;
+    if (!pId) return;
+
+    toast.loading("Linking PI and calculating expenses...", { id: `pi-${itemId}` });
+    const pi = await getBookingById(piRef);
+    toast.dismiss(`pi-${itemId}`);
+
+    if (pi && pi.items) {
+      const piItem = pi.items.find((i: any) => String(i.productId || i.PRODUCT_ID) === String(pId));
+      if (piItem) {
+        const qty = Number(piItem.receivedQty || piItem.totalQty || piItem.TOTAL_QTY || 0);
+        const pRate = Number(piItem.ratePerQty || piItem.RATE_PER_QTY || piItem.purchaseRatePerQty || 0);
+        const poRef = String(pi.header?.PO_REF_NO || pi.header?.poRefNo || pi.PO_REF_NO || pi.poRefNo || "").trim();
+        const piRef = String(pi.header?.PURCHASE_INVOICE_REF_NO || pi.header?.purchaseInvoiceRefNo || pi.PURCHASE_INVOICE_REF_NO || pi.purchaseInvoiceRefNo || "").trim();
+
+        const poExpenses = (expenses || []).filter((e: any) => {
+          const expRef = String(e.poRefNo || e.PO_REF_NO || e.header?.poRefNo || e.header?.PO_REF_NO || "").trim();
+          if (!expRef) return false;
+
+          // Match against either PO Ref or PI Ref
+          const matchPO = poRef && expRef === poRef;
+          const matchPI = piRef && expRef === piRef;
+          return matchPO || matchPI;
+        });
+
+        let totalProductExp = 0;
+        for (const exp of poExpenses) {
+          try {
+            const expId = exp.expenseRefNo || exp.id || String(exp.SNO);
+            const fullExp = await getExpenseById(expId);
+            if (fullExp && fullExp.items) {
+              const match = fullExp.items.find((it: any) => {
+                const itProdId = String(it.productId || it.PRODUCT_ID || "").trim();
+                const targetProdId = String(pId).trim();
+                return itProdId && itProdId === targetProdId;
+              });
+              if (match) {
+                totalProductExp += Number(match.EXPENSE_AMOUNT || match.allocatedAmount || match.allocated_amount || 0);
+              }
+            }
+          } catch (e) {
+            console.error("Error fetching expense detail:", e);
+          }
+        }
+
+        const eRate = qty > 0 ? totalProductExp / qty : 0;
+
+        updateItemFields(itemId, {
+          selectedPiNo: piRef,
+          poRefNo: piRef,
+          poDtlSno: piItem.sno || piItem.SNO || null,
+          storeStockPcs: qty,
+          purchaseRate: pRate,
+          expenseRate: eRate,
+          costPrice: pRate + eRate
+        });
+      }
+    }
+  };
+
   const removeItem = (id: string | number) => setItems(items.filter(i => i.id !== id));
   const addItem = () => setItems([...items, emptyItem()]);
 
@@ -375,7 +465,7 @@ function CreateSalesOrderContent(): JSX.Element {
       setHeader(prev => ({ ...prev, salesProformaRefNo: "" }));
       return;
     }
-    
+
     setIsFetchingData(true);
     try {
       const res = await getProformaById(proformaRefNo);
@@ -423,19 +513,19 @@ function CreateSalesOrderContent(): JSX.Element {
 
             // Aggressive PI auto-matching
             let piRef = itemData.selectedPiNo;
-            
+
             // If Proforma is linked to a PI, priority 1
             if (piRef) {
-               // Great
+              // Great
             } else if (purchaseInvoices && purchaseInvoices.length > 0) {
               // Priority 2: Try to find a PI for this product in the already loaded list
-              const matchingPI = purchaseInvoices.find((inv: any) => 
+              const matchingPI = purchaseInvoices.find((inv: any) =>
                 inv.items?.some((i: any) => String(i.productId || i.PRODUCT_ID) === String(pId))
               );
               if (matchingPI) {
-                 piRef = matchingPI.PURCHASE_INVOICE_REF_NO || String(matchingPI.id || matchingPI.SNO);
-                 itemData.selectedPiNo = piRef;
-                 itemData.poRefNo = piRef;
+                piRef = matchingPI.PURCHASE_INVOICE_REF_NO || String(matchingPI.id || matchingPI.SNO);
+                itemData.selectedPiNo = piRef;
+                itemData.poRefNo = piRef;
               }
             }
 
@@ -443,23 +533,37 @@ function CreateSalesOrderContent(): JSX.Element {
               try {
                 const pi = await getBookingById(piRef);
                 if (pi && pi.items) {
-                  const piItem = pi.items.find((i: any) => 
+                  const piItem = pi.items.find((i: any) =>
                     String(i.productId || i.PRODUCT_ID || i.id).trim() === String(pId).trim()
                   );
                   if (piItem) {
                     const qty = Number(piItem.receivedQty || piItem.totalQty || piItem.TOTAL_QTY || 1);
                     const pRate = Number(piItem.purchaseRatePerQty || piItem.ratePerQty || piItem.PURCHASE_RATE_PER_QTY || piItem.RATE_PER_QTY || piItem.purchaseRate || 0);
                     const poRefHdr = pi.header?.PO_REF_NO || pi.header?.poRefNo || pi.PO_REF_NO || pi.poRefNo || "";
-                    
+
                     // Always try to get expenses for calculation
                     const poExpenses = (expenses || []).filter((e: any) => {
                       const expPo = e.poRefNo || e.PO_REF_NO || e.header?.poRefNo || e.header?.PO_REF_NO || "";
                       return expPo && poRefHdr && String(expPo).trim() === String(poRefHdr).trim();
                     });
-                    
-                    const totalExp = poExpenses.reduce((sum: number, e: any) => sum + Number(e.totalExpenseAmount || e.amount || 0), 0);
-                    const eRate = qty > 0 ? totalExp / qty : 0;
-                    
+
+                    let totalProductExp = 0;
+                    for (const exp of poExpenses) {
+                      try {
+                        const fullExp = await getExpenseById(exp.expenseRefNo || exp.id || String(exp.SNO));
+                        if (fullExp && fullExp.items) {
+                          const match = fullExp.items.find((it: any) =>
+                            String(it.productId || it.PRODUCT_ID).trim() === String(pId).trim()
+                          );
+                          if (match) {
+                            totalProductExp += Number(match.EXPENSE_AMOUNT || match.allocatedAmount || 0);
+                          }
+                        }
+                      } catch (e) { }
+                    }
+
+                    const eRate = qty > 0 ? totalProductExp / qty : 0;
+
                     itemData = {
                       ...itemData,
                       poDtlSno: piItem.sno || piItem.SNO || piItem.poDtlSno || null,
@@ -623,7 +727,7 @@ function CreateSalesOrderContent(): JSX.Element {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-               <div className="space-y-2">
+              <div className="space-y-2">
                 <Label>Proforma Reference <span className="text-red-500">*</span></Label>
                 {proformasLoading ? (
                   <Skeleton className="h-11 w-full rounded-xl" />
@@ -710,8 +814,8 @@ function CreateSalesOrderContent(): JSX.Element {
               </div>
             </div>
 
-             {/* Credit Info Strip */}
-             <div className="mt-8 p-6 bg-slate-900 rounded-2xl flex flex-wrap gap-8 justify-between text-white shadow-inner">
+            {/* Credit Info Strip */}
+            <div className="mt-8 p-6 bg-slate-900 rounded-2xl flex flex-wrap gap-8 justify-between text-white shadow-inner">
               <div className="space-y-1">
                 <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Credit Limit</p>
                 <p className="text-lg font-bold">{selectedCurrency} {header.creditLimitAmt.toLocaleString()}</p>
@@ -732,7 +836,7 @@ function CreateSalesOrderContent(): JSX.Element {
 
         {/* Sidebar */}
         <div className="space-y-8">
-           <div className="bg-[#1A2E28] rounded-[32px] p-8 text-white shadow-xl lg:sticky lg:top-8 overflow-hidden relative">
+          <div className="bg-[#1A2E28] rounded-[32px] p-8 text-white shadow-xl lg:sticky lg:top-8 overflow-hidden relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl" />
             <div className="flex items-center gap-3 mb-8 relative">
               <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center">
@@ -752,7 +856,7 @@ function CreateSalesOrderContent(): JSX.Element {
             </div>
             <div className="mt-10 pt-8 border-t border-white/10 relative">
               <p className="text-[10px] uppercase font-black tracking-[0.2em] text-white/30 mb-2">Grand Total</p>
-              <p className="text-5xl font-black tracking-tighter tabular-nums mb-1">{formatAmount(grandTotal)}</p>
+              <p className="text-2xl font-black tracking-tighter tabular-nums mb-1">{formatAmount(grandTotal)}</p>
               <Button onClick={() => handleSubmit("Confirmed")} disabled={isSaving} className="w-full mt-10 h-14 bg-emerald-500 hover:bg-emerald-600 rounded-2xl font-black text-lg shadow-xl shadow-emerald-500/20 active:scale-95 transition-all">
                 {editId ? "Update Order" : "Confirm & Send"}
               </Button>
@@ -763,7 +867,7 @@ function CreateSalesOrderContent(): JSX.Element {
         {/* Line Items */}
         <div className="lg:col-span-4 space-y-8">
           <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-             <div className="flex flex-col gap-4 border-b border-slate-200 p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-4 border-b border-slate-200 p-6 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-wrap items-center gap-3">
                 <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-slate-500">Order Lines</h3>
                 <Badge variant="outline" className="rounded-full border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-bold text-slate-600">
@@ -776,153 +880,215 @@ function CreateSalesOrderContent(): JSX.Element {
             </div>
 
             <div className="p-6">
-               {items.map((item, index) => {
-                  const prod = productsData.find((p: any) => p.productName === item.productName);
-                  const totalPacking = getLineItemMeta(item).totalPacking;
-                  return (
-                    <div key={item.id} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 mb-4 last:mb-0">
-                      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
-                        <div className="min-w-0 space-y-3">
-                          <div className="flex items-center gap-2">
-                             <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
-                              Item {index + 1}
-                            </Badge>
-                          </div>
-                          
-                          <div className="space-y-2">
-                             <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Product</Label>
-                             <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
-                                {prod?.contentData || prod?.PRODUCT_IMAGE ? (
-                                  <img src={prod.contentData || prod.PRODUCT_IMAGE} className="h-10 w-10 shrink-0 rounded-lg border border-slate-200 object-cover shadow-sm cursor-pointer" onClick={() => setPreviewImage(prod.contentData || prod.PRODUCT_IMAGE)} />
-                                ) : (
-                                  <div className="h-10 w-10 shrink-0 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center text-[10px] font-bold text-slate-400">IMG</div>
-                                )}
-                                <div className="flex-1">
-                                  {productsLoading || isFetchingData ? (
-                                    <Skeleton className="h-10 w-full rounded-xl" />
-                                  ) : (
-                                    <Select 
-                                      value={item.productId ? String(item.productId) : ""} 
-                                      onValueChange={(v) => updateItem(item.id, "productId", v)}
-                                    >
-                                      <SelectTrigger className="h-10 border-0 bg-transparent px-0 font-semibold text-slate-900 focus:ring-0 shadow-none">
-                                        <SelectValue placeholder="Select Product" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {productsData.map((p: any) => (
-                                          <SelectItem key={p.id || p.PRODUCT_ID} value={String(p.id || p.PRODUCT_ID)}>
-                                            {p.productName || p.PRODUCT_NAME}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                  )}
-                                </div>
-                             </div>
-                          </div>
+              {items.map((item, index) => {
+                const prod = productsData.find((p: any) => p.productName === item.productName);
+                const totalPacking = getLineItemMeta(item).totalPacking;
+                return (
+                  <div key={item.id} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 mb-4 last:mb-0">
+                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
+                      <div className="min-w-0 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                            Item {index + 1}
+                          </Badge>
+                        </div>
 
-                          <div className="flex flex-wrap gap-2 text-xs text-slate-500">
-                            <span className="rounded-full border border-slate-200 bg-white px-3 py-1">UOM: {item.uom}</span>
-                            <span className="rounded-full border border-slate-200 bg-white px-3 py-1">Pack: {item.qtyPerPacking} {item.alternateUom || item.uom}</span>
-                            <span className="rounded-full border border-slate-200 bg-white px-3 py-1">Stock: {Number(item.storeStockPcs || 0).toLocaleString()}</span>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Product</Label>
+                          <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+                            {prod?.contentData || prod?.PRODUCT_IMAGE ? (
+                              <img src={prod.contentData || prod.PRODUCT_IMAGE} className="h-10 w-10 shrink-0 rounded-lg border border-slate-200 object-cover shadow-sm cursor-pointer" onClick={() => setPreviewImage(prod.contentData || prod.PRODUCT_IMAGE)} />
+                            ) : (
+                              <div className="h-10 w-10 shrink-0 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center text-[10px] font-bold text-slate-400">IMG</div>
+                            )}
+                            <div className="flex-1">
+                              {productsLoading || isFetchingData ? (
+                                <Skeleton className="h-10 w-full rounded-xl" />
+                              ) : (
+                                <Select
+                                  value={item.productId ? String(item.productId) : ""}
+                                  onValueChange={async (v) => {
+                                    updateItem(item.id, "productId", v);
+
+                                    // Auto-link PI
+                                    const relatedPIs = (purchaseInvoices || []).filter((inv: any) =>
+                                      inv.items?.some((i: any) => String(i.productId || i.PRODUCT_ID) === String(v))
+                                    );
+                                    if (relatedPIs.length > 0) {
+                                      const latestPI = relatedPIs[0];
+                                      const refNo = latestPI.PURCHASE_INVOICE_REF_NO || String(latestPI.id);
+                                      await linkPItoItem(item.id, refNo, v);
+                                    }
+                                  }}
+                                >
+                                  <SelectTrigger className="h-10 border-0 bg-transparent px-0 font-semibold text-slate-900 focus:ring-0 shadow-none">
+                                    <SelectValue placeholder="Select Product" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {productsData.filter((p: any) => {
+                                      const pId = String(p.id || p.PRODUCT_ID);
+                                      const isAlreadySelected = items.some(otherItem =>
+                                        String(otherItem.productId) === pId && otherItem.id !== item.id
+                                      );
+                                      return !isAlreadySelected;
+                                    }).map((p: any) => (
+                                      <SelectItem key={p.id || p.PRODUCT_ID} value={String(p.id || p.PRODUCT_ID)}>
+                                        {p.productName || p.PRODUCT_NAME}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            </div>
                           </div>
                         </div>
 
-                        <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Final Amount</p>
-                           <p className="mt-2 text-2xl font-extrabold text-slate-900">{selectedCurrency} {formatAmount(item.finalSalesAmount)}</p>
-                           <button onClick={() => removeItem(item.id)} className="mt-4 w-full flex items-center justify-center rounded-xl border border-destructive/10 bg-destructive/5 py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/10 transition-colors"><Trash2 className="w-4 h-4 mr-2" /> Remove</button>
+                        <div className="flex flex-wrap gap-2 text-[11px] font-bold">
+                          <div className="flex items-center gap-1.5 rounded-lg border border-blue-100 bg-blue-50/50 px-2.5 py-1 text-blue-700 shadow-sm">
+                            <span className="opacity-60 uppercase tracking-tighter">Uom:</span>
+                            <span>{item.uom || "-"}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 rounded-lg border border-emerald-100 bg-emerald-50/50 px-2.5 py-1 text-emerald-700 shadow-sm">
+                            <span className="opacity-60 uppercase tracking-tighter">Pack:</span>
+                            <span>{item.qtyPerPacking || 0} {item.alternateUom || item.uom}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 rounded-lg border border-violet-100 bg-violet-50/50 px-2.5 py-1 text-violet-700 shadow-sm">
+                            <span className="opacity-60 uppercase tracking-tighter">Tot Packs:</span>
+                            <span>{totalPacking.toFixed(2)}</span>
+                          </div>
+                          <div className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 shadow-sm ${Number(item.storeStockPcs || 0) <= 0
+                            ? "border-rose-100 bg-rose-50/50 text-rose-700"
+                            : "border-amber-100 bg-amber-50/50 text-amber-700"
+                            }`}>
+                            <span className="opacity-60 uppercase tracking-tighter">Stock:</span>
+                            <span>{Number(item.storeStockPcs || 0).toLocaleString("en-US")}</span>
+                          </div>
                         </div>
                       </div>
-                      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-                        <div className="space-y-2">
-                           <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">PO Link</Label>
-                           <Select 
-                               key={item.id + (item.selectedPiNo || "none")}
-                               value={item.selectedPiNo ? String(item.selectedPiNo).trim() : "none"} 
-                               onValueChange={async (v) => {
-                                 const refNo = v === "none" ? "" : v;
-                                 updateItem(item.id, "selectedPiNo", refNo);
-                                 if (refNo) {
-                                   toast.loading("Fetching PI data...", { id: `pi-${item.id}` });
-                                   const pi = await getBookingById(refNo);
-                                   toast.dismiss(`pi-${item.id}`);
-                                   
-                                   if (pi && pi.items) {
-                                     const piItem = pi.items.find((i: any) => String(i.productId || i.PRODUCT_ID) === String(item.productId));
-                                     if (piItem) {
-                                       const qty = Number(piItem.receivedQty || piItem.totalQty || piItem.TOTAL_QTY || 0);
-                                       const pRate = Number(piItem.ratePerQty || piItem.RATE_PER_QTY || piItem.purchaseRatePerQty || 0);
-                                       const poRef = pi.header?.PO_REF_NO || pi.header?.poRefNo || pi.PO_REF_NO || pi.poRefNo || "";
-                                       
-                                       const poExpenses = expenses?.filter((e: any) => {
-                                         const expPo = e.poRefNo || e.PO_REF_NO || e.header?.poRefNo || e.header?.PO_REF_NO || "";
-                                         return expPo && poRef && String(expPo).trim() === String(poRef).trim();
-                                       }) || [];
-                                       
-                                       const totalExp = poExpenses.reduce((sum: number, e: any) => sum + Number(e.totalExpenseAmount || e.amount || 0), 0);
-                                       const eRate = qty > 0 ? totalExp / qty : 0;
-                                       
-                                       updateItemFields(item.id, {
-                                          poRefNo: refNo,
-                                          poDtlSno: piItem.sno || piItem.SNO || null,
-                                          storeStockPcs: qty,
-                                          purchaseRate: pRate,
-                                          expenseRate: eRate,
-                                          costPrice: pRate + eRate
-                                       });
-                                     }
-                                   }
-                                 }
-                               }}
-                            >
-                               <SelectTrigger className="h-11 rounded-xl font-bold bg-white text-xs whitespace-nowrap"><SelectValue placeholder="Select PI" /></SelectTrigger>
-                               <SelectContent>
-                                 <SelectItem value="none">None</SelectItem>
-                                 {purchaseInvoices?.filter((inv: any) => {
-                                   const piRef = String(inv.PURCHASE_INVOICE_REF_NO || inv.id || inv.SNO || "").trim();
-                                   const selectedRef = String(item.selectedPiNo || "").trim();
-                                   if (selectedRef && piRef === selectedRef) return true;
-                                   
-                                   if (inv.items && inv.items.length > 0) {
-                                     return inv.items.some((i: any) => String(i.productId || i.PRODUCT_ID) === String(item.productId));
-                                   }
-                                   return true;
-                                 }).map((inv: any) => {
-                                   const val = String(inv.PURCHASE_INVOICE_REF_NO || inv.id || inv.SNO).trim();
-                                   return (
-                                     <SelectItem key={val} value={val}>
-                                       {val}
-                                     </SelectItem>
-                                   );
-                                 })}
-                               </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                           <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Qty</Label>
-                           <Input type="number" value={item.totalQty} onChange={e => updateItem(item.id, "totalQty", Number(e.target.value))} className="h-11 rounded-xl font-bold text-center" />
-                        </div>
-                        <div className="space-y-2">
-                           <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Selling Price</Label>
-                           <Input type="number" value={item.salesRatePerQty} onChange={e => updateItem(item.id, "salesRatePerQty", Number(e.target.value))} className="h-11 rounded-xl font-bold text-center" />
-                        </div>
-                        <div className="space-y-2">
-                           <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Cost Price</Label>
-                           <Input readOnly disabled value={item.costPrice} className="h-11 rounded-xl font-bold text-center bg-slate-50 opacity-70 cursor-not-allowed" />
-                        </div>
-                         <div className="space-y-2">
-                           <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Expense Rate</Label>
-                           <Input readOnly disabled value={item.expenseRate} className="h-11 rounded-xl font-bold text-center bg-slate-50 opacity-70 cursor-not-allowed" />
-                        </div>
-                        <div className="space-y-2">
-                           <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">VAT %</Label>
-                           <Input type="number" value={item.vatPercentage} onChange={e => updateItem(item.id, "vatPercentage", Number(e.target.value))} className="h-11 rounded-xl font-bold text-center" />
-                        </div>
+
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Final Amount</p>
+                        <p className="mt-2 text-2xl font-extrabold text-slate-900">{selectedCurrency} {formatAmount(item.finalSalesAmount)}</p>
+                        <button onClick={() => removeItem(item.id)} className="mt-4 w-full flex items-center justify-center rounded-xl border border-destructive/10 bg-destructive/5 py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/10 transition-colors"><Trash2 className="w-4 h-4 mr-2" /> Remove</button>
                       </div>
                     </div>
-                  );
-               })}
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">PO Link</Label>
+                        <Select
+                          key={item.id + (item.selectedPiNo || "none")}
+                          value={item.selectedPiNo ? String(item.selectedPiNo).trim() : "none"}
+                          onValueChange={async (v) => {
+                            const refNo = v === "none" ? "" : v;
+                            updateItem(item.id, "selectedPiNo", refNo);
+                            if (refNo) {
+                              toast.loading("Fetching PI data...", { id: `pi-${item.id}` });
+                              const pi = await getBookingById(refNo);
+                              toast.dismiss(`pi-${item.id}`);
+
+                              if (pi && pi.items) {
+                                const piItem = pi.items.find((i: any) => String(i.productId || i.PRODUCT_ID) === String(item.productId));
+                                if (piItem) {
+                                  const qty = Number(piItem.receivedQty || piItem.totalQty || piItem.TOTAL_QTY || 0);
+                                  const pRate = Number(piItem.ratePerQty || piItem.RATE_PER_QTY || piItem.purchaseRatePerQty || 0);
+                                  const poRef = pi.header?.PO_REF_NO || pi.header?.poRefNo || pi.PO_REF_NO || pi.poRefNo || "";
+
+                                  const poExpenses = expenses?.filter((e: any) => {
+                                    const expPo = e.poRefNo || e.PO_REF_NO || e.header?.poRefNo || e.header?.PO_REF_NO || "";
+                                    return expPo && poRef && String(expPo).trim() === String(poRef).trim();
+                                  }) || [];
+
+                                  let totalProductExp = 0;
+                                  for (const exp of poExpenses) {
+                                    try {
+                                      const fullExp = await getExpenseById(exp.expenseRefNo || exp.id || String(exp.SNO));
+                                      if (fullExp && fullExp.items) {
+                                        const match = fullExp.items.find((it: any) =>
+                                          String(it.productId || it.PRODUCT_ID).trim() === String(item.productId).trim()
+                                        );
+                                        if (match) {
+                                          totalProductExp += Number(match.EXPENSE_AMOUNT || match.allocatedAmount || 0);
+                                        }
+                                      }
+                                    } catch (e) { }
+                                  }
+
+                                  const eRate = qty > 0 ? totalProductExp / qty : 0;
+
+                                  updateItemFields(item.id, {
+                                    poRefNo: refNo,
+                                    poDtlSno: piItem.sno || piItem.SNO || null,
+                                    storeStockPcs: qty,
+                                    purchaseRate: pRate,
+                                    expenseRate: eRate,
+                                    costPrice: pRate + eRate
+                                  });
+                                }
+                              }
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="h-11 rounded-xl font-bold bg-white text-xs whitespace-nowrap"><SelectValue placeholder="Select PI" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">None</SelectItem>
+                            {purchaseInvoices?.filter((inv: any) => {
+                              const piRef = String(inv.PURCHASE_INVOICE_REF_NO || inv.id || inv.SNO || "").trim();
+                              const selectedRef = String(item.selectedPiNo || "").trim();
+                              if (selectedRef && piRef === selectedRef) return true;
+
+                              if (inv.items && inv.items.length > 0) {
+                                return inv.items.some((i: any) => String(i.productId || i.PRODUCT_ID) === String(item.productId));
+                              }
+                              return true;
+                            }).map((inv: any) => {
+                              const val = String(inv.PURCHASE_INVOICE_REF_NO || inv.id || inv.SNO).trim();
+                              return (
+                                <SelectItem key={val} value={val}>
+                                  {val}
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Qty</Label>
+                        <Input type="number" value={item.totalQty} onChange={e => updateItem(item.id, "totalQty", Number(e.target.value))} className="h-11 rounded-xl font-bold text-center" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">UOM</Label>
+                        <Input readOnly disabled value={item.uom || ""} className="h-11 rounded-xl font-semibold text-center bg-slate-50 opacity-70 cursor-not-allowed" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Selling Price</Label>
+                        <Input type="number" value={item.salesRatePerQty} onChange={e => updateItem(item.id, "salesRatePerQty", Number(e.target.value))} className="h-11 rounded-xl font-bold text-center" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Purchase Rate</Label>
+                        <Input readOnly disabled value={Number(item.purchaseRate || 0).toFixed(2)} className="h-11 rounded-xl font-bold text-center bg-slate-50 opacity-70 cursor-not-allowed" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Expense Rate</Label>
+                        <Input
+                          type="number"
+                          step="any"
+                          value={Number(item.expenseRate || 0).toFixed(2)}
+                          onChange={e => updateItem(item.id, "expenseRate", e.target.value)}
+                          className="h-11 rounded-xl border-slate-200 bg-white text-center font-bold"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Cost Price</Label>
+                        <Input readOnly disabled type="number" step="any" value={Number(item.costPrice || 0).toFixed(2)} className="h-11 rounded-xl font-bold text-center bg-slate-50 opacity-70 cursor-not-allowed" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">VAT %</Label>
+                        <Input type="number" value={item.vatPercentage} onChange={e => updateItem(item.id, "vatPercentage", Number(e.target.value))} className="h-11 rounded-xl font-bold text-center" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -930,8 +1096,8 @@ function CreateSalesOrderContent(): JSX.Element {
         </div>
       </div>
 
-       {/* Image Preview */}
-       <Dialog open={!!previewImage} onOpenChange={open => !open && setPreviewImage(null)}>
+      {/* Image Preview */}
+      <Dialog open={!!previewImage} onOpenChange={open => !open && setPreviewImage(null)}>
         <DialogContent className="max-w-4xl border-none bg-transparent shadow-none p-0 flex items-center justify-center">
           <DialogTitle className="sr-only">Product Image Preview</DialogTitle>
           <div className="relative group">

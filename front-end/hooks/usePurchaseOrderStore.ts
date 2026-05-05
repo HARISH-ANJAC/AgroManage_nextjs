@@ -27,9 +27,7 @@ export function usePurchaseOrderStore() {
 
   // Fetch single order
   const getOrderById = useCallback(async (id: string) => {
-    // Double encoding to safely pass slashes through certain router configurations
-    const encodedId = encodeURIComponent(encodeURIComponent(id));
-    const response = await fetch(`${API_URL}/purchase-orders/${encodedId}`, {
+    const response = await fetch(`${API_URL}/purchase-orders/${encodeURIComponent(id)}`, {
       headers: { 'Authorization': `Bearer ${getAuthToken()}` }
     });
     if (!response.ok) return null;
@@ -118,8 +116,7 @@ export function usePurchaseOrderStore() {
     approveOrder: approveMutation.mutateAsync,
     deleteOrder: deleteMutation.mutateAsync,
     updatePOD: async ({ id, deliveryPerson, deliveryDate, remarks }: any) => {
-       const encodedId = encodeURIComponent(encodeURIComponent(id));
-       const response = await fetch(`${API_URL}/purchase-orders/pod/${encodedId}`, {
+       const response = await fetch(`${API_URL}/purchase-orders/pod/${encodeURIComponent(id)}`, {
          method: "PUT",
          headers: { 
            "Content-Type": "application/json",

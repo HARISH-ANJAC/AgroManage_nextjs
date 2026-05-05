@@ -578,7 +578,15 @@ function CreatePurchaseOrderContent() {
                                   <SelectValue placeholder="Select Product" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {productsData.map((p: any) => <SelectItem key={p.id} value={p.productName}>{p.productName}</SelectItem>)}
+                                  {productsData.filter((p: any) => {
+                                    // Filter out products already selected in other items
+                                    const isAlreadySelected = items.some(otherItem => 
+                                      otherItem.productName === p.productName && otherItem.id !== item.id
+                                    );
+                                    return !isAlreadySelected;
+                                  }).map((p: any) => (
+                                    <SelectItem key={p.id || p.PRODUCT_ID} value={p.productName}>{p.productName}</SelectItem>
+                                  ))}
                                 </SelectContent>
                               </Select>
                             </div>
