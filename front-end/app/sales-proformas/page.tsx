@@ -12,7 +12,7 @@ export default function SalesProformasPage() {
   const handleExportPDF = async (proforma: any) => {
     toast.loading("Generating Sales Proforma PDF...", { id: "sp-pdf" });
     const fullProforma = await getProformaById(proforma.salesProformaRefNo || proforma.id);
-    
+
     if (!fullProforma) {
       toast.error("Failed to load proforma details", { id: "sp-pdf" });
       return;
@@ -107,7 +107,7 @@ export default function SalesProformasPage() {
 
   return <MasterCrudPage
     domain="sales-proformas"
-    title="Sales Proformas"
+    title="Sales Proforma"
     description="Manage proforma invoices and conversions"
     idPrefix="PF"
     onPrint={handleExportPDF}

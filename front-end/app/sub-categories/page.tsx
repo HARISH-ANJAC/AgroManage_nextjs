@@ -16,7 +16,7 @@ export default function SubCategoriesPage() {
 
   return <MasterCrudPage
     domain="sub-categories"
-    title="Sub Categories"
+    title="Sub Category"
     description="Manage your business sub categories"
     idPrefix="SUB"
     fields={[

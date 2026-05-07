@@ -8,7 +8,7 @@ export default function CategoriesPage() {
 
   return <MasterCrudPage
     domain="categories"
-    title="Main Categories"
+    title="Main Category"
     description="Manage your main categories"
     idPrefix="CAT"
     fields={[

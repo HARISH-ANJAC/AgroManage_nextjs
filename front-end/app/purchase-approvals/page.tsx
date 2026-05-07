@@ -45,7 +45,7 @@ const formatDate = (dateStr: string) => {
 export default function PurchaseApprovalsPage() {
   const { orders, refetchOrders, isLoading, approveOrder } = usePurchaseOrderStore();
   const [search, setSearch] = useState("");
-  const [approvalModal, setApprovalModal] = useState<{ id: string, action: 'Approve' | 'Reject' } | null>(null);
+  const [approvalModal, setApprovalModal] = useState<{ id: string, action: 'Approve' | 'Reject', level: 'head' | 'final' } | null>(null);
   const [remarks, setRemarks] = useState("");
   const navigate = useRouter();
 
@@ -72,7 +72,7 @@ export default function PurchaseApprovalsPage() {
     try {
       await approveOrder({
         id: approvalModal.id, 
-        level: "head", 
+        level: approvalModal.level, 
         status: approvalModal.action === "Approve" ? "Approved" : "Rejected", 
         remarks, 
         user: "Admin" 
@@ -132,10 +132,9 @@ export default function PurchaseApprovalsPage() {
                   <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">PO Ref No</th>
                   <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Date</th>
                   <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Supplier</th>
-                  <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Store</th>
-                  <th className="text-left p-3 font-semibold text-muted-foreground uppercase text-xs">Items</th>
+                  <th className="text-center p-3 font-semibold text-muted-foreground uppercase text-xs">Head Status</th>
+                  <th className="text-center p-3 font-semibold text-muted-foreground uppercase text-xs">Final Status</th>
                   <th className="p-3 font-semibold text-muted-foreground uppercase text-xs text-right">Final Amt</th>
-                  <th className="text-center p-3 font-semibold text-muted-foreground uppercase text-xs">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -150,19 +149,56 @@ export default function PurchaseApprovalsPage() {
                       <td className="p-3">
                         <div className="flex gap-2">
                           <button onClick={() => navigate.push(`/purchase-orders/create?id=${encodeURIComponent(h.PO_REF_NO)}`)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors" title="View Details"><Eye className="w-4 h-4" /></button>
-                          <button onClick={() => setApprovalModal({ id: h.PO_REF_NO, action: 'Approve' })} className="p-1.5 rounded-lg hover:bg-success/20 text-success transition-colors" title="Approve"><CheckCircle className="w-4 h-4" /></button>
-                          <button onClick={() => setApprovalModal({ id: h.PO_REF_NO, action: 'Reject' })} className="p-1.5 rounded-lg hover:bg-destructive/20 text-destructive transition-colors" title="Reject"><XCircle className="w-4 h-4" /></button>
+                          
+                          {/* Head Approval Button - Only if not yet approved by head */}
+                          {h.PURCHASE_HEAD_RESPONSE_STATUS !== 'Approved' && (
+                            <button 
+                              onClick={() => setApprovalModal({ id: h.PO_REF_NO, action: 'Approve', level: 'head' })} 
+                              className="p-1.5 rounded-lg hover:bg-emerald-100 text-emerald-600 transition-colors" 
+                              title="Head Approve"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          {/* Final Approval Button - Only if head has approved but final is pending */}
+                          {h.PURCHASE_HEAD_RESPONSE_STATUS === 'Approved' && h.STATUS_ENTRY !== 'Approved' && (
+                            <button 
+                              onClick={() => setApprovalModal({ id: h.PO_REF_NO, action: 'Approve', level: 'final' })} 
+                              className="p-1.5 rounded-lg hover:bg-indigo-100 text-indigo-600 transition-colors" 
+                              title="Final Approve"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          <button 
+                            onClick={() => setApprovalModal({ 
+                              id: h.PO_REF_NO, 
+                              action: 'Reject', 
+                              level: h.PURCHASE_HEAD_RESPONSE_STATUS !== 'Approved' ? 'head' : 'final' 
+                            })} 
+                            className="p-1.5 rounded-lg hover:bg-destructive/20 text-destructive transition-colors" 
+                            title="Reject"
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </button>
                         </div>
                       </td>
                       <td className="p-3 font-mono text-xs font-bold text-[#0F172A]">{h.PO_REF_NO || "-"}</td>
                       <td className="p-3 text-muted-foreground text-xs">{formatDate(h.PO_DATE)}</td>
                       <td className="p-3 font-semibold text-[#0F172A] text-xs max-w-[150px] truncate">{h.SUPPLIER_ID || "-"}</td>
-                      <td className="p-3 text-[10px] text-[#64748B]">{h.PO_STORE_ID || "-"}</td>
-                      <td className="p-3 text-center font-bold text-[#0F172A]">{itemsCount}</td>
-                      <td className="p-3 text-right font-bold text-[#0F172A] text-xs">{currency} {(Number(h.FINAL_PURCHASE_HDR_AMOUNT) || 0).toLocaleString()}</td>
                       <td className="p-3 text-center">
-                        <Badge variant="outline" className={`${statusColors[finalStatus] || ""} font-bold text-[9px] px-1 h-5`}>{finalStatus}</Badge>
+                        <Badge variant="outline" className={`${statusColors[h.PURCHASE_HEAD_RESPONSE_STATUS] || "bg-muted text-muted-foreground"} font-bold text-[9px] px-1 h-5`}>
+                          {h.PURCHASE_HEAD_RESPONSE_STATUS || "Pending"}
+                        </Badge>
                       </td>
+                      <td className="p-3 text-center">
+                        <Badge variant="outline" className={`${statusColors[h.STATUS_ENTRY] || "bg-muted text-muted-foreground"} font-bold text-[9px] px-1 h-5`}>
+                          {h.STATUS_ENTRY}
+                        </Badge>
+                      </td>
+                      <td className="p-3 text-right font-bold text-[#0F172A] text-xs">{currency} {(Number(h.FINAL_PURCHASE_HDR_AMOUNT) || 0).toLocaleString()}</td>
                     </tr>
                   );
                 })}
@@ -178,9 +214,9 @@ export default function PurchaseApprovalsPage() {
       <AlertDialog open={!!approvalModal} onOpenChange={(open) => !open && setApprovalModal(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{approvalModal?.action} Purchase Order</AlertDialogTitle>
+            <AlertDialogTitle>{approvalModal?.action} Purchase Order ({approvalModal?.level === 'head' ? 'Head Approval' : 'Final Approval'})</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to {approvalModal?.action.toLowerCase()} this purchase order? You can leave remarks below:
+              Are you sure you want to {approvalModal?.action.toLowerCase()} this purchase order at the <strong>{approvalModal?.level}</strong> level? You can leave remarks below:
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="my-4">

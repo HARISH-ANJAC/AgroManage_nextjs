@@ -408,17 +408,17 @@ export const getAll = async (req: Request, res: Response): Promise<Response> => 
                         const prefix = normalizeKey(join.prefix);
                         Object.keys(joinedData).forEach(col => {
                             const normalizedCol = normalizeKey(col);
-                            
+
                             // Map all columns with prefix: e.g. PRODUCT + productName -> productName
                             // If the column already contains the prefix or is a generic 'name' field, map it smartly
                             if (col.toLowerCase().includes("name")) {
                                 final[prefix + "Name"] = joinedData[col];
                             }
-                            
+
                             // Also map the original normalized column with prefix for safe access
                             // This ensures keys like 'productName' or 'unitPrice' work if they come from the join
                             final[prefix + normalizedCol.charAt(0).toUpperCase() + normalizedCol.slice(1)] = joinedData[col];
-                            
+
                             // Compatibility: map common name fields directly if not already set
                             if (!final[prefix + "Name"] && col.toLowerCase().includes("name")) {
                                 final[prefix + "Name"] = joinedData[col];
@@ -431,13 +431,9 @@ export const getAll = async (req: Request, res: Response): Promise<Response> => 
         });
 
         return res.status(200).json(data);
-    } catch (error: any) {
+    } catch (error) {
         logError(`Master Controller Error [${req.method} ${req.originalUrl}]`, error);
-        return res.status(500).json({ 
-            msg: "Internal server error", 
-            error: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
-        });
+        return res.status(500).json({ msg: "Internal server error" });
     }
 };
 
@@ -494,11 +490,7 @@ export const createOne = async (req: Request, res: Response): Promise<Response> 
             const detailMsg = error.cause?.detail || error.detail || "Duplicate record currently exists.";
             return res.status(400).json({ msg: `Duplicate Entry: ${detailMsg}`, code: '23505' });
         }
-        return res.status(500).json({ 
-            msg: "Internal server error", 
-            error: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
-        });
+        return res.status(500).json({ msg: "Internal server error" });
     }
 };
 
@@ -550,11 +542,7 @@ export const updateOne = async (req: Request, res: Response): Promise<Response> 
             const detailMsg = error.cause?.detail || error.detail || "Duplicate record currently exists.";
             return res.status(400).json({ msg: `Duplicate Entry: ${detailMsg}`, code: '23505' });
         }
-        return res.status(500).json({ 
-            msg: "Internal server error", 
-            error: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
-        });
+        return res.status(500).json({ msg: "Internal server error" });
     }
 };
 
@@ -576,16 +564,12 @@ export const deleteOne = async (req: Request, res: Response): Promise<Response> 
             const detail = error.cause?.detail || error.detail || "";
             const match = detail.match(/table "(.+)"/);
             const tableName = match ? match[1] : "other modules";
-            return res.status(400).json({ 
+            return res.status(400).json({
                 msg: `Cannot delete this record because it is still referenced in ${tableName}. Please remove related entries first.`,
-                code: '23503' 
+                code: '23503'
             });
         }
-        return res.status(500).json({ 
-            msg: "Internal server error", 
-            error: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
-        });
+        return res.status(500).json({ msg: "Internal server error" });
     }
 };
 
@@ -611,15 +595,11 @@ export const bulkDelete = async (req: Request, res: Response): Promise<Response>
             const detail = error.cause?.detail || error.detail || "";
             const match = detail.match(/table "(.+)"/);
             const tableName = match ? match[1] : "other modules";
-            return res.status(400).json({ 
+            return res.status(400).json({
                 msg: `Some items cannot be deleted because they are still referenced in ${tableName}.`,
-                code: '23503' 
+                code: '23503'
             });
         }
-        return res.status(500).json({ 
-            msg: "Internal server error", 
-            error: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
-        });
+        return res.status(500).json({ msg: "Internal server error" });
     }
 };

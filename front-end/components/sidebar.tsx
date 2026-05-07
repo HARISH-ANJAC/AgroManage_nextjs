@@ -164,7 +164,7 @@ const navigation = [
       { name: 'Products', href: '/products', icon: Package },
       { name: 'Opening Stock', href: '/product-opening-stock', icon: Database },
       { name: 'Category Mapping', href: '/product-company-category-mapping', icon: Link2 },
-      { name: 'Stock Ledger', href: '/stock-ledger', icon: History },
+      // { name: 'Stock Ledger', href: '/stock-ledger', icon: History },
     ]
   },
   {
@@ -235,7 +235,7 @@ const navigation = [
   {
     group: 'Sales',
     items: [
-      { name: 'Sales Proformas', href: '/sales-proformas', icon: FileText },
+      { name: 'Sales Proforma', href: '/sales-proformas', icon: FileText },
       { name: 'Sales Orders', href: '/sales-orders', icon: DollarSign },
       { name: 'Delivery Notes', href: '/delivery-notes', icon: Truck },
       { name: 'Sales Invoices', href: '/sales-invoices', icon: Receipt },

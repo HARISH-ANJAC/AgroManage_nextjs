@@ -19,6 +19,7 @@
     "db:truncate": "tsx src/db/seed/truncate-tables.ts",
     "db:reset": "tsx src/db/seed/reset-and-seed.ts",
     "db:refresh": "pnpm db:drop && pnpm db:seed",
+    "db:clear-masters": "tsx clear-master-data.ts",
     "api:test": "tsx test-apis.ts"
   },
   "keywords": [],
