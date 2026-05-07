@@ -148,7 +148,7 @@ const navigation = [
   {
     group: 'Organization',
     items: [
-      { name: 'Companies', href: '/companies', icon: Building2 },
+      { name: 'Company', href: '/company', icon: Building2 },
       { name: 'Stores', href: '/stores', icon: Store },
       { name: 'Financial Years', href: '/financial-years', icon: Calendar },
       { name: 'Locations', href: '/locations', icon: MapPin },
@@ -211,7 +211,25 @@ const navigation = [
       { name: 'Goods Receipts', href: '/goods-receipts', icon: ClipboardCheck },
       { name: 'Purchase Invoices', href: '/purchase-booking', icon: FileText },
       { name: 'Purchases History', href: '/purchase-history', icon: History },
-      { name: 'Proof of Delivery', href: '/pod', icon: ClipboardList },
+      // { name: 'Proof of Delivery', href: '/pod', icon: ClipboardList },
+    ]
+  },
+  {
+    group: 'Finance',
+    items: [
+      { name: 'Expenses', href: '/expenses', icon: CreditCard },
+      // { name: 'Journals', href: '/journals', icon: BookOpen },
+      // { name: 'General Ledger', href: '/ledgers', icon: Calculator },
+      // { name: 'Multi-Currency', href: '/multi-currency', icon: ArrowRightLeft },
+      // { name: 'Cost Center Master', href: '/cost-center-master', icon: Target },
+      // { name: 'Cost Center Budgets', href: '/cost-center-budget', icon: Wallet },
+      // { name: 'Cost Center Analysis', href: '/cost-center-dashboard', icon: TrendingDown },
+      // { name: 'Profit Center Master', href: '/profit-center-master', icon: Layers },
+      // { name: 'Profit Center Targets', href: '/profit-center-target', icon: Target },
+      // { name: 'Profitability Analysis', href: '/profit-center-dashboard', icon: TrendingUp },
+      // { name: 'Trial Balances', href: '/trial-balances', icon: FileText },
+      // { name: 'Cash Book', href: '/cash-book', icon: Wallet },
+      // { name: 'Cash Flow', href: '/cash-flow', icon: Activity },
     ]
   },
   {
@@ -224,24 +242,7 @@ const navigation = [
       { name: 'Customer Receipts', href: '/customer-receipts', icon: Wallet },
     ]
   },
-  {
-    group: 'Finance',
-    items: [
-      { name: 'Expenses', href: '/expenses', icon: CreditCard },
-      { name: 'Journals', href: '/journals', icon: BookOpen },
-      { name: 'General Ledger', href: '/ledgers', icon: Calculator },
-      { name: 'Multi-Currency', href: '/multi-currency', icon: ArrowRightLeft },
-      { name: 'Cost Center Master', href: '/cost-center-master', icon: Target },
-      { name: 'Cost Center Budgets', href: '/cost-center-budget', icon: Wallet },
-      { name: 'Cost Center Analysis', href: '/cost-center-dashboard', icon: TrendingDown },
-      { name: 'Profit Center Master', href: '/profit-center-master', icon: Layers },
-      { name: 'Profit Center Targets', href: '/profit-center-target', icon: Target },
-      { name: 'Profitability Analysis', href: '/profit-center-dashboard', icon: TrendingUp },
-      { name: 'Trial Balances', href: '/trial-balances', icon: FileText },
-      { name: 'Cash Book', href: '/cash-book', icon: Wallet },
-      { name: 'Cash Flow', href: '/cash-flow', icon: Activity },
-    ]
-  },
+
   {
     group: 'System',
     items: [

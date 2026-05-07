@@ -8,12 +8,11 @@ import { MONTHS, TIMEZONES, YEARS } from "@/lib/utils";
 export default function CompaniesPage() {
   const { data: companies, isLoading: loadingCompanies } = useMasterData("companies");
   const { data: currencies, isLoading: loadingCurrencies } = useMasterData("currencies");
+  const masterData = useMasterData("companies", companies);
 
   if (loadingCurrencies || loadingCompanies) return <div className="p-8 text-center text-muted-foreground font-medium">Loading data...</div>;
 
   const currencyOptions = currencies.map((c: any) => ({ value: c.id, label: c.currencyName }));
-
-  const masterData = useMasterData("companies", companies);
 
   const customOverrides = {
     ...masterData,
@@ -30,7 +29,7 @@ export default function CompaniesPage() {
   };
 
   return <MasterCrudPage
-    domain="companies" title="Companies" description="Manage your companies" idPrefix="CMP" fields={[
+    domain="company" title="Company" description="Manage your Companies" idPrefix="CMP" fields={[
       { key: "companyName", label: "Company Name", type: "text", required: true },
       { key: "companyFullName", label: "Company Full Name", type: "text" },
       { key: "tinNumber", label: "TIN Number", type: "text", required: true, placeholder: "Exactly 9 digits", maxLength: 9 },

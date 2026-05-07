@@ -355,12 +355,12 @@ const fromDbCase = (data: any) => {
 
 import { Request, Response } from "express";
 import { db } from "../db/index.js";
-import fs from 'fs';
+// NOTE: No fs import — Vercel (and other serverless hosts) have a read-only filesystem.
 
 const logError = (msg: string, err: any) => {
-    const errorMsg = `[${new Date().toISOString()}] ${msg}: ${err instanceof Error ? err.stack : JSON.stringify(err)}\n`;
-    fs.appendFileSync('master-errors.log', errorMsg);
-    console.error(msg, err);
+    // Use console.error only — Vercel / serverless environments have read-only filesystems.
+    // All console output is captured in the Vercel function logs dashboard.
+    console.error(`[${new Date().toISOString()}] ${msg}:`, err instanceof Error ? err.stack : JSON.stringify(err));
 };
 
 // 3. Controller Handlers
