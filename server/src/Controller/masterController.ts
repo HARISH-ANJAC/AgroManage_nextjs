@@ -431,9 +431,13 @@ export const getAll = async (req: Request, res: Response): Promise<Response> => 
         });
 
         return res.status(200).json(data);
-    } catch (error) {
+    } catch (error: any) {
         logError(`Master Controller Error [${req.method} ${req.originalUrl}]`, error);
-        return res.status(500).json({ msg: "Internal server error" });
+        return res.status(500).json({ 
+            msg: "Internal server error", 
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+        });
     }
 };
 
@@ -490,7 +494,11 @@ export const createOne = async (req: Request, res: Response): Promise<Response> 
             const detailMsg = error.cause?.detail || error.detail || "Duplicate record currently exists.";
             return res.status(400).json({ msg: `Duplicate Entry: ${detailMsg}`, code: '23505' });
         }
-        return res.status(500).json({ msg: "Internal server error" });
+        return res.status(500).json({ 
+            msg: "Internal server error", 
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+        });
     }
 };
 
@@ -542,7 +550,11 @@ export const updateOne = async (req: Request, res: Response): Promise<Response> 
             const detailMsg = error.cause?.detail || error.detail || "Duplicate record currently exists.";
             return res.status(400).json({ msg: `Duplicate Entry: ${detailMsg}`, code: '23505' });
         }
-        return res.status(500).json({ msg: "Internal server error" });
+        return res.status(500).json({ 
+            msg: "Internal server error", 
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+        });
     }
 };
 
@@ -569,7 +581,11 @@ export const deleteOne = async (req: Request, res: Response): Promise<Response> 
                 code: '23503' 
             });
         }
-        return res.status(500).json({ msg: "Internal server error" });
+        return res.status(500).json({ 
+            msg: "Internal server error", 
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+        });
     }
 };
 
@@ -600,6 +616,10 @@ export const bulkDelete = async (req: Request, res: Response): Promise<Response>
                 code: '23503' 
             });
         }
-        return res.status(500).json({ msg: "Internal server error" });
+        return res.status(500).json({ 
+            msg: "Internal server error", 
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+        });
     }
 };
