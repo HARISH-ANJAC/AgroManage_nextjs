@@ -81,12 +81,12 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-       <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 font-primary italic">Management Dashboard</h1>
-            <p className="text-sm text-slate-500">Corporate overview of overall business performance</p>
-          </div>
-       </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 font-primary italic">Management Dashboard</h1>
+          <p className="text-sm text-slate-500">Corporate overview of overall business performance</p>
+        </div>
+      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -99,7 +99,7 @@ export default function DashboardPage() {
                 <Icon className={`w-4 h-4 ${s.color}`} />
               </div>
               <p className="text-2xl font-bold text-foreground">{s.value}</p>
-              <p className="text-xs text-amber-600 mt-1">{s.change}</p>
+              {/* <p className="text-xs text-amber-600 mt-1">{s.change}</p> */}
             </div>
           );
         })}
@@ -114,13 +114,13 @@ export default function DashboardPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="month" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: "hsl(var(--card))", 
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "hsl(var(--card))",
                   borderColor: "hsl(var(--border))",
                   borderRadius: "8px",
                   fontSize: "12px"
-                }} 
+                }}
               />
               <Bar dataKey="purchases" fill="hsl(150, 35%, 22%)" radius={[4, 4, 0, 0]} />
               <Bar dataKey="sales" fill="hsl(38, 80%, 55%)" radius={[4, 4, 0, 0]} />
@@ -137,13 +137,13 @@ export default function DashboardPage() {
                 ))}
               </Pie>
               <Legend />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: "hsl(var(--card))", 
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "hsl(var(--card))",
                   borderColor: "hsl(var(--border))",
                   borderRadius: "8px",
                   fontSize: "12px"
-                }} 
+                }}
               />
             </PieChart>
           </ResponsiveContainer>
