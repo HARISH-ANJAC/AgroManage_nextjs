@@ -24,6 +24,34 @@ const __dirname = path.dirname(__filename);
 import { sql } from "drizzle-orm";
 import { createJournalEntry, getSystemLedger, getLedgerForSupplier } from "../utils/accountingUtils.js";
 
+const firstDefined = (...values: any[]) => values.find(value => value !== undefined && value !== null && value !== "");
+const toNumberOrNull = (...values: any[]) => {
+    const value = firstDefined(...values);
+    if (value === undefined) return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+};
+
+const normalizeInvoiceItem = (item: any) => ({
+    ...item,
+    grnRefNo: firstDefined(item.grnRefNo, item.GRN_REF_NO, item.grn_ref_no),
+    mainCategoryId: toNumberOrNull(item.mainCategoryId, item.MAIN_CATEGORY_ID, item.main_category_id),
+    subCategoryId: toNumberOrNull(item.subCategoryId, item.SUB_CATEGORY_ID, item.sub_category_id),
+    productId: toNumberOrNull(item.productId, item.PRODUCT_ID, item.productID, item.product_id),
+    qtyPerPacking: Number(firstDefined(item.qtyPerPacking, item.QTY_PER_PACKING, item.qtyPerPack, 0)),
+    totalQty: Number(firstDefined(item.totalQty, item.TOTAL_QTY, item.receivedQty, 0)),
+    uom: firstDefined(item.uom, item.UOM, "KG"),
+    ratePerQty: Number(firstDefined(item.ratePerQty, item.RATE_PER_QTY, item.rate, 0)),
+    productAmount: Number(firstDefined(item.productAmount, item.PRODUCT_AMOUNT, 0)),
+    discountPercentage: Number(firstDefined(item.discountPercentage, item.DISCOUNT_PERCENTAGE, item.discountPercent, 0)),
+    discountAmount: Number(firstDefined(item.discountAmount, item.DISCOUNT_AMOUNT, 0)),
+    totalProductAmount: Number(firstDefined(item.totalProductAmount, item.TOTAL_PRODUCT_AMOUNT, 0)),
+    vatPercentage: Number(firstDefined(item.vatPercentage, item.VAT_PERCENTAGE, item.vatPercent, 0)),
+    vatAmount: Number(firstDefined(item.vatAmount, item.VAT_AMOUNT, 0)),
+    finalProductAmount: Number(firstDefined(item.finalProductAmount, item.FINAL_PRODUCT_AMOUNT, 0)),
+    remarks: firstDefined(item.remarks, item.REMARKS, null),
+});
+
 export const getPurchaseInvoices = async (req: Request, res: Response): Promise<Response> => {
     try {
         // Aggregating unique GRN references from the detail table
@@ -137,13 +165,18 @@ export const createPurchaseInvoice = async (req: Request, res: Response): Promis
 
             await tx.insert(TBL_PURCHASE_INVOICE_HDR).values(hValues as any);
 
-            if (items && items.length > 0) {
+            const normalizedItems = Array.isArray(items) ? items.map(normalizeInvoiceItem) : [];
+
+            if (normalizedItems.length > 0) {
                 // 3-Way Matching Validation
                 const poItems = await tx.select().from(TBL_PURCHASE_ORDER_DTL).where(eq(TBL_PURCHASE_ORDER_DTL.PO_REF_NO, header.poRefNo));
-                const grnRefs = [...new Set(items.map((i: any) => i.grnRefNo))] as string[];
+                const grnRefs = [...new Set(normalizedItems.map((i: any) => i.grnRefNo).filter(Boolean))] as string[];
                 const grnItems = await tx.select().from(TBL_GOODS_INWARD_GRN_DTL).where(inArray(TBL_GOODS_INWARD_GRN_DTL.GRN_REF_NO, grnRefs));
 
-                for (const item of items) {
+                for (const [index, item] of normalizedItems.entries()) {
+                    if (!item.productId) throw new Error(`Product ID is missing for invoice item #${index + 1}`);
+                    if (!item.grnRefNo) throw new Error(`GRN reference is missing for invoice item #${index + 1}`);
+
                     const poItem = poItems.find(p => Number(p.PRODUCT_ID) === Number(item.productId));
                     const grnItem = grnItems.find(g => Number(g.PRODUCT_ID) === Number(item.productId) && g.GRN_REF_NO === item.grnRefNo);
 
@@ -160,25 +193,25 @@ export const createPurchaseInvoice = async (req: Request, res: Response): Promis
                     if (invoiceRate > poRate) throw new Error(`3-Way Mismatch: Invoice Rate (${invoiceRate}) exceeds PO Rate (${poRate}) for Product ${item.productId}`);
                 }
 
-                const dValues = items.map((item: any) => ({
+                const dValues = normalizedItems.map((item: any) => ({
                     PURCHASE_INVOICE_REF_NO: header.purchaseInvoiceRefNo,
                     GRN_REF_NO: item.grnRefNo,
-                    MAIN_CATEGORY_ID: item.mainCategoryId ? Number(item.mainCategoryId) : null,
-                    SUB_CATEGORY_ID: item.subCategoryId ? Number(item.subCategoryId) : null,
-                    PRODUCT_ID: item.productId ? Number(item.productId) : null,
-                    QTY_PER_PACKING: Number(item.qtyPerPacking),
-                    TOTAL_QTY: Number(item.totalQty),
+                    MAIN_CATEGORY_ID: item.mainCategoryId,
+                    SUB_CATEGORY_ID: item.subCategoryId,
+                    PRODUCT_ID: item.productId,
+                    QTY_PER_PACKING: item.qtyPerPacking,
+                    TOTAL_QTY: item.totalQty,
                     UOM: item.uom,
-                    RATE_PER_QTY: Number(item.ratePerQty),
-                    PRODUCT_AMOUNT: Number(item.productAmount),
-                    DISCOUNT_PERCENTAGE: Number(item.discountPercentage),
-                    DISCOUNT_AMOUNT: Number(item.discountAmount),
-                    TOTAL_PRODUCT_AMOUNT: Number(item.totalProductAmount),
-                    VAT_PERCENTAGE: Number(item.vatPercentage),
-                    VAT_AMOUNT: Number(item.vatAmount),
-                    FINAL_PRODUCT_AMOUNT: Number(item.finalProductAmount),
-                    TOTAL_PRODUCT_AMOUNT_LC: Number(item.totalProductAmount) * exRate,
-                    FINAL_PRODUCT_AMOUNT_LC: Number(item.finalProductAmount) * exRate,
+                    RATE_PER_QTY: item.ratePerQty,
+                    PRODUCT_AMOUNT: item.productAmount,
+                    DISCOUNT_PERCENTAGE: item.discountPercentage,
+                    DISCOUNT_AMOUNT: item.discountAmount,
+                    TOTAL_PRODUCT_AMOUNT: item.totalProductAmount,
+                    VAT_PERCENTAGE: item.vatPercentage,
+                    VAT_AMOUNT: item.vatAmount,
+                    FINAL_PRODUCT_AMOUNT: item.finalProductAmount,
+                    TOTAL_PRODUCT_AMOUNT_LC: item.totalProductAmount * exRate,
+                    FINAL_PRODUCT_AMOUNT_LC: item.finalProductAmount * exRate,
                     REMARKS: item.remarks,
                     STATUS_ENTRY: "Active",
                     CREATED_BY: audit?.user,
@@ -290,7 +323,6 @@ export const createPurchaseInvoice = async (req: Request, res: Response): Promis
             return { msg: "Purchase Invoice created successfully", id: header.purchaseInvoiceRefNo };
         } catch (error: any) {
             console.error(error);
-            tx.rollback();
             throw error;
         }
         });
@@ -367,13 +399,18 @@ export const updatePurchaseInvoice = async (req: Request, res: Response): Promis
             await tx.update(TBL_PURCHASE_INVOICE_HDR).set(hUpdates as any).where(eq(TBL_PURCHASE_INVOICE_HDR.PURCHASE_INVOICE_REF_NO, id));
 
             await tx.delete(TBL_PURCHASE_INVOICE_DTL).where(eq(TBL_PURCHASE_INVOICE_DTL.PURCHASE_INVOICE_REF_NO, id));
-            if (items && items.length > 0) {
+            const normalizedItems = Array.isArray(items) ? items.map(normalizeInvoiceItem) : [];
+
+            if (normalizedItems.length > 0) {
                 // 3-Way Matching Validation
                 const poItems = await tx.select().from(TBL_PURCHASE_ORDER_DTL).where(eq(TBL_PURCHASE_ORDER_DTL.PO_REF_NO, header.poRefNo));
-                const grnRefs = [...new Set(items.map((i: any) => i.grnRefNo))] as string[];
+                const grnRefs = [...new Set(normalizedItems.map((i: any) => i.grnRefNo).filter(Boolean))] as string[];
                 const grnItems = await tx.select().from(TBL_GOODS_INWARD_GRN_DTL).where(inArray(TBL_GOODS_INWARD_GRN_DTL.GRN_REF_NO, grnRefs));
 
-                for (const item of items) {
+                for (const [index, item] of normalizedItems.entries()) {
+                    if (!item.productId) throw new Error(`Product ID is missing for invoice item #${index + 1}`);
+                    if (!item.grnRefNo) throw new Error(`GRN reference is missing for invoice item #${index + 1}`);
+
                     const poItem = poItems.find(p => Number(p.PRODUCT_ID) === Number(item.productId));
                     const grnItem = grnItems.find(g => Number(g.PRODUCT_ID) === Number(item.productId) && g.GRN_REF_NO === item.grnRefNo);
 
@@ -390,25 +427,25 @@ export const updatePurchaseInvoice = async (req: Request, res: Response): Promis
                     if (invoiceRate > poRate) throw new Error(`3-Way Mismatch: Invoice Rate (${invoiceRate}) exceeds PO Rate (${poRate}) for Product ${item.productId}`);
                 }
 
-                const dValues = items.map((item: any) => ({
+                const dValues = normalizedItems.map((item: any) => ({
                     PURCHASE_INVOICE_REF_NO: id,
                     GRN_REF_NO: item.grnRefNo,
-                    MAIN_CATEGORY_ID: item.mainCategoryId ? Number(item.mainCategoryId) : null,
-                    SUB_CATEGORY_ID: item.subCategoryId ? Number(item.subCategoryId) : null,
-                    PRODUCT_ID: item.productId ? Number(item.productId) : null,
-                    QTY_PER_PACKING: Number(item.qtyPerPacking),
-                    TOTAL_QTY: Number(item.totalQty),
+                    MAIN_CATEGORY_ID: item.mainCategoryId,
+                    SUB_CATEGORY_ID: item.subCategoryId,
+                    PRODUCT_ID: item.productId,
+                    QTY_PER_PACKING: item.qtyPerPacking,
+                    TOTAL_QTY: item.totalQty,
                     UOM: item.uom,
-                    RATE_PER_QTY: Number(item.ratePerQty),
-                    PRODUCT_AMOUNT: Number(item.productAmount),
-                    DISCOUNT_PERCENTAGE: Number(item.discountPercentage),
-                    DISCOUNT_AMOUNT: Number(item.discountAmount),
-                    TOTAL_PRODUCT_AMOUNT: Number(item.totalProductAmount),
-                    VAT_PERCENTAGE: Number(item.vatPercentage),
-                    VAT_AMOUNT: Number(item.vatAmount),
-                    FINAL_PRODUCT_AMOUNT: Number(item.finalProductAmount),
-                    TOTAL_PRODUCT_AMOUNT_LC: Number(item.totalProductAmount) * exRate,
-                    FINAL_PRODUCT_AMOUNT_LC: Number(item.finalProductAmount) * exRate,
+                    RATE_PER_QTY: item.ratePerQty,
+                    PRODUCT_AMOUNT: item.productAmount,
+                    DISCOUNT_PERCENTAGE: item.discountPercentage,
+                    DISCOUNT_AMOUNT: item.discountAmount,
+                    TOTAL_PRODUCT_AMOUNT: item.totalProductAmount,
+                    VAT_PERCENTAGE: item.vatPercentage,
+                    VAT_AMOUNT: item.vatAmount,
+                    FINAL_PRODUCT_AMOUNT: item.finalProductAmount,
+                    TOTAL_PRODUCT_AMOUNT_LC: item.totalProductAmount * exRate,
+                    FINAL_PRODUCT_AMOUNT_LC: item.finalProductAmount * exRate,
                     REMARKS: item.remarks,
                     STATUS_ENTRY: "Active",
                     CREATED_BY: audit?.user,
@@ -500,7 +537,6 @@ export const updatePurchaseInvoice = async (req: Request, res: Response): Promis
             return { msg: "Purchase Invoice updated successfully" };
         } catch (error: any) {
             console.error(error);
-            tx.rollback();
             throw error;
         }
         });

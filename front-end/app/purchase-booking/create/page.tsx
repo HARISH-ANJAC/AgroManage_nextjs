@@ -22,7 +22,7 @@ interface InvoiceItem {
     grnRefNo: string;
     mainCategoryId: number | null;
     subCategoryId: number | null;
-    productId: number;
+    productId: number | null;
     productName: string;
     qtyPerPacking: number;
     totalQty: number; // Invoice Qty
@@ -55,6 +55,39 @@ interface UploadedFile {
     fileName: string;
     description: string;
 }
+
+const firstDefined = (...values: any[]) => values.find(value => value !== undefined && value !== null && value !== "");
+const toNumberOrNull = (value: any) => {
+    const resolved = firstDefined(value);
+    if (resolved === undefined) return null;
+    const parsed = Number(resolved);
+    return Number.isFinite(parsed) ? parsed : null;
+};
+const normalizeText = (value: any) => String(value || "").trim().toLowerCase();
+const productIdFrom = (item: any, poItem?: any, productsData: any[] = []) => {
+    const directId = toNumberOrNull(firstDefined(
+        item.productId,
+        item.PRODUCT_ID,
+        item.productID,
+        item.product_id,
+        item.poProductId,
+        item.PO_PRODUCT_ID,
+        poItem?.productId,
+        poItem?.PRODUCT_ID,
+        poItem?.productID,
+        poItem?.product_id
+    ));
+    if (directId) return directId;
+
+    const itemName = normalizeText(firstDefined(item.productName, item.PRODUCT_NAME, item.poProductName, item.PO_PRODUCT_NAME));
+    const product = productsData.find((pd: any) => normalizeText(firstDefined(pd.productName, pd.PRODUCT_NAME, pd.name)) === itemName);
+    return toNumberOrNull(firstDefined(product?.id, product?.productId, product?.PRODUCT_ID));
+};
+const findPoItem = (grnItem: any, poItems: any[], productId?: number | null) => {
+    const poDtlSno = toNumberOrNull(firstDefined(grnItem.poDtlSno, grnItem.PO_DTL_SNO, grnItem.po_dtl_sno));
+    return poItems.find((pi: any) => toNumberOrNull(firstDefined(pi.SNO, pi.poDtlSno, pi.po_dtl_sno)) === poDtlSno)
+        || poItems.find((pi: any) => Number(firstDefined(pi.productId, pi.PRODUCT_ID, pi.productID, pi.product_id)) === Number(productId));
+};
 
 function CreatePurchaseBookingContent() {
     const navigate = useRouter();
@@ -189,12 +222,25 @@ function CreatePurchaseBookingContent() {
         }));
     };
 
+    const updateItemProduct = (id: number, productId: string) => {
+        const product = productsData.find((pd: any) => String(firstDefined(pd.id, pd.productId, pd.PRODUCT_ID)) === productId);
+        setItems(prev => prev.map(item => item.id === id ? {
+            ...item,
+            productId: Number(productId),
+            productName: firstDefined(product?.productName, product?.PRODUCT_NAME, product?.name, item.productName),
+            mainCategoryId: toNumberOrNull(firstDefined(product?.mainCategoryId, product?.MAIN_CATEGORY_ID, item.mainCategoryId)),
+            subCategoryId: toNumberOrNull(firstDefined(product?.subCategoryId, product?.SUB_CATEGORY_ID, item.subCategoryId)),
+            uom: firstDefined(product?.uom, product?.UOM, item.uom),
+        } : item));
+    };
+
     // Removed old handleFileUpload
 
     // Save
     const handleSave = async () => {
         if (!header.invoiceNo) { toast.error("Supplier Invoice Number is mandatory"); return; }
         if (items.length === 0) { toast.error("Please add at least one line item from a GRN"); return; }
+        if (items.some(i => !i.productId)) { toast.error("One or more imported GRN items are missing Product ID."); return; }
 
         // 3-Way Matching Validation
         const mismatches = items.filter(i => i.totalQty > i.grnQty || i.ratePerQty > i.poRate);
@@ -276,11 +322,12 @@ function CreatePurchaseBookingContent() {
             });
             if (res.items) {
                 setItems(res.items.map((i: any, idx: number) => {
-                    const p = productsData.find((pd: any) => Number(pd.id) === Number(i.PRODUCT_ID || i.productId));
+                    const productId = toNumberOrNull(firstDefined(i.productId, i.PRODUCT_ID, i.productID, i.product_id));
+                    const p = productsData.find((pd: any) => Number(firstDefined(pd.id, pd.productId, pd.PRODUCT_ID)) === Number(productId));
                     return {
                         ...i,
                         id: idx,
-                        productId: i.PRODUCT_ID || i.productId,
+                        productId,
                         productName: p?.productName || i.PRODUCT_NAME || i.productName || "Product",
                         qtyPerPacking: Number(i.QTY_PER_PACKING || i.qtyPerPacking || 0),
                         totalQty: Number(i.TOTAL_QTY || i.totalQty || 0),
@@ -459,32 +506,41 @@ function CreatePurchaseBookingContent() {
                                                 poItems = fullPo?.items || [];
                                             }
 
-                                            const newITs = (fullGrn.items || []).map((i: any, dx: number) => {
-                                                const poItem = poItems.find((pi: any) => Number(pi.productId || pi.PRODUCT_ID) === Number(i.productId || i.PRODUCT_ID));
-                                                const poItemRate = Number(poItem?.rate || poItem?.RATE_PER_QTY || 0);
+                                            const mappedItems = (fullGrn.items || []).map((i: any, dx: number) => {
+                                                const poItemBySno = findPoItem(i, poItems);
+                                                const productId = productIdFrom(i, poItemBySno, productsData);
+                                                const poItem = poItemBySno || findPoItem(i, poItems, productId);
+                                                const poItemRate = Number(firstDefined(poItem?.rate, poItem?.RATE_PER_QTY, poItem?.ratePerQty, 0));
                                                 const poDiscPercent = Number(poItem?.discountPercentage || poItem?.DISCOUNT_PERCENTAGE || poItem?.discountPercent || 0);
                                                 const poVatPercent = Number(poItem?.vatPercentage || poItem?.VAT_PERCENTAGE || poItem?.vatPercent || i.vatPercent || i.VAT_PERCENTAGE || 0);
+                                                const product = productsData.find((pd: any) => Number(firstDefined(pd.id, pd.productId, pd.PRODUCT_ID)) === Number(productId));
 
                                                 return {
                                                     id: Date.now() + dx,
                                                     grnRefNo: grnRef,
-                                                    productId: i.PRODUCT_ID || i.productId,
-                                                    productName: productsData.find((pd: any) => Number(pd.id) === Number(i.productId || i.PRODUCT_ID))?.productName || i.productName || i.PRODUCT_NAME || "Product",
-                                                    mainCategoryId: i.MAIN_CATEGORY_ID || null,
-                                                    subCategoryId: i.SUB_CATEGORY_ID || null,
-                                                    qtyPerPacking: Number(i.QTY_PER_PACKING || 0),
-                                                    totalQty: Number(i.TOTAL_QTY || i.totalQty || i.receivedQty || 0),
-                                                    grnQty: Number(i.TOTAL_QTY || i.totalQty || i.receivedQty || 0),
-                                                    uom: i.UOM || "KG",
+                                                    productId,
+                                                    productName: product?.productName || i.productName || i.PRODUCT_NAME || `Product #${productId ?? "Unknown"}`,
+                                                    mainCategoryId: toNumberOrNull(firstDefined(i.mainCategoryId, i.MAIN_CATEGORY_ID, i.poMainCategoryId, poItem?.mainCategoryId, poItem?.MAIN_CATEGORY_ID)),
+                                                    subCategoryId: toNumberOrNull(firstDefined(i.subCategoryId, i.SUB_CATEGORY_ID, i.poSubCategoryId, poItem?.subCategoryId, poItem?.SUB_CATEGORY_ID)),
+                                                    qtyPerPacking: Number(firstDefined(i.qtyPerPacking, i.QTY_PER_PACKING, i.qtyPerPack, i.poQtyPerPacking, poItem?.qtyPerPacking, poItem?.QTY_PER_PACKING, 0)),
+                                                    totalQty: Number(firstDefined(i.totalQty, i.TOTAL_QTY, i.receivedQty, 0)),
+                                                    grnQty: Number(firstDefined(i.totalQty, i.TOTAL_QTY, i.receivedQty, 0)),
+                                                    uom: firstDefined(i.uom, i.UOM, i.poUom, poItem?.uom, poItem?.UOM, "KG"),
                                                     totalPacking: 0,
                                                     alternateUom: "",
-                                                    ratePerQty: Number(i.rate || i.RATE_PER_QTY || poItemRate),
+                                                    ratePerQty: Number(firstDefined(i.rate, i.RATE_PER_QTY, i.ratePerQty, poItemRate)),
                                                     poRate: poItemRate,
                                                     productAmount: 0, discountPercentage: poDiscPercent, discountAmount: 0, totalProductAmount: 0, vatPercentage: poVatPercent, vatAmount: 0, finalProductAmount: 0, remarks: ""
                                                 };
                                             });
                                             setItems(prev => {
-                                                const filtered = newITs.filter((ni: any) => !prev.some(pi => pi.productId === ni.productId && pi.grnRefNo === ni.grnRefNo));
+                                                const filtered = mappedItems.filter((ni: any) => !prev.some(pi =>
+                                                    pi.grnRefNo === ni.grnRefNo
+                                                    && (ni.productId ? pi.productId === ni.productId : pi.productName === ni.productName)
+                                                ));
+                                                if (filtered.some((item: InvoiceItem) => item.productId === null)) {
+                                                    toast.warning("Select Product for highlighted GRN items before saving.");
+                                                }
                                                 return [...prev, ...filtered].map(it => {
                                                     const amt = it.totalQty * it.ratePerQty;
                                                     const discAmt = amt * (it.discountPercentage / 100);
@@ -528,10 +584,29 @@ function CreatePurchaseBookingContent() {
                                                         <td className="p-4">
                                                             <div className="flex flex-col gap-0.5">
                                                                 <div className="flex items-center gap-2">
-                                                                    <div className="font-bold text-slate-900 text-sm tracking-tight">{item.productName}</div>
+                                                                    {item.productId ? (
+                                                                        <div className="font-bold text-slate-900 text-sm tracking-tight">{item.productName}</div>
+                                                                    ) : (
+                                                                        <Select value="" onValueChange={(value) => updateItemProduct(item.id, value)}>
+                                                                            <SelectTrigger className="h-9 w-56 rounded-xl border-amber-300 bg-amber-50 text-xs font-bold text-amber-900">
+                                                                                <SelectValue placeholder="Select Product" />
+                                                                            </SelectTrigger>
+                                                                            <SelectContent>
+                                                                                {productsData.map((product: any) => {
+                                                                                    const productId = firstDefined(product.id, product.productId, product.PRODUCT_ID);
+                                                                                    const productName = firstDefined(product.productName, product.PRODUCT_NAME, product.name, `Product #${productId}`);
+                                                                                    return <SelectItem key={productId} value={String(productId)}>{productName}</SelectItem>;
+                                                                                })}
+                                                                            </SelectContent>
+                                                                        </Select>
+                                                                    )}
+                                                                    {!item.productId && <Badge className="bg-amber-500 hover:bg-amber-600 text-[8px] h-4 rounded-md uppercase font-black">Product Required</Badge>}
                                                                     {hasQtyMismatch && <Badge className="bg-orange-500 hover:bg-orange-600 text-[8px] h-4 rounded-md uppercase font-black">Qty Error</Badge>}
                                                                     {hasRateMismatch && <Badge className="bg-red-500 hover:bg-red-600 text-[8px] h-4 rounded-md uppercase font-black">Rate Error</Badge>}
                                                                 </div>
+                                                                {!item.productId && item.productName && item.productName !== "Product #Unknown" && (
+                                                                    <div className="text-[10px] text-slate-400 font-bold">GRN name: {item.productName}</div>
+                                                                )}
                                                                 <div className="flex items-center gap-1.5 font-mono text-[10px] text-emerald-600/70 font-bold">
                                                                     <LinkIcon className="w-3 h-3" />
                                                                     {item.grnRefNo}

@@ -29,12 +29,26 @@ export const getGoodsReceiptById = async (req: Request, res: Response): Promise<
         const items = await db.select({
             ...getTableColumns(TBL_GOODS_INWARD_GRN_DTL),
             productName: TBL_PRODUCT_MASTER.PRODUCT_NAME,
-            poQty: TBL_PURCHASE_ORDER_DTL.TOTAL_QTY
+            poQty: TBL_PURCHASE_ORDER_DTL.TOTAL_QTY,
+            poProductId: TBL_PURCHASE_ORDER_DTL.PRODUCT_ID,
+            poMainCategoryId: TBL_PURCHASE_ORDER_DTL.MAIN_CATEGORY_ID,
+            poSubCategoryId: TBL_PURCHASE_ORDER_DTL.SUB_CATEGORY_ID,
+            poQtyPerPacking: TBL_PURCHASE_ORDER_DTL.QTY_PER_PACKING,
+            poUom: TBL_PURCHASE_ORDER_DTL.UOM,
         })
         .from(TBL_GOODS_INWARD_GRN_DTL)
-        .leftJoin(TBL_PRODUCT_MASTER, eq(TBL_GOODS_INWARD_GRN_DTL.PRODUCT_ID, TBL_PRODUCT_MASTER.PRODUCT_ID))
         .leftJoin(TBL_PURCHASE_ORDER_DTL, eq(TBL_GOODS_INWARD_GRN_DTL.PO_DTL_SNO, TBL_PURCHASE_ORDER_DTL.SNO))
+        .leftJoin(TBL_PRODUCT_MASTER, eq(TBL_PURCHASE_ORDER_DTL.PRODUCT_ID, TBL_PRODUCT_MASTER.PRODUCT_ID))
         .where(eq(TBL_GOODS_INWARD_GRN_DTL.GRN_REF_NO, id as string));
+
+        const normalizedItems = items.map((item: any) => ({
+            ...item,
+            PRODUCT_ID: item.PRODUCT_ID ?? item.poProductId,
+            MAIN_CATEGORY_ID: item.MAIN_CATEGORY_ID ?? item.poMainCategoryId,
+            SUB_CATEGORY_ID: item.SUB_CATEGORY_ID ?? item.poSubCategoryId,
+            QTY_PER_PACKING: item.QTY_PER_PACKING ?? item.poQtyPerPacking,
+            UOM: item.UOM ?? item.poUom,
+        }));
 
         const filesData = await db.select().from(TBL_GOODS_FILES_UPLOAD).where(eq(TBL_GOODS_FILES_UPLOAD.GRN_REF_NO, id as string));
         const processedFiles = filesData.map(f => ({
@@ -44,7 +58,7 @@ export const getGoodsReceiptById = async (req: Request, res: Response): Promise<
 
         return res.status(200).json({
             header: header[0],
-            items,
+            items: normalizedItems,
             files: processedFiles
         });
     } catch (error) {
