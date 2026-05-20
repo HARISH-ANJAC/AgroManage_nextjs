@@ -55,7 +55,8 @@ import {
   Calculator,
   Target,
   TrendingDown,
-  Activity
+  Activity,
+  RefreshCcw
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -183,7 +184,6 @@ const navigation = [
       { name: 'Banks', href: '/bank-master', icon: Landmark },
       { name: 'Bank Accounts', href: '/bank-accounts', icon: Wallet },
       { name: 'Currencies', href: '/currency-master', icon: Coins },
-      { name: 'Exchange Rates', href: '/exchange-rate', icon: ArrowRightLeft },
       { name: 'Tax Master', href: '/tax-master', icon: Receipt },
       { name: 'VAT Settings', href: '/vat-settings', icon: Percent },
       { name: 'Account Heads', href: '/account-heads', icon: FileText },
@@ -210,9 +210,11 @@ const navigation = [
       { name: 'Purchase Approval', href: '/purchase-approvals', icon: CheckSquare },
       { name: 'Goods Receipts', href: '/goods-receipts', icon: ClipboardCheck },
       { name: 'Purchase Invoices', href: '/purchase-booking', icon: FileText },
+      { name: 'Purchase Payments', href: '/purchase-payments', icon: Wallet },
       { name: 'Purchases History', href: '/purchase-history', icon: History },
       // { name: 'Proof of Delivery', href: '/pod', icon: ClipboardList },
     ]
+
   },
   {
     group: 'Finance',
@@ -230,6 +232,8 @@ const navigation = [
       // { name: 'Trial Balances', href: '/trial-balances', icon: FileText },
       // { name: 'Cash Book', href: '/cash-book', icon: Wallet },
       // { name: 'Cash Flow', href: '/cash-flow', icon: Activity },
+      // { name: 'Exchange Rates', href: '/exchange-rate', icon: ArrowRightLeft },
+      // { name: 'Exchange Revaluation', href: '/finance/exchange-revaluation', icon: RefreshCcw },
     ]
   },
   {

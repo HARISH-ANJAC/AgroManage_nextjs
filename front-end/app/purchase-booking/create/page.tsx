@@ -100,7 +100,7 @@ function CreatePurchaseBookingContent() {
     });
 
     const [items, setItems] = useState<InvoiceItem[]>([]);
-  const [isSaving, setIsSaving] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const [additionalCosts, setAdditionalCosts] = useState<AdditionalCost[]>([]);
     const [files, setFiles] = useState<any[]>([]);
     const [uploading, setUploading] = useState(false);
@@ -145,8 +145,8 @@ function CreatePurchaseBookingContent() {
 
     useEffect(() => {
         if (!editId) {
-            setHeader(prev => ({ 
-                ...prev, 
+            setHeader(prev => ({
+                ...prev,
                 purchaseInvoiceRefNo: nextPiRefNo,
                 companyId: prev.companyId || (companies[0]?.companyId || "")
             }));
@@ -218,12 +218,12 @@ function CreatePurchaseBookingContent() {
                 items,
                 additionalCosts,
                 files: files.map(f => ({
-                  documentType: f.DOCUMENT_TYPE || f.documentType,
-                  descriptionDetails: f.DESCRIPTION_DETAILS || f.descriptionDetails,
-                  fileName: f.FILE_NAME || f.fileName,
-                  contentType: f.CONTENT_TYPE || f.contentType,
-                  contentData: f.CONTENT_DATA || f.contentData,
-                  remarks: f.REMARKS || f.remarks,
+                    documentType: f.DOCUMENT_TYPE || f.documentType,
+                    descriptionDetails: f.DESCRIPTION_DETAILS || f.descriptionDetails,
+                    fileName: f.FILE_NAME || f.fileName,
+                    contentType: f.CONTENT_TYPE || f.contentType,
+                    contentData: f.CONTENT_DATA || f.contentData,
+                    remarks: f.REMARKS || f.remarks,
                 })),
                 audit: { user: "Admin" }
             };
@@ -277,23 +277,23 @@ function CreatePurchaseBookingContent() {
             if (res.items) {
                 setItems(res.items.map((i: any, idx: number) => {
                     const p = productsData.find((pd: any) => Number(pd.id) === Number(i.PRODUCT_ID || i.productId));
-                    return { 
-                        ...i, 
-                        id: idx, 
-                        productId: i.PRODUCT_ID || i.productId, 
-                        productName: p?.productName || i.PRODUCT_NAME || i.productName || "Product", 
-                        qtyPerPacking: Number(i.QTY_PER_PACKING || i.qtyPerPacking || 0), 
-                        totalQty: Number(i.TOTAL_QTY || i.totalQty || 0), 
-                        uom: i.UOM || i.uom || "KG", 
-                        ratePerQty: Number(i.RATE_PER_QTY || i.ratePerQty || 0), 
-                        productAmount: Number(i.PRODUCT_AMOUNT || i.productAmount || 0), 
-                        discountPercentage: Number(i.DISCOUNT_PERCENTAGE || i.discountPercentage || 0), 
-                        discountAmount: Number(i.DISCOUNT_AMOUNT || i.discountAmount || 0), 
-                        totalProductAmount: Number(i.TOTAL_PRODUCT_AMOUNT || i.totalProductAmount || 0), 
-                        vatPercentage: Number(i.VAT_PERCENTAGE || i.vatPercentage || 0), 
-                        vatAmount: Number(i.VAT_AMOUNT || i.vatAmount || 0), 
-                        finalProductAmount: Number(i.FINAL_PRODUCT_AMOUNT || i.finalProductAmount || 0), 
-                        grnRefNo: i.GRN_REF_NO || i.grnRefNo 
+                    return {
+                        ...i,
+                        id: idx,
+                        productId: i.PRODUCT_ID || i.productId,
+                        productName: p?.productName || i.PRODUCT_NAME || i.productName || "Product",
+                        qtyPerPacking: Number(i.QTY_PER_PACKING || i.qtyPerPacking || 0),
+                        totalQty: Number(i.TOTAL_QTY || i.totalQty || 0),
+                        uom: i.UOM || i.uom || "KG",
+                        ratePerQty: Number(i.RATE_PER_QTY || i.ratePerQty || 0),
+                        productAmount: Number(i.PRODUCT_AMOUNT || i.productAmount || 0),
+                        discountPercentage: Number(i.DISCOUNT_PERCENTAGE || i.discountPercentage || 0),
+                        discountAmount: Number(i.DISCOUNT_AMOUNT || i.discountAmount || 0),
+                        totalProductAmount: Number(i.TOTAL_PRODUCT_AMOUNT || i.totalProductAmount || 0),
+                        vatPercentage: Number(i.VAT_PERCENTAGE || i.vatPercentage || 0),
+                        vatAmount: Number(i.VAT_AMOUNT || i.vatAmount || 0),
+                        finalProductAmount: Number(i.FINAL_PRODUCT_AMOUNT || i.finalProductAmount || 0),
+                        grnRefNo: i.GRN_REF_NO || i.grnRefNo
                     };
                 }));
             }
@@ -355,11 +355,11 @@ function CreatePurchaseBookingContent() {
                     </div>
                 </div>
                 <div className="flex gap-3">
-                     <Button variant="outline" onClick={() => navigate.push("/purchase-booking")} className="rounded-xl border-slate-200">Cancel</Button>
-                     <Button onClick={handleSave} disabled={submitting} className="bg-[#10B981] hover:bg-[#059669] text-white font-bold rounded-xl px-8 h-12 shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98]">
+                    <Button variant="outline" onClick={() => navigate.push("/purchase-booking")} className="rounded-xl border-slate-200">Cancel</Button>
+                    <Button onClick={handleSave} disabled={submitting} className="bg-[#10B981] hover:bg-[#059669] text-white font-bold rounded-xl px-8 h-12 shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98]">
                         {submitting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Save className="w-5 h-5 mr-2" />}
                         {editId ? "Save Changes" : "Confirm Booking"}
-                     </Button>
+                    </Button>
                 </div>
             </div>
 
@@ -379,18 +379,18 @@ function CreatePurchaseBookingContent() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
                                         <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Supplier Invoice No *</Label>
-                                        <Input placeholder="Enter Invoice Number" value={header.invoiceNo} onChange={(e) => setHeader({...header, invoiceNo: e.target.value})} className="h-12 rounded-2xl bg-slate-50/50 border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500" />
+                                        <Input placeholder="Enter Invoice Number" value={header.invoiceNo} onChange={(e) => setHeader({ ...header, invoiceNo: e.target.value })} className="h-12 rounded-2xl bg-slate-50/50 border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500" />
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Invoice Date</Label>
-                                        <Input type="date" value={header.invoiceDate} onChange={(e) => setHeader({...header, invoiceDate: e.target.value})} className="h-12 rounded-2xl bg-slate-50/50" />
+                                        <Input type="date" value={header.invoiceDate} onChange={(e) => setHeader({ ...header, invoiceDate: e.target.value })} className="h-12 rounded-2xl bg-slate-50/50" />
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="text-xs font-bold uppercase tracking-wider text-slate-400">Company</Label>
                                         {companiesLoading ? (
                                             <Skeleton className="h-12 w-full rounded-2xl" />
                                         ) : (
-                                            <Select value={String(header.companyId)} onValueChange={(v) => setHeader({...header, companyId: v})}>
+                                            <Select value={String(header.companyId)} onValueChange={(v) => setHeader({ ...header, companyId: v })}>
                                                 <SelectTrigger className="h-12 rounded-2xl bg-slate-50/50"><SelectValue placeholder="Select Company" /></SelectTrigger>
                                                 <SelectContent>{companies.map((c: any) => <SelectItem key={c.id} value={String(c.companyId)}>{c.companyName} (@{c.categoryName})</SelectItem>)}</SelectContent>
                                             </Select>
@@ -401,7 +401,7 @@ function CreatePurchaseBookingContent() {
                                         <Select disabled={items.length > 0} value={header.poRefNo} onValueChange={(v) => {
                                             const po = approvedPOs.find((p: any) => (p.header?.poRefNo || p.poRefNo || p.PO_REF_NO) === v);
                                             const h = po?.header || po;
-                                            setHeader({...header, poRefNo: v, supplierId: h?.supplierId || h?.SUPPLIER_ID || "", storeId: h?.storeId || h?.STORE_ID || "", currencyId: h?.currencyId || h?.CURRENCY_ID || "1", exchangeRate: Number(h?.exchangeRate || h?.EXCHANGE_RATE || 1)});
+                                            setHeader({ ...header, poRefNo: v, supplierId: h?.supplierId || h?.SUPPLIER_ID || "", storeId: h?.storeId || h?.STORE_ID || "", currencyId: h?.currencyId || h?.CURRENCY_ID || "1", exchangeRate: Number(h?.exchangeRate || h?.EXCHANGE_RATE || 1) });
                                         }}>
                                             <SelectTrigger className="h-12 rounded-2xl bg-slate-50/50"><SelectValue placeholder="Select source PO" /></SelectTrigger>
                                             <SelectContent>{approvedPOs.map((p: any) => <SelectItem key={p.PO_REF_NO || p.poRefNo || p.id} value={p.header?.poRefNo || p.poRefNo || p.PO_REF_NO}>{p.header?.poRefNo || p.poRefNo || p.PO_REF_NO}</SelectItem>)}</SelectContent>
@@ -409,17 +409,17 @@ function CreatePurchaseBookingContent() {
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-slate-100">
-                                     <div className="space-y-2">
+                                    <div className="space-y-2">
                                         <Label className="text-xs font-bold uppercase text-slate-400">Supplier</Label>
                                         {suppliersLoading ? (
                                             <Skeleton className="h-12 w-full rounded-2xl" />
                                         ) : (
-                                            <Input value={suppliers.find((s:any) => (s.id || s.Supplier_Id) == header.supplierId)?.supplierName || ""} disabled className="h-12 rounded-2xl bg-slate-100/50" placeholder="Auto-filled" />
+                                            <Input value={suppliers.find((s: any) => (s.id || s.Supplier_Id) == header.supplierId)?.supplierName || ""} disabled className="h-12 rounded-2xl bg-slate-100/50" placeholder="Auto-filled" />
                                         )}
-                                     </div>
-                                     <div className="space-y-2">
+                                    </div>
+                                    <div className="space-y-2">
                                         <Label className="text-xs font-bold uppercase text-slate-400">Payment Mode</Label>
-                                        <Select value={header.modeOfPayment} onValueChange={(v) => setHeader({...header, modeOfPayment: v})}>
+                                        <Select value={header.modeOfPayment} onValueChange={(v) => setHeader({ ...header, modeOfPayment: v })}>
                                             <SelectTrigger className="h-12 rounded-2xl"><SelectValue /></SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="Credit">Credit</SelectItem>
@@ -427,17 +427,17 @@ function CreatePurchaseBookingContent() {
                                                 <SelectItem value="MobileMoney">Mobile Money</SelectItem>
                                             </SelectContent>
                                         </Select>
-                                     </div>
-                                     <div className="space-y-2">
+                                    </div>
+                                    <div className="space-y-2">
                                         <Label className="text-xs font-bold uppercase text-slate-400">Currency / Ex-Rate</Label>
                                         <div className="flex gap-2">
-                                            <Select value={String(header.currencyId)} onValueChange={(v) => setHeader({...header, currencyId: v})}>
+                                            <Select value={String(header.currencyId)} onValueChange={(v) => setHeader({ ...header, currencyId: v })}>
                                                 <SelectTrigger className="h-12 rounded-2xl flex-1"><SelectValue placeholder="Currency" /></SelectTrigger>
                                                 <SelectContent>{currencies.map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.currencyIsoCode || c.currencyCode || c.currencyName || "Currency"}</SelectItem>)}</SelectContent>
                                             </Select>
-                                            <Input type="number" value={header.exchangeRate} onChange={(e) => setHeader({...header, exchangeRate: Number(e.target.value)})} className="h-12 w-20 rounded-2xl text-center" />
+                                            <Input type="number" value={header.exchangeRate} onChange={(e) => setHeader({ ...header, exchangeRate: Number(e.target.value) })} className="h-12 w-20 rounded-2xl text-center" />
                                         </div>
-                                     </div>
+                                    </div>
                                 </div>
                             </div>
                         </TabsContent>
@@ -452,19 +452,19 @@ function CreatePurchaseBookingContent() {
                                                 toast.error("Could not fetch GRN items");
                                                 return;
                                             }
-                                            
+
                                             let poItems: any[] = [];
                                             if (header.poRefNo) {
                                                 const fullPo = await getPOById(header.poRefNo);
                                                 poItems = fullPo?.items || [];
                                             }
-                                            
+
                                             const newITs = (fullGrn.items || []).map((i: any, dx: number) => {
                                                 const poItem = poItems.find((pi: any) => Number(pi.productId || pi.PRODUCT_ID) === Number(i.productId || i.PRODUCT_ID));
                                                 const poItemRate = Number(poItem?.rate || poItem?.RATE_PER_QTY || 0);
                                                 const poDiscPercent = Number(poItem?.discountPercentage || poItem?.DISCOUNT_PERCENTAGE || poItem?.discountPercent || 0);
                                                 const poVatPercent = Number(poItem?.vatPercentage || poItem?.VAT_PERCENTAGE || poItem?.vatPercent || i.vatPercent || i.VAT_PERCENTAGE || 0);
-                                                
+
                                                 return {
                                                     id: Date.now() + dx,
                                                     grnRefNo: grnRef,
@@ -522,7 +522,7 @@ function CreatePurchaseBookingContent() {
                                             {items.map(item => {
                                                 const hasQtyMismatch = item.totalQty > item.grnQty;
                                                 const hasRateMismatch = item.ratePerQty > item.poRate;
-                                                
+
                                                 return (
                                                     <tr key={item.id} className={`group transition-all ${hasQtyMismatch || hasRateMismatch ? 'bg-red-50/40' : 'hover:bg-slate-50/50'}`}>
                                                         <td className="p-4">
@@ -541,11 +541,11 @@ function CreatePurchaseBookingContent() {
                                                         <td className="p-4">
                                                             <div className="flex flex-col items-center gap-1.5">
                                                                 <div className="flex items-center gap-1">
-                                                                    <Input 
-                                                                        type="number" 
-                                                                        value={item.totalQty} 
-                                                                        onChange={(e) => updateItem(item.id, "totalQty", Number(e.target.value))} 
-                                                                        className={`w-20 h-9 text-center rounded-xl font-bold bg-white shadow-sm border-slate-200 focus:ring-emerald-500/10 ${hasQtyMismatch ? 'border-red-500 ring-2 ring-red-500/10' : ''}`} 
+                                                                    <Input
+                                                                        type="number"
+                                                                        value={item.totalQty}
+                                                                        onChange={(e) => updateItem(item.id, "totalQty", Number(e.target.value))}
+                                                                        className={`w-20 h-9 text-center rounded-xl font-bold bg-white shadow-sm border-slate-200 focus:ring-emerald-500/10 ${hasQtyMismatch ? 'border-red-500 ring-2 ring-red-500/10' : ''}`}
                                                                     />
                                                                     <span className="text-[10px] font-bold text-slate-400">{item.uom}</span>
                                                                 </div>
@@ -556,11 +556,11 @@ function CreatePurchaseBookingContent() {
                                                         </td>
                                                         <td className="p-4">
                                                             <div className="flex flex-col items-center gap-1.5">
-                                                                <Input 
-                                                                    type="number" 
-                                                                    value={item.ratePerQty} 
-                                                                    onChange={(e) => updateItem(item.id, "ratePerQty", Number(e.target.value))} 
-                                                                    className={`w-24 h-9 text-center rounded-xl font-bold bg-white shadow-sm border-slate-200 focus:ring-emerald-500/10 ${hasRateMismatch ? 'border-red-500 ring-2 ring-red-500/10' : ''}`} 
+                                                                <Input
+                                                                    type="number"
+                                                                    value={item.ratePerQty}
+                                                                    onChange={(e) => updateItem(item.id, "ratePerQty", Number(e.target.value))}
+                                                                    className={`w-24 h-9 text-center rounded-xl font-bold bg-white shadow-sm border-slate-200 focus:ring-emerald-500/10 ${hasRateMismatch ? 'border-red-500 ring-2 ring-red-500/10' : ''}`}
                                                                 />
                                                                 <div className={`text-[9px] font-bold uppercase tracking-tight ${hasRateMismatch ? 'text-red-500' : 'text-slate-400'}`}>
                                                                     PO Rate: <span className="font-black underline">{item.poRate}</span>
@@ -609,12 +609,12 @@ function CreatePurchaseBookingContent() {
                         </TabsContent>
 
                         <TabsContent value="costs">
-                             <div className="bg-white rounded-[32px] border border-slate-200 p-8 shadow-sm">
+                            <div className="bg-white rounded-[32px] border border-slate-200 p-8 shadow-sm">
                                 <div className="flex items-center justify-between mb-8">
                                     <h2 className="text-lg font-bold text-slate-800">Additional Charges / Landed Costs</h2>
                                     <Button variant="outline" size="sm" onClick={() => setAdditionalCosts([...additionalCosts, { id: Date.now(), typeId: "", amount: 0, remarks: "" }])} className="rounded-xl border-emerald-100 text-emerald-600 hover:bg-emerald-50"><Plus className="w-4 h-4 mr-2" /> Add Charge</Button>
                                 </div>
-                                 <div className="space-y-4">
+                                <div className="space-y-4">
                                     {additionalCosts.map(cost => (
                                         <div key={cost.id} className="flex gap-4 items-end bg-slate-50/50 p-4 rounded-2xl border border-slate-100 group transition-all hover:border-emerald-200">
                                             <div className="flex-1 space-y-1.5 text-center">
@@ -637,17 +637,17 @@ function CreatePurchaseBookingContent() {
                                                 <Label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Amount (TZS)</Label>
                                                 <div className="relative">
                                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">TZS</span>
-                                                    <Input 
-                                                        type="number" 
-                                                        value={cost.amount} 
-                                                        onChange={(e) => setAdditionalCosts(prev => prev.map(c => c.id === cost.id ? { ...c, amount: Number(e.target.value) } : c))} 
+                                                    <Input
+                                                        type="number"
+                                                        value={cost.amount}
+                                                        onChange={(e) => setAdditionalCosts(prev => prev.map(c => c.id === cost.id ? { ...c, amount: Number(e.target.value) } : c))}
                                                         className="h-11 rounded-xl bg-white pl-10 font-bold text-slate-900 border-slate-200 shadow-sm"
                                                     />
                                                 </div>
                                             </div>
-                                            <Button 
-                                                variant="ghost" 
-                                                onClick={() => setAdditionalCosts(additionalCosts.filter(c => c.id !== cost.id))} 
+                                            <Button
+                                                variant="ghost"
+                                                onClick={() => setAdditionalCosts(additionalCosts.filter(c => c.id !== cost.id))}
                                                 className="text-slate-300 hover:text-red-500 hover:bg-red-50 h-11 w-11 p-0 rounded-xl transition-colors"
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -660,16 +660,16 @@ function CreatePurchaseBookingContent() {
                                         </div>
                                     )}
                                 </div>
-                             </div>
+                            </div>
                         </TabsContent>
 
                         <TabsContent value="files">
-                             <div className="bg-white rounded-[32px] border border-slate-200 p-8 shadow-sm">
-                                 <SupportingDoc 
-                                    files={files} 
-                                    onFilesChange={setFiles} 
-                                 />
-                             </div>
+                            <div className="bg-white rounded-[32px] border border-slate-200 p-8 shadow-sm">
+                                <SupportingDoc
+                                    files={files}
+                                    onFilesChange={setFiles}
+                                />
+                            </div>
                         </TabsContent>
 
                         {/* <TabsContent value="audit">
@@ -729,11 +729,11 @@ function CreatePurchaseBookingContent() {
                             <div className="mt-12 space-y-4">
                                 <div className="bg-white/5 rounded-3xl p-5 border border-white/10 group focus-within:border-emerald-500/30 transition-all">
                                     <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 block">Internal Remarks</Label>
-                                    <textarea 
+                                    <textarea
                                         className="bg-transparent border-none w-full text-sm resize-none focus:ring-0 placeholder:text-white/10 h-24 font-medium"
                                         placeholder="Add any accounting notes..."
                                         value={header.remarks}
-                                        onChange={(e) => setHeader({...header, remarks: e.target.value})}
+                                        onChange={(e) => setHeader({ ...header, remarks: e.target.value })}
                                     />
                                 </div>
                                 <Button onClick={handleSave} disabled={submitting} className="w-full h-14 bg-emerald-500 hover:bg-emerald-400 text-white rounded-[24px] font-black uppercase tracking-widest text-xs shadow-xl shadow-emerald-600/20 active:scale-95 transition-all">

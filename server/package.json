@@ -16,6 +16,8 @@
     "db:seed": "tsx src/db/seed.ts",
     "db:seed:transactional": "tsx src/db/seedTransactional.ts",
     "db:drop": "tsx src/db/seed/drop-tables.ts",
+    "db:create": "tsx src/db/seed/create-db.ts",
+    "db:remove": "tsx src/db/seed/remove-db.ts",
     "db:truncate": "tsx src/db/seed/truncate-tables.ts",
     "db:reset": "tsx src/db/seed/reset-and-seed.ts",
     "db:refresh": "pnpm db:drop && pnpm db:seed",

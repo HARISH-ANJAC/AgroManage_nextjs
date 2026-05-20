@@ -56,6 +56,29 @@ export function useJournalStore(companyId?: number, module?: string) {
     },
   });
 
+  // Create a manual journal entry
+  const createMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const res = await fetch(`${API_URL}/accounting/journals`, {
+        method: "POST",
+        headers: {
+          ...authHeader(),
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.msg || "Failed to create journal entry");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["journals"] });
+      queryClient.invalidateQueries({ queryKey: ["trialBalance"] });
+    }
+  });
+
   // Fetch ledger transaction history
   const getLedgerReport = useCallback(async (ledgerId?: number, groupId?: number) => {
     if (!ledgerId && !groupId) return [];
@@ -75,5 +98,6 @@ export function useJournalStore(companyId?: number, module?: string) {
     getJournalById,
     getLedgerReport,
     deleteJournal: deleteMutation.mutateAsync,
+    createJournal: createMutation.mutateAsync,
   };
 }

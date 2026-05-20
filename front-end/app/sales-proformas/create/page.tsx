@@ -987,7 +987,7 @@ function CreateProformaContent(): JSX.Element {
                             <SelectContent>
                               <SelectItem value="none">None</SelectItem>
                               {purchaseInvoices?.filter((inv: any) => {
-                                const piRef = inv.PURCHASE_INVOICE_REF_NO || String(inv.id);
+                                const piRef = String(inv.purchaseInvoiceRefNo || inv.PURCHASE_INVOICE_REF_NO || inv.id || "").trim();
                                 // Always show the currently selected PI, even if the product filter fails
                                 if (item.selectedPiNo && String(piRef).trim() === String(item.selectedPiNo).trim()) return true;
 
@@ -995,11 +995,14 @@ function CreateProformaContent(): JSX.Element {
                                   return inv.items.some((i: any) => Number(i.productId || i.PRODUCT_ID) === Number(item.productId));
                                 }
                                 return true;
-                              }).map((inv: any) => (
-                                <SelectItem key={inv.PURCHASE_INVOICE_REF_NO || inv.id} value={inv.PURCHASE_INVOICE_REF_NO || String(inv.id)}>
-                                  {inv.PURCHASE_INVOICE_REF_NO || String(inv.id)}
-                                </SelectItem>
-                              ))}
+                              }).map((inv: any) => {
+                                const val = String(inv.purchaseInvoiceRefNo || inv.PURCHASE_INVOICE_REF_NO || inv.id).trim();
+                                return (
+                                  <SelectItem key={val} value={val}>
+                                    {val}
+                                  </SelectItem>
+                                );
+                              })}
                             </SelectContent>
                           </Select>
                         </div>

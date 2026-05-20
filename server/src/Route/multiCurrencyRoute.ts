@@ -5,7 +5,9 @@ const router = Router();
 
 router.get("/rates", multiCurrencyController.getExchangeRates);
 router.get("/transactions", multiCurrencyController.getMCTransactions);
+router.get("/revaluation-history", multiCurrencyController.getRevaluationHistory);
 router.post("/update-rates", multiCurrencyController.updateRatesFromProvider);
 router.post("/revaluation", multiCurrencyController.runRevaluation);
+
 
 export default router;

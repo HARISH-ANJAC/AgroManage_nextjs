@@ -13,6 +13,7 @@ router.post("/opening-balance", accountingController.postOpeningBalance);
 
 // Journal Entries
 router.get("/journals", accountingController.getJournalEntries);
+router.post("/journals", accountingController.createJournal);
 router.get("/journals/detail", accountingController.getJournalById);
 router.delete("/journals", accountingController.deleteJournal);
 router.get("/journals/module", accountingController.getJournalsByModule);

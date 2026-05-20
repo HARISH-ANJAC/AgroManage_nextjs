@@ -243,7 +243,7 @@ export default function PurchaseBookingPage() {
                   const id = b.purchaseInvoiceRefNo || b.PURCHASE_INVOICE_REF_NO;
                   const supplier = supplierMap[b.supplierId || b.SUPPLIER_ID] || b.supplier || "N/A";
                   const status = b.status || b.STATUS_ENTRY || "Pending";
-                  const amount = Number(b.finalAmount || b.FINAL_INVOICE_HDR_AMOUNT || 0);
+                  const amount = Number(b.finalInvoiceHdrAmount || b.finalAmount || b.FINAL_INVOICE_HDR_AMOUNT || 0);
 
                   return (
                     <tr key={id} className="border-b hover:bg-muted/30 transition-colors">

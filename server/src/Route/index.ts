@@ -18,6 +18,8 @@ import { taxInvoiceRoute } from "./taxInvoiceRoute.js";
 import { customerReceiptRoute } from "./customerReceiptRoute.js";
 import { expenseRoute } from "./expenseRoute.js";
 import { purchaseApprovalRoute } from "./purchaseApprovalRoute.js";
+import purchasePaymentRoute from "./purchasePaymentRoute.js";
+
 import { schedulerRoute } from "./schedulerRoute.js";
 import accountingRoute from "./accountingRoute.js";
 import inventoryRoute from "./inventoryRoute.js";
@@ -25,6 +27,7 @@ import multiCurrencyRoute from "./multiCurrencyRoute.js";
 import costCenterRoute from "./costCenterRoute.js";
 
 import profitCenterRoute from "./profitCenterRoute.js";
+import exchangeRateRoute from "./exchangeRateRoute.js";
 
 const Router = express.Router();
 
@@ -52,6 +55,8 @@ Router.use("/purchase-orders", purchaseOrderRoute);
 Router.use("/purchase-approvals", purchaseApprovalRoute);
 Router.use("/goods-receipts", goodsReceiptRoute);
 Router.use("/purchase-invoices", purchaseInvoiceRoute);
+Router.use("/purchase-payments", purchasePaymentRoute);
+
 
 Router.use("/sales-orders", salesOrderRoute);
 Router.use("/sales-proformas", salesProformaRoute);
@@ -65,6 +70,7 @@ Router.use("/scheduler", schedulerRoute);
 Router.use("/multi-currency", multiCurrencyRoute);
 Router.use("/cost-centers", costCenterRoute);
 Router.use("/profit-centers", profitCenterRoute);
+Router.use("/exchange-rates", exchangeRateRoute);
 
 // Master routes are top-level because domain names are unique (companies, stores, etc.)
 Router.use("/", masterRoute);

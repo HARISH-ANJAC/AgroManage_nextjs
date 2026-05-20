@@ -18,6 +18,24 @@ import * as multiCurrencyController from "./multiCurrencyController.js";
 import { eq, desc, sql, and, ne, lte, gte, getTableColumns } from "drizzle-orm";
 import { createJournalEntry, getSystemLedger, getLedgerForSupplier } from "../utils/accountingUtils.js";
 
+const EXPENSE_MAPPING: Record<string, string> = {
+    "Accomodation - March": "Marketing exp",
+    "Company Secretary - Feb": "Admin exp",
+    "House Rent (April - September)": "Admin exp",
+    "Furniture": "Admin exp",
+    "Fuel (Full Tanks) - March": "Selling & Distribution",
+    "Fuel (Full Tank)": "Selling & Distribution",
+    "Rent - Godown": "Admin exp",
+    "Company Secretary - Mar": "Admin exp",
+    "Weigh Machines": "Admin exp",
+    "Transport Soya to Godown": "Selling & Distribution",
+    "Offloading at the Godown": "Selling & Distribution",
+    "Fumigation Tabs": "Direct Exp",
+    "Tents": "Admin exp",
+    "Business License": "Admin exp",
+    "PDPC Invoice": "Admin exp"
+};
+
 export const getExpenses = async (req: Request, res: Response): Promise<Response> => {
     try {
         const data = await db.select({
@@ -263,7 +281,7 @@ export const createExpense = async (req: Request, res: Response): Promise<Respon
                     SOURCE_TABLE: 'TBL_EXPENSE_HDR',
                     SOURCE_REF_NO: expenseRefNo,
                     EXPENSE_DATE: hValues.EXPENSE_DATE,
-                    EXPENSE_CATEGORY: header.expenseCategory || 'OTHER',
+                    EXPENSE_CATEGORY: EXPENSE_MAPPING[header.expenseType] || header.expenseCategory || 'OTHER',
                     CURRENCY_ID: header.currencyId || 1,
                     EXPENSE_AMOUNT: String(header.totalExpenseAmount),
                     LC_AMOUNT: String(hValues.TOTAL_EXPENSE_AMOUNT_LC),
@@ -458,7 +476,7 @@ export const updateExpense = async (req: Request, res: Response): Promise<Respon
                     SOURCE_TABLE: 'TBL_EXPENSE_HDR',
                     SOURCE_REF_NO: id,
                     EXPENSE_DATE: expDate,
-                    EXPENSE_CATEGORY: header.expenseCategory || 'OTHER',
+                    EXPENSE_CATEGORY: EXPENSE_MAPPING[header.expenseType] || header.expenseCategory || 'OTHER',
                     CURRENCY_ID: header.currencyId || 1,
                     EXPENSE_AMOUNT: String(header.totalExpenseAmount),
                     LC_AMOUNT: String(totalAmountLc),

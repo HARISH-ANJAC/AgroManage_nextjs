@@ -29,33 +29,33 @@ export const getPurchaseInvoices = async (req: Request, res: Response): Promise<
         // Aggregating unique GRN references from the detail table
         const headers = await db.select({
             id: TBL_PURCHASE_INVOICE_HDR.SNO,
-            PURCHASE_INVOICE_REF_NO: TBL_PURCHASE_INVOICE_HDR.PURCHASE_INVOICE_REF_NO,
-            INVOICE_NO: TBL_PURCHASE_INVOICE_HDR.INVOICE_NO,
-            INVOICE_DATE: TBL_PURCHASE_INVOICE_HDR.INVOICE_DATE,
-            PO_REF_NO: TBL_PURCHASE_INVOICE_HDR.PO_REF_NO,
-            COMPANY_ID: TBL_PURCHASE_INVOICE_HDR.COMPANY_ID,
-            SUPPLIER_ID: TBL_PURCHASE_INVOICE_HDR.SUPPLIER_ID,
-            CURRENCY_ID: TBL_PURCHASE_INVOICE_HDR.CURRENCY_ID,
-            EXCHANGE_RATE: TBL_PURCHASE_INVOICE_HDR.EXCHANGE_RATE,
-            TOTAL_PRODUCT_HDR_AMOUNT: TBL_PURCHASE_INVOICE_HDR.TOTAL_PRODUCT_HDR_AMOUNT,
-            TOTAL_ADDITIONAL_COST_AMOUNT: TBL_PURCHASE_INVOICE_HDR.TOTAL_ADDITIONAL_COST_AMOUNT,
-            TOTAL_PRODUCT_HDR_AMOUNT_LC: TBL_PURCHASE_INVOICE_HDR.TOTAL_PRODUCT_HDR_AMOUNT_LC,
-            TOTAL_VAT_HDR_AMOUNT: TBL_PURCHASE_INVOICE_HDR.TOTAL_VAT_HDR_AMOUNT,
-            FINAL_INVOICE_HDR_AMOUNT: TBL_PURCHASE_INVOICE_HDR.FINAL_INVOICE_HDR_AMOUNT,
-            STATUS_ENTRY: TBL_PURCHASE_INVOICE_HDR.STATUS_ENTRY,
-            REMARKS: TBL_PURCHASE_INVOICE_HDR.REMARKS,
+            purchaseInvoiceRefNo: TBL_PURCHASE_INVOICE_HDR.PURCHASE_INVOICE_REF_NO,
+            invoiceNo: TBL_PURCHASE_INVOICE_HDR.INVOICE_NO,
+            invoiceDate: TBL_PURCHASE_INVOICE_HDR.INVOICE_DATE,
+            poRefNo: TBL_PURCHASE_INVOICE_HDR.PO_REF_NO,
+            companyId: TBL_PURCHASE_INVOICE_HDR.COMPANY_ID,
+            supplierId: TBL_PURCHASE_INVOICE_HDR.SUPPLIER_ID,
+            currencyId: TBL_PURCHASE_INVOICE_HDR.CURRENCY_ID,
+            exchangeRate: TBL_PURCHASE_INVOICE_HDR.EXCHANGE_RATE,
+            totalProductHdrAmount: TBL_PURCHASE_INVOICE_HDR.TOTAL_PRODUCT_HDR_AMOUNT,
+            totalAdditionalCostAmount: TBL_PURCHASE_INVOICE_HDR.TOTAL_ADDITIONAL_COST_AMOUNT,
+            totalProductHdrAmountLc: TBL_PURCHASE_INVOICE_HDR.TOTAL_PRODUCT_HDR_AMOUNT_LC,
+            totalVatHdrAmount: TBL_PURCHASE_INVOICE_HDR.TOTAL_VAT_HDR_AMOUNT,
+            finalInvoiceHdrAmount: TBL_PURCHASE_INVOICE_HDR.FINAL_INVOICE_HDR_AMOUNT,
+            status: TBL_PURCHASE_INVOICE_HDR.STATUS_ENTRY,
+            remarks: TBL_PURCHASE_INVOICE_HDR.REMARKS,
         }).from(TBL_PURCHASE_INVOICE_HDR);
 
         // Fetch all items for these headers to allow frontend filtering and GRN aggregation
         const allItems = await db.select().from(TBL_PURCHASE_INVOICE_DTL);
 
         const data = headers.map(h => {
-            const hItems = allItems.filter(i => i.PURCHASE_INVOICE_REF_NO === h.PURCHASE_INVOICE_REF_NO);
+            const hItems = allItems.filter(i => i.PURCHASE_INVOICE_REF_NO === h.purchaseInvoiceRefNo);
             const grnRefs = [...new Set(hItems.map(i => i.GRN_REF_NO))].filter(Boolean);
             
             return {
                 ...h,
-                GRN_REF_NO: grnRefs.join(', '),
+                grnRefNo: grnRefs.join(', '),
                 items: hItems
             };
         });

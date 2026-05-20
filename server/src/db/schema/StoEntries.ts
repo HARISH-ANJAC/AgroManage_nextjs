@@ -615,7 +615,71 @@ export const TBL_CUSTOMER_RECEIPT_INVOICE_DTL = StoEntriesSchema.table("TBL_CUST
   MODIFIED_MAC_ADDRESS: varchar("MODIFIED_MAC_ADDRESS", { length: 50 }),
 });
 
+export const TBL_PURCHASE_PAYMENT_HDR = StoEntriesSchema.table("TBL_PURCHASE_PAYMENT_HDR", {
+  SNO: bigint("SNO", { mode: "number" }).notNull().generatedAlwaysAsIdentity(),
+  PAYMENT_REF_NO: varchar("PAYMENT_REF_NO", { length: 50 }).primaryKey(),
+  PAYMENT_DATE: timestamp("PAYMENT_DATE", { mode: "date" }),
+  PAYMENT_TYPE: varchar("PAYMENT_TYPE", { length: 50 }),
+  COMPANY_ID: integer("COMPANY_ID").references(() => StoMasterSchema.TBL_COMPANY_MASTER.Company_Id),
+  SUPPLIER_ID: integer("SUPPLIER_ID").references(() => StoMasterSchema.TBL_SUPPLIER_MASTER.Supplier_Id),
+  PAYMENT_MODE_ID: integer("PAYMENT_MODE_ID").references(() => StoMasterSchema.TBL_PAYMENT_MODE_MASTER.PAYMENT_MODE_ID),
+  CR_BANK_CASH_ID: integer("CR_BANK_CASH_ID").references(() => StoMasterSchema.TBL_BANK_MASTER.BANK_ID),
+  DR_BANK_CASH_ID: integer("DR_BANK_CASH_ID").references(() => StoMasterSchema.TBL_BANK_MASTER.BANK_ID),
+  DR_ACCOUNT_ID: integer("DR_ACCOUNT_ID").references(() => StoMasterSchema.TBL_COMPANY_BANK_ACCOUNT_MASTER.Account_Id),
+  TRANSACTION_REF_NO: varchar("TRANSACTION_REF_NO", { length: 100 }),
+  TRANSACTION_DATE: timestamp("TRANSACTION_DATE", { mode: "date" }),
+  CURRENCY_ID: integer("CURRENCY_ID").references(() => StoMasterSchema.TBL_CURRENCY_MASTER.CURRENCY_ID),
+  PAYMENT_AMOUNT: numeric("PAYMENT_AMOUNT", { precision: 30, scale: 2 }),
+  EXCHANGE_RATE: numeric("EXCHANGE_RATE", { precision: 30, scale: 2 }),
+  PAYMENT_AMOUNT_LC: numeric("PAYMENT_AMOUNT_LC", { precision: 30, scale: 2 }),
+  REMARKS: varchar("REMARKS", { length: 1000 }),
+  STATUS_ENTRY: varchar("STATUS_ENTRY", { length: 20 }),
+  CREATED_BY: varchar("CREATED_BY", { length: 50 }),
+  CREATED_DATE: timestamp("CREATED_DATE", { mode: "date" }),
+  CREATED_MAC_ADDRESS: varchar("CREATED_MAC_ADDRESS", { length: 50 }),
+  MODIFIED_BY: varchar("MODIFIED_BY", { length: 50 }),
+  MODIFIED_DATE: timestamp("MODIFIED_DATE", { mode: "date" }),
+  MODIFIED_MAC_ADDRESS: varchar("MODIFIED_MAC_ADDRESS", { length: 50 }),
+  Submitted_By: varchar("Submitted_By", { length: 50 }),
+  Submitted_Date: timestamp("Submitted_Date", { mode: "date" }),
+  Submitted_IP_Address: varchar("Submitted_IP_Address", { length: 50 }),
+});
 
+export const TBL_PURCHASE_PAYMENT_INV_DTL = StoEntriesSchema.table("TBL_PURCHASE_PAYMENT_INV_DTL", {
+  SNO: bigint("SNO", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
+  PAYMENT_REF_NO: varchar("PAYMENT_REF_NO", { length: 50 }).references(() => TBL_PURCHASE_PAYMENT_HDR.PAYMENT_REF_NO),
+  PURCHASE_INVOICE_REF_NO: varchar("PURCHASE_INVOICE_REF_NO", { length: 50 }).references(() => TBL_PURCHASE_INVOICE_HDR.PURCHASE_INVOICE_REF_NO),
+  ACTUAL_INVOICE_AMOUNT: numeric("ACTUAL_INVOICE_AMOUNT", { precision: 30, scale: 2 }),
+  ALREADY_PAID_AMOUNT: numeric("ALREADY_PAID_AMOUNT", { precision: 30, scale: 2 }),
+  OUTSTANDING_INVOICE_AMOUNT: numeric("OUTSTANDING_INVOICE_AMOUNT", { precision: 30, scale: 2 }),
+  PAYMENT_INVOICE_ADJUST_AMOUNT: numeric("PAYMENT_INVOICE_ADJUST_AMOUNT", { precision: 30, scale: 2 }),
+  REMARKS: varchar("REMARKS", { length: 1000 }),
+  STATUS_ENTRY: varchar("STATUS_ENTRY", { length: 20 }),
+  CREATED_BY: varchar("CREATED_BY", { length: 50 }),
+  CREATED_DATE: timestamp("CREATED_DATE", { mode: "date" }),
+  CREATED_MAC_ADDRESS: varchar("CREATED_MAC_ADDRESS", { length: 50 }),
+  MODIFIED_BY: varchar("MODIFIED_BY", { length: 50 }),
+  MODIFIED_DATE: timestamp("MODIFIED_DATE", { mode: "date" }),
+  MODIFIED_MAC_ADDRESS: varchar("MODIFIED_MAC_ADDRESS", { length: 50 }),
+});
+
+export const TBL_PURCHASE_PAYMENT_FILES_UPLOAD = StoEntriesSchema.table("TBL_PURCHASE_PAYMENT_FILES_UPLOAD", {
+  SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
+  PAYMENT_REF_NO: varchar("PAYMENT_REF_NO", { length: 50 }).references(() => TBL_PURCHASE_PAYMENT_HDR.PAYMENT_REF_NO),
+  DOCUMENT_TYPE: varchar("DOCUMENT_TYPE", { length: 50 }),
+  DESCRIPTION_DETAILS: varchar("DESCRIPTION_DETAILS", { length: 100 }),
+  FILE_NAME: varchar("FILE_NAME", { length: 150 }),
+  CONTENT_TYPE: varchar("CONTENT_TYPE", { length: 50 }),
+  CONTENT_DATA: bytea("CONTENT_DATA"),
+  REMARKS: varchar("REMARKS", { length: 1000 }),
+  STATUS_MASTER: varchar("STATUS_MASTER", { length: 20 }),
+  CREATED_BY: varchar("CREATED_BY", { length: 50 }),
+  CREATED_DATE: timestamp("CREATED_DATE", { mode: "date" }),
+  CREATED_IP_ADDRESS: varchar("CREATED_IP_ADDRESS", { length: 50 }),
+  MODIFIED_BY: varchar("MODIFIED_BY", { length: 50 }),
+  MODIFIED_DATE: timestamp("MODIFIED_DATE", { mode: "date" }),
+  MODIFIED_IP_ADDRESS: varchar("MODIFIED_IP_ADDRESS", { length: 50 }),
+});
 
 export const TBL_PURCHASE_ORDER_HDRRelations = relations(TBL_PURCHASE_ORDER_HDR, ({ one }) => ({
   company_master: one(StoMasterSchema.TBL_COMPANY_MASTER, { fields: [TBL_PURCHASE_ORDER_HDR.COMPANY_ID], references: [StoMasterSchema.TBL_COMPANY_MASTER.Company_Id] }),
@@ -624,6 +688,7 @@ export const TBL_PURCHASE_ORDER_HDRRelations = relations(TBL_PURCHASE_ORDER_HDR,
   payment_term_master: one(StoMasterSchema.TBL_PAYMENT_TERM_MASTER, { fields: [TBL_PURCHASE_ORDER_HDR.PAYMENT_TERM_ID], references: [StoMasterSchema.TBL_PAYMENT_TERM_MASTER.PAYMENT_TERM_ID] }),
   currency_master: one(StoMasterSchema.TBL_CURRENCY_MASTER, { fields: [TBL_PURCHASE_ORDER_HDR.CURRENCY_ID], references: [StoMasterSchema.TBL_CURRENCY_MASTER.CURRENCY_ID] }),
 }));
+
 
 
 export const TBL_PURCHASE_ORDER_DTLRelations = relations(TBL_PURCHASE_ORDER_DTL, ({ one }) => ({
@@ -784,17 +849,12 @@ export const TBL_CUSTOMER_RECEIPT_HDRRelations = relations(TBL_CUSTOMER_RECEIPT_
   currency_master: one(StoMasterSchema.TBL_CURRENCY_MASTER, { fields: [TBL_CUSTOMER_RECEIPT_HDR.CURRENCY_ID], references: [StoMasterSchema.TBL_CURRENCY_MASTER.CURRENCY_ID] }),
 }));
 
-
-export const TBL_CUSTOMER_RECEIPT_INVOICE_DTLRelations = relations(TBL_CUSTOMER_RECEIPT_INVOICE_DTL, ({ one }) => ({
-  customer_receipt_hdr: one(TBL_CUSTOMER_RECEIPT_HDR, { fields: [TBL_CUSTOMER_RECEIPT_INVOICE_DTL.RECEIPT_REF_NO], references: [TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_REF_NO] }),
-  tax_invoice_hdr: one(TBL_TAX_INVOICE_HDR, { fields: [TBL_CUSTOMER_RECEIPT_INVOICE_DTL.TAX_INVOICE_REF_NO], references: [TBL_TAX_INVOICE_HDR.TAX_INVOICE_REF_NO] }),
-}));
-
 export const TBL_GOODS_FILES_UPLOAD = StoEntriesSchema.table("TBL_GOODS_FILES_UPLOAD", {
   SNO: integer("SNO").primaryKey().generatedAlwaysAsIdentity(),
   GRN_REF_NO: varchar("GRN_REF_NO", { length: 50 }).references(() => TBL_GOODS_INWARD_GRN_HDR.GRN_REF_NO),
   DOCUMENT_TYPE: varchar("DOCUMENT_TYPE", { length: 50 }),
   DESCRIPTION_DETAILS: varchar("DESCRIPTION_DETAILS", { length: 100 }),
+
   FILE_NAME: varchar("FILE_NAME", { length: 150 }),
   CONTENT_TYPE: varchar("CONTENT_TYPE", { length: 50 }),
   CONTENT_DATA: bytea("CONTENT_DATA"),
@@ -1065,7 +1125,31 @@ export const TBL_CUSTOMER_RECEIPT_FILES_UPLOADRelations = relations(TBL_CUSTOMER
   customer_receipt_hdr: one(TBL_CUSTOMER_RECEIPT_HDR, { fields: [TBL_CUSTOMER_RECEIPT_FILES_UPLOAD.RECEIPT_REF_NO], references: [TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_REF_NO] }),
 }));
 
+export const TBL_CUSTOMER_RECEIPT_INVOICE_DTLRelations = relations(TBL_CUSTOMER_RECEIPT_INVOICE_DTL, ({ one }) => ({
+  customer_receipt_hdr: one(TBL_CUSTOMER_RECEIPT_HDR, { fields: [TBL_CUSTOMER_RECEIPT_INVOICE_DTL.RECEIPT_REF_NO], references: [TBL_CUSTOMER_RECEIPT_HDR.RECEIPT_REF_NO] }),
+  tax_invoice_hdr: one(TBL_TAX_INVOICE_HDR, { fields: [TBL_CUSTOMER_RECEIPT_INVOICE_DTL.TAX_INVOICE_REF_NO], references: [TBL_TAX_INVOICE_HDR.TAX_INVOICE_REF_NO] }),
+}));
 
+export const TBL_PURCHASE_PAYMENT_HDRRelations = relations(TBL_PURCHASE_PAYMENT_HDR, ({ one, many }) => ({
+  company_master: one(StoMasterSchema.TBL_COMPANY_MASTER, { fields: [TBL_PURCHASE_PAYMENT_HDR.COMPANY_ID], references: [StoMasterSchema.TBL_COMPANY_MASTER.Company_Id] }),
+  supplier_master: one(StoMasterSchema.TBL_SUPPLIER_MASTER, { fields: [TBL_PURCHASE_PAYMENT_HDR.SUPPLIER_ID], references: [StoMasterSchema.TBL_SUPPLIER_MASTER.Supplier_Id] }),
+  payment_mode_master: one(StoMasterSchema.TBL_PAYMENT_MODE_MASTER, { fields: [TBL_PURCHASE_PAYMENT_HDR.PAYMENT_MODE_ID], references: [StoMasterSchema.TBL_PAYMENT_MODE_MASTER.PAYMENT_MODE_ID] }),
+  bank_master_cr: one(StoMasterSchema.TBL_BANK_MASTER, { fields: [TBL_PURCHASE_PAYMENT_HDR.CR_BANK_CASH_ID], references: [StoMasterSchema.TBL_BANK_MASTER.BANK_ID] }),
+  bank_master_dr: one(StoMasterSchema.TBL_BANK_MASTER, { fields: [TBL_PURCHASE_PAYMENT_HDR.DR_BANK_CASH_ID], references: [StoMasterSchema.TBL_BANK_MASTER.BANK_ID] }),
+  company_bank_account_master: one(StoMasterSchema.TBL_COMPANY_BANK_ACCOUNT_MASTER, { fields: [TBL_PURCHASE_PAYMENT_HDR.DR_ACCOUNT_ID], references: [StoMasterSchema.TBL_COMPANY_BANK_ACCOUNT_MASTER.Account_Id] }),
+  currency_master: one(StoMasterSchema.TBL_CURRENCY_MASTER, { fields: [TBL_PURCHASE_PAYMENT_HDR.CURRENCY_ID], references: [StoMasterSchema.TBL_CURRENCY_MASTER.CURRENCY_ID] }),
+  details: many(TBL_PURCHASE_PAYMENT_INV_DTL),
+  files: many(TBL_PURCHASE_PAYMENT_FILES_UPLOAD),
+}));
+
+export const TBL_PURCHASE_PAYMENT_INV_DTLRelations = relations(TBL_PURCHASE_PAYMENT_INV_DTL, ({ one }) => ({
+  purchase_payment_hdr: one(TBL_PURCHASE_PAYMENT_HDR, { fields: [TBL_PURCHASE_PAYMENT_INV_DTL.PAYMENT_REF_NO], references: [TBL_PURCHASE_PAYMENT_HDR.PAYMENT_REF_NO] }),
+  purchase_invoice_hdr: one(TBL_PURCHASE_INVOICE_HDR, { fields: [TBL_PURCHASE_PAYMENT_INV_DTL.PURCHASE_INVOICE_REF_NO], references: [TBL_PURCHASE_INVOICE_HDR.PURCHASE_INVOICE_REF_NO] }),
+}));
+
+export const TBL_PURCHASE_PAYMENT_FILES_UPLOADRelations = relations(TBL_PURCHASE_PAYMENT_FILES_UPLOAD, ({ one }) => ({
+  purchase_payment_hdr: one(TBL_PURCHASE_PAYMENT_HDR, { fields: [TBL_PURCHASE_PAYMENT_FILES_UPLOAD.PAYMENT_REF_NO], references: [TBL_PURCHASE_PAYMENT_HDR.PAYMENT_REF_NO] }),
+}));
 
 export const TBL_SALES_PROFORMA_HDRRelations = relations(TBL_SALES_PROFORMA_HDR, ({ one }) => ({
   company_master: one(StoMasterSchema.TBL_COMPANY_MASTER, { fields: [TBL_SALES_PROFORMA_HDR.COMPANY_ID], references: [StoMasterSchema.TBL_COMPANY_MASTER.Company_Id] }),

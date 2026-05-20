@@ -1,8 +1,11 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { useJournalStore } from "@/hooks/useJournalStore";
 import { toast } from "sonner";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import {
   Search,
   FileText,
@@ -23,7 +26,8 @@ import {
   Building2,
   Clock,
   History,
-  AlertCircle
+  AlertCircle,
+  Plus
 } from "lucide-react";
 
 // ── Module badge colors (Light Theme Optimized) ──────────────────────────────
@@ -216,6 +220,7 @@ function JournalDrawer({ refNo, onClose, onDelete }: { refNo: string; onClose: (
 const ALL_MODULES = ["ALL", "PURCHASE_INVOICE", "TAX_INVOICE", "SALES_ORDER", "SALES_PROFORMA", "CUSTOMER_RECEIPT", "EXPENSE", "OPENING_BALANCE"];
 
 export default function JournalsPage() {
+  const router = useRouter();
   const { journals, isLoading, deleteJournal } = useJournalStore();
   const [search, setSearch] = useState("");
   const [moduleFilter, setModuleFilter] = useState("ALL");
@@ -249,6 +254,76 @@ export default function JournalsPage() {
     } catch {
       toast.error("Operation failed. Ensure you have proper permissions.");
     }
+  };
+
+  const handleExportCSV = () => {
+    if (filtered.length === 0) {
+      return toast.error("No data to export");
+    }
+
+    const headers = ["Reference", "Date", "Module", "Source Ref", "Narration", "Created By", "Entries"];
+    const rows = filtered.map(j => [
+      j.journalRefNo,
+      fmt(j.journalDate),
+      j.moduleName,
+      j.moduleRefNo || "",
+      `"${(j.narration || "").replace(/"/g, '""')}"`, // Handle quotes and commas in narration
+      j.createdBy,
+      j.lineCount || 0
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(r => r.join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `journals_export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("CSV Exported successfully!");
+  };
+
+  const handleExportPDF = () => {
+    if (filtered.length === 0) return toast.error("No data to export");
+
+    const doc = new jsPDF();
+    
+    // Add Title
+    doc.setFontSize(20);
+    doc.text("Journal Entries Report", 14, 22);
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+    doc.text(`Filter Mode: ${moduleFilter === 'ALL' ? 'All Modules' : moduleFilter}`, 14, 36);
+
+    const tableHeaders = [["Reference", "Date", "Module", "Source Ref", "Created By", "Entries"]];
+    const tableData = filtered.map(j => [
+      j.journalRefNo,
+      fmt(j.journalDate),
+      j.moduleName,
+      j.moduleRefNo || "—",
+      j.createdBy,
+      j.lineCount || 0
+    ]);
+
+    autoTable(doc, {
+      head: tableHeaders,
+      body: tableData,
+      startY: 45,
+      theme: 'striped',
+      styles: { fontSize: 8, cellPadding: 3 },
+      headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+    });
+
+    doc.save(`journals_report_${new Date().toISOString().split('T')[0]}.pdf`);
+    toast.success("PDF Exported successfully!");
   };
 
   return (
@@ -318,9 +393,26 @@ export default function JournalsPage() {
             />
           </div>
           <div className="flex items-center gap-2 w-full md:w-auto">
-            <button className="flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">
-              <Download size={16} />
-              Export CSV
+            <button 
+              onClick={() => router.push("/journals/create")}
+              className="flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+            >
+              <Plus size={16} strokeWidth={3} />
+              Create JV
+            </button>
+            <button 
+              onClick={handleExportCSV}
+              className="flex items-center gap-2 px-4 py-3.5 rounded-2xl bg-white border border-slate-200 text-slate-600 text-sm font-bold hover:bg-slate-50 transition-all shadow-sm"
+            >
+              <Download size={16} className="text-slate-400" />
+              CSV
+            </button>
+            <button 
+              onClick={handleExportPDF}
+              className="flex items-center gap-2 px-4 py-3.5 rounded-2xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
+            >
+              <FileText size={16} />
+              PDF
             </button>
           </div>
         </div>

@@ -62,7 +62,7 @@ export default function PurchaseOrdersPage() {
     const h = fullOrder.header;
     const items = fullOrder.items || [];
     const doc = new jsPDF();
-    const currency = h.CURRENCY_ID === 2 ? "TZS" : "$";
+    const currency = h.CURRENCY_ID === 2 ? "TZS" : "TZS";
 
     // Header & Logo — Logo LEFT, Title RIGHT
     // Handle logo with proper aspect ratio (placed on the left)
@@ -241,7 +241,7 @@ export default function PurchaseOrdersPage() {
                 {filtered.map((o: any) => {
                   const h = o.header || o;
                   const itemsCount = o.items?.length || h.itemsCount || 0;
-                  const currency = h.CURRENCY_ID === 2 ? "TZS" : "$";
+                  const currency = h.CURRENCY_ID === 2 ? "TZS" : "TZS";
 
                   // Approval summary
                   const headStatus = h.PURCHASE_HEAD_RESPONSE_STATUS || "Pending";

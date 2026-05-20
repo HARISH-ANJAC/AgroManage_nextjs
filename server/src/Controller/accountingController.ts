@@ -167,6 +167,35 @@ export const getJournalEntries = async (req: Request, res: Response): Promise<Re
 };
 
 /**
+ * Create a Manual Journal Entry
+ */
+export const createJournal = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const { journalDate, companyId, narration, details, audit } = req.body;
+        
+        if (!companyId || !details || details.length < 2) {
+            return res.status(400).json({ msg: "Company ID and at least 2 ledger details are required" });
+        }
+
+        const journalRefNo = await db.transaction(async (tx) => {
+            return await createJournalEntry(tx, {
+                journalDate: journalDate ? new Date(journalDate) : new Date(),
+                companyId: Number(companyId),
+                moduleName: "MANUAL_JOURNAL",
+                moduleRefNo: "MANUAL",
+                narration: narration || "Manual Journal Entry",
+                createdBy: audit?.user || "System"
+            }, details);
+        });
+
+        return res.status(201).json({ msg: "Journal entry created successfully", journalRefNo });
+    } catch (error: any) {
+        console.error("Create Journal Error:", error);
+        return res.status(400).json({ msg: error.message || "Failed to create journal entry" });
+    }
+};
+
+/**
  * Fetches a single Journal Entry by Ref No (header + full detail lines)
  */
 export const getJournalById = async (req: Request, res: Response): Promise<Response> => {

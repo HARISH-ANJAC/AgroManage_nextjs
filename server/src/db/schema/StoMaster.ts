@@ -180,6 +180,7 @@ export const TBL_EXCHANGE_RATE_MASTER = StoMasterSchema.table("TBL_EXCHANGE_RATE
   Company_ID: integer("Company_ID").references(() => TBL_COMPANY_MASTER.Company_Id),
   CURRENCY_ID: integer("CURRENCY_ID").references(() => TBL_CURRENCY_MASTER.CURRENCY_ID),
   Exchange_Rate: numeric("Exchange_Rate", { precision: 30, scale: 5 }),
+  EFFECTIVE_DATE: timestamp("EFFECTIVE_DATE", { mode: "date" }),
   REMARKS: varchar("REMARKS", { length: 1000 }),
   STATUS_MASTER: varchar("STATUS_MASTER", { length: 20 }),
   CREATED_BY: varchar("CREATED_BY", { length: 50 }),

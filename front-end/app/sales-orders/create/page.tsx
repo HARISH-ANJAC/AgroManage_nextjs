@@ -1032,7 +1032,7 @@ function CreateSalesOrderContent(): JSX.Element {
                           <SelectContent>
                             <SelectItem value="none">None</SelectItem>
                             {purchaseInvoices?.filter((inv: any) => {
-                              const piRef = String(inv.PURCHASE_INVOICE_REF_NO || inv.id || inv.SNO || "").trim();
+                              const piRef = String(inv.purchaseInvoiceRefNo || inv.PURCHASE_INVOICE_REF_NO || inv.id || inv.SNO || "").trim();
                               const selectedRef = String(item.selectedPiNo || "").trim();
                               if (selectedRef && piRef === selectedRef) return true;
 
@@ -1041,7 +1041,7 @@ function CreateSalesOrderContent(): JSX.Element {
                               }
                               return true;
                             }).map((inv: any) => {
-                              const val = String(inv.PURCHASE_INVOICE_REF_NO || inv.id || inv.SNO).trim();
+                              const val = String(inv.purchaseInvoiceRefNo || inv.PURCHASE_INVOICE_REF_NO || inv.id || inv.SNO).trim();
                               return (
                                 <SelectItem key={val} value={val}>
                                   {val}

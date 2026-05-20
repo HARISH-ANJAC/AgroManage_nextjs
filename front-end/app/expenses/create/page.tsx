@@ -41,6 +41,26 @@ interface AllocationLine {
   poDtlSno?: number;
 }
 
+const EXPENSE_MAPPING = [
+  { name: "Accomodation - March", category: "Marketing exp" },
+  { name: "Company Secretary - Feb", category: "Admin exp" },
+  { name: "House Rent (April - September)", category: "Admin exp" },
+  { name: "Furniture", category: "Admin exp" },
+  { name: "Fuel (Full Tanks) - March", category: "Selling & Distribution" },
+  { name: "Fuel (Full Tank)", category: "Selling & Distribution" },
+  { name: "Rent - Godown", category: "Admin exp" },
+  { name: "Company Secretary - Mar", category: "Admin exp" },
+  { name: "Weigh Machines", category: "Admin exp" },
+  { name: "Transport Soya to Godown", category: "Selling & Distribution" },
+  { name: "Offloading at the Godown", category: "Selling & Distribution" },
+  { name: "Fumigation Tabs", category: "Direct Exp" },
+  { name: "Tents", category: "Admin exp" },
+  { name: "Business License", category: "Admin exp" },
+  { name: "PDPC Invoice", category: "Admin exp" }
+];
+
+const MAIN_CATEGORIES = Array.from(new Set(EXPENSE_MAPPING.map(e => e.category)));
+
 function CreateExpenseContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -63,7 +83,8 @@ function CreateExpenseContent() {
     accountHeadId: undefined as number | undefined,
     expenseSupplierId: undefined as number | undefined,
     expenseAgainst: "PO",
-    expenseType: "General",
+    expenseCategory: "",
+    expenseType: "",
     traEfdReceiptNo: "",
     currencyId: 1, // Default to Base Currency (1)
     exchangeRate: 1,
@@ -112,6 +133,7 @@ function CreateExpenseContent() {
       const load = async () => {
         const data = await getExpenseById(editId);
         if (data && data.header) {
+          const mappedExp = EXPENSE_MAPPING.find(e => e.name === data.header.expenseType);
           setHeader({
             expenseDate: data.header.expenseDate ? new Date(data.header.expenseDate).toISOString().split('T')[0] : today,
             companyId: data.header.companyId || undefined,
@@ -119,7 +141,8 @@ function CreateExpenseContent() {
             accountHeadId: data.header.accountHeadId || undefined,
             expenseSupplierId: data.header.expenseSupplierId || undefined,
             expenseAgainst: data.header.expenseAgainst || "PO",
-            expenseType: data.header.expenseType || "General",
+            expenseCategory: mappedExp ? mappedExp.category : (data.header.expenseCategory || ""),
+            expenseType: data.header.expenseType || "",
             traEfdReceiptNo: data.header.traEfdReceiptNo || "",
             currencyId: data.header.currencyId || 1,
             exchangeRate: Number(data.header.exchangeRate) || 1,
@@ -307,17 +330,33 @@ function CreateExpenseContent() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Expense Type <span className="text-red-500">*</span></Label>
-                  <Select value={header.expenseType} onValueChange={(v) => setHeader({ ...header, expenseType: v })}>
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Main Category <span className="text-red-500">*</span></Label>
+                  <Select value={header.expenseCategory || ""} onValueChange={(v) => setHeader({ ...header, expenseCategory: v, expenseType: "" })}>
                     <SelectTrigger className="rounded-xl h-11 font-bold">
-                      <SelectValue placeholder="Select Expense Type" />
+                      <SelectValue placeholder="Select Category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="General">General</SelectItem>
-                      <SelectItem value="Administrative">Administrative</SelectItem>
-                      <SelectItem value="Operational">Operational</SelectItem>
-                      <SelectItem value="Marketing">Marketing</SelectItem>
-                      <SelectItem value="Maintenance">Maintenance</SelectItem>
+                      {MAIN_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      {header.expenseCategory && !MAIN_CATEGORIES.includes(header.expenseCategory) && (
+                        <SelectItem value={header.expenseCategory}>{header.expenseCategory}</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8]">Expense Name <span className="text-red-500">*</span></Label>
+                  <Select value={header.expenseType || ""} onValueChange={(v) => setHeader({ ...header, expenseType: v })} disabled={!header.expenseCategory}>
+                    <SelectTrigger className="rounded-xl h-11 font-bold">
+                      <SelectValue placeholder="Select Expense" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EXPENSE_MAPPING.filter(e => e.category === header.expenseCategory).map((e, idx) => (
+                        <SelectItem key={`${e.name}-${idx}`} value={e.name}>{e.name}</SelectItem>
+                      ))}
+                      {header.expenseType && !EXPENSE_MAPPING.find(e => e.name === header.expenseType) && (
+                        <SelectItem value={header.expenseType}>{header.expenseType}</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
