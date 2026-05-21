@@ -40,7 +40,7 @@ export const TBL_BILLING_LOCATION_MASTER = StoMasterSchema.table("tbl_Billing_Lo
 export const TBL_BANK_MASTER = StoMasterSchema.table("TBL_BANK_MASTER", {
   BANK_ID: integer("BANK_ID").primaryKey().generatedAlwaysAsIdentity(),
   BANK_NAME: varchar("BANK_NAME", { length: 50 }).unique(),
-  ADDRESS: varchar("ADDRESS", { length: 50 }),
+  ADDRESS: varchar("ADDRESS", { length: 250 }),
   REMARKS: varchar("REMARKS", { length: 1000 }),
   STATUS_MASTER: varchar("STATUS_MASTER", { length: 20 }),
   CREATED_BY: varchar("CREATED_BY", { length: 50 }),

@@ -409,18 +409,16 @@ export const getAll = async (req: Request, res: Response): Promise<Response> => 
                         Object.keys(joinedData).forEach(col => {
                             const normalizedCol = normalizeKey(col);
 
-                            // Map all columns with prefix: e.g. PRODUCT + productName -> productName
-                            // If the column already contains the prefix or is a generic 'name' field, map it smartly
-                            if (col.toLowerCase().includes("name")) {
-                                final[prefix + "Name"] = joinedData[col];
-                            }
-
+                            const isExactNameMatch = col.toLowerCase() === `${join.prefix.toLowerCase()}_name` || col.toLowerCase() === `${join.prefix.toLowerCase()}name` || col.toLowerCase() === "name";
+                            
                             // Also map the original normalized column with prefix for safe access
                             // This ensures keys like 'productName' or 'unitPrice' work if they come from the join
                             final[prefix + normalizedCol.charAt(0).toUpperCase() + normalizedCol.slice(1)] = joinedData[col];
 
-                            // Compatibility: map common name fields directly if not already set
-                            if (!final[prefix + "Name"] && col.toLowerCase().includes("name")) {
+                            if (isExactNameMatch) {
+                                final[prefix + "Name"] = joinedData[col];
+                            } else if (!final[prefix + "Name"] && col.toLowerCase().includes("name") && !col.toLowerCase().includes("zone")) {
+                                // Fallback: map common name fields directly if not already set
                                 final[prefix + "Name"] = joinedData[col];
                             }
                         });
