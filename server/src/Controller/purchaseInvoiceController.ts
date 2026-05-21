@@ -11,7 +11,8 @@ import {
     TBL_JOURNAL_DTL,
     TBL_COST_CENTER_ALLOCATION,
     TBL_COST_CENTER_BUDGET,
-    TBL_COST_CENTER_MASTER
+    TBL_COST_CENTER_MASTER,
+    TBL_PURCHASE_PAYMENT_INV_DTL
 } from "../db/schema/index.js";
 import { eq, inArray, and, lte, gte } from "drizzle-orm";
 import fs from "fs";
@@ -592,6 +593,17 @@ export const deletePurchaseInvoice = async (req: Request, res: Response): Promis
     const id = decodeURIComponent(idRaw);
     try {
         await db.transaction(async (tx) => {
+            const paymentRefs = await tx.select({
+                paymentRefNo: TBL_PURCHASE_PAYMENT_INV_DTL.PAYMENT_REF_NO
+            })
+                .from(TBL_PURCHASE_PAYMENT_INV_DTL)
+                .where(eq(TBL_PURCHASE_PAYMENT_INV_DTL.PURCHASE_INVOICE_REF_NO, id));
+
+            if (paymentRefs.length > 0) {
+                const refs = [...new Set(paymentRefs.map(p => p.paymentRefNo).filter(Boolean))].join(", ");
+                throw new Error(`Cannot delete Purchase Invoice ${id}. It is linked to Purchase Payment ${refs}. Delete or reverse the payment first.`);
+            }
+
             // Delete Journal Entries
             const oldJournals = await tx.select({ journalRefNo: TBL_JOURNAL_HDR.JOURNAL_REF_NO })
                 .from(TBL_JOURNAL_HDR)

@@ -74,7 +74,17 @@ export function usePurchaseBookingStore() {
         method: "DELETE",
         headers: { 'Authorization': `Bearer ${getAuthToken()}` }
       });
-      if (!response.ok) throw new Error(await response.text());
+      if (!response.ok) {
+        const text = await response.text();
+        let message = text;
+        try {
+          const body = JSON.parse(text);
+          message = body.msg || body.message || text;
+        } catch {
+          message = text;
+        }
+        throw new Error(message);
+      }
       return response.json();
     },
     onSuccess: () => {
