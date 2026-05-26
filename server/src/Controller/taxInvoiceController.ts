@@ -51,7 +51,26 @@ export const getTaxInvoices = async (req: Request, res: Response): Promise<Respo
             .leftJoin(TBL_CUSTOMER_MASTER, eq(TBL_TAX_INVOICE_HDR.CUSTOMER_ID, TBL_CUSTOMER_MASTER.Customer_Id))
             .orderBy(desc(TBL_TAX_INVOICE_HDR.CREATED_DATE));
 
-        return res.status(200).json(data);
+        const receiptsQuery = await db.select({
+            taxInvoiceRefNo: TBL_CUSTOMER_RECEIPT_INVOICE_DTL.TAX_INVOICE_REF_NO,
+            totalPaid: sql<string>`COALESCE(SUM(CAST(${TBL_CUSTOMER_RECEIPT_INVOICE_DTL.RECEIPT_INVOICE_ADJUST_AMOUNT} AS NUMERIC)), 0)`
+        })
+        .from(TBL_CUSTOMER_RECEIPT_INVOICE_DTL)
+        .groupBy(TBL_CUSTOMER_RECEIPT_INVOICE_DTL.TAX_INVOICE_REF_NO);
+
+        const receiptsMap = new Map(receiptsQuery.map(r => [r.taxInvoiceRefNo, Number(r.totalPaid) || 0]));
+
+        const result = data.map(h => {
+            const alreadyPaid = receiptsMap.get(h.taxInvoiceRefNo!) || 0;
+            const outstanding = Math.max(0, (Number(h.finalSalesAmount) || 0) - alreadyPaid);
+            return {
+                ...h,
+                alreadyPaidAmount: alreadyPaid,
+                outstandingAmount: outstanding
+            };
+        });
+
+        return res.status(200).json(result);
     } catch (error) {
         console.error(error);
         return res.status(500).json({ msg: "Internal server error" });

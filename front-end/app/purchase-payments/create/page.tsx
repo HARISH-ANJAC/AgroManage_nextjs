@@ -127,15 +127,16 @@ function CreatePaymentContent() {
     const loadInvoices = async () => {
       if (header.supplierId && !editId) {
         const data = await getUnpaidInvoicesBySupplierId(header.supplierId);
-        setInvoices(data);
+        const unpaid = data.filter((inv: any) => inv.outstandingAmount === undefined || Number(inv.outstandingAmount) > 0);
+        setInvoices(unpaid);
 
         // Auto-allocate if possible
-        setItems(data.map((inv: any) => ({
+        setItems(unpaid.map((inv: any) => ({
           id: inv.purchaseInvoiceRefNo,
           purchaseInvoiceRefNo: inv.purchaseInvoiceRefNo,
           actualInvoiceAmount: Number(inv.finalInvoiceHdrAmount) || 0,
-          alreadyPaidAmount: 0,
-          outstandingInvoiceAmount: Number(inv.finalInvoiceHdrAmount) || 0,
+          alreadyPaidAmount: Number(inv.alreadyPaidAmount) || 0,
+          outstandingInvoiceAmount: inv.outstandingAmount !== undefined ? Number(inv.outstandingAmount) : (Number(inv.finalInvoiceHdrAmount) || 0),
           paymentInvoiceAdjustAmount: 0,
           remarks: ""
         })));
@@ -380,7 +381,7 @@ function CreatePaymentContent() {
                       <tr key={item.id} className="hover:bg-[#F8FAFC]/50 transition-colors">
                         <td className="px-6 py-4 font-bold text-[#1E293B]">{item.purchaseInvoiceRefNo}</td>
                         <td className="px-4 py-4 text-center text-[#64748B]">{(item.actualInvoiceAmount).toLocaleString()}</td>
-                        <td className="px-4 py-4 text-center font-bold text-red-500">{(item.outstandingInvoiceAmount).toLocaleString()}</td>
+                        <td className="px-4 py-4 text-center font-bold text-red-500">{(item.outstandingInvoiceAmount - (item.paymentInvoiceAdjustAmount || 0)).toLocaleString()}</td>
                         <td className="px-6 py-4">
                           <Input
                             type="number"

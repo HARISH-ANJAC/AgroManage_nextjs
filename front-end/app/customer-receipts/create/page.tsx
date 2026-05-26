@@ -129,15 +129,16 @@ function CreateReceiptContent() {
     const loadInvoices = async () => {
       if (header.customerId && !editId) {
         const data = await getUnpaidInvoicesByCustomerId(header.customerId);
-        setInvoices(data);
+        const unpaid = data.filter((inv: any) => inv.outstandingAmount === undefined || Number(inv.outstandingAmount) > 0);
+        setInvoices(unpaid);
 
         // Auto-allocate if possible
-        setItems(data.map((inv: any) => ({
+        setItems(unpaid.map((inv: any) => ({
           id: inv.taxInvoiceRefNo,
           taxInvoiceRefNo: inv.taxInvoiceRefNo,
           actualInvoiceAmount: Number(inv.finalSalesAmount) || 0,
-          alreadyPaidAmount: 0,
-          outstandingInvoiceAmount: Number(inv.finalSalesAmount) || 0,
+          alreadyPaidAmount: Number(inv.alreadyPaidAmount) || 0,
+          outstandingInvoiceAmount: inv.outstandingAmount !== undefined ? Number(inv.outstandingAmount) : (Number(inv.finalSalesAmount) || 0),
           receiptInvoiceAdjustAmount: 0,
           remarks: ""
         })));
@@ -383,7 +384,7 @@ function CreateReceiptContent() {
                       <tr key={item.id} className="hover:bg-[#F8FAFC]/50 transition-colors">
                         <td className="px-6 py-4 font-bold text-[#1E293B]">{item.taxInvoiceRefNo}</td>
                         <td className="px-4 py-4 text-center text-[#64748B]">{(item.actualInvoiceAmount).toLocaleString()}</td>
-                        <td className="px-4 py-4 text-center font-bold text-red-500">{(item.outstandingInvoiceAmount).toLocaleString()}</td>
+                        <td className="px-4 py-4 text-center font-bold text-red-500">{(item.outstandingInvoiceAmount - (item.receiptInvoiceAdjustAmount || 0)).toLocaleString()}</td>
                         <td className="px-6 py-4">
                           <Input
                             type="number"

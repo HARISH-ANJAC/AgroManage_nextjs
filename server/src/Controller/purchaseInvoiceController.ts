@@ -78,14 +78,28 @@ export const getPurchaseInvoices = async (req: Request, res: Response): Promise<
         // Fetch all items for these headers to allow frontend filtering and GRN aggregation
         const allItems = await db.select().from(TBL_PURCHASE_INVOICE_DTL);
 
+        // Fetch sum of payments made towards each invoice
+        const paymentsQuery = await db.select({
+            purchaseInvoiceRefNo: TBL_PURCHASE_PAYMENT_INV_DTL.PURCHASE_INVOICE_REF_NO,
+            totalPaid: sql<string>`COALESCE(SUM(CAST(${TBL_PURCHASE_PAYMENT_INV_DTL.PAYMENT_INVOICE_ADJUST_AMOUNT} AS NUMERIC)), 0)`
+        })
+        .from(TBL_PURCHASE_PAYMENT_INV_DTL)
+        .groupBy(TBL_PURCHASE_PAYMENT_INV_DTL.PURCHASE_INVOICE_REF_NO);
+
+        const paymentsMap = new Map(paymentsQuery.map(p => [p.purchaseInvoiceRefNo, Number(p.totalPaid) || 0]));
+
         const data = headers.map(h => {
+            const alreadyPaid = paymentsMap.get(h.purchaseInvoiceRefNo!) || 0;
+            const outstanding = Math.max(0, (Number(h.finalInvoiceHdrAmount) || 0) - alreadyPaid);
             const hItems = allItems.filter(i => i.PURCHASE_INVOICE_REF_NO === h.purchaseInvoiceRefNo);
             const grnRefs = [...new Set(hItems.map(i => i.GRN_REF_NO))].filter(Boolean);
             
             return {
                 ...h,
                 grnRefNo: grnRefs.join(', '),
-                items: hItems
+                items: hItems,
+                alreadyPaidAmount: alreadyPaid,
+                outstandingAmount: outstanding
             };
         });
         
