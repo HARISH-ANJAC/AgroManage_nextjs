@@ -1,5 +1,5 @@
 {
-  "id": "ad51718f-3491-490d-8870-41afc902ef86",
+  "id": "36fddaad-0a51-4318-b52c-c3a994068ae5",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -133,9 +133,20 @@
       "columns": {
         "ACCOUNT_HEAD_ID": {
           "name": "ACCOUNT_HEAD_ID",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_ACCOUNTS_HEAD_MASTER_ACCOUNT_HEAD_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "ACCOUNT_HEAD_NAME": {
           "name": "ACCOUNT_HEAD_NAME",
@@ -214,9 +225,20 @@
       "columns": {
         "LEDGER_GROUP_ID": {
           "name": "LEDGER_GROUP_ID",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_ACCOUNTS_LEDGER_GROUP_MASTER_LEDGER_GROUP_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "LEDGER_GROUP_NAME": {
           "name": "LEDGER_GROUP_NAME",
@@ -295,9 +317,20 @@
       "columns": {
         "LEDGER_ID": {
           "name": "LEDGER_ID",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_ACCOUNTS_LEDGER_MASTER_LEDGER_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "Company_id": {
           "name": "Company_id",
@@ -407,9 +440,20 @@
       "columns": {
         "ADDITIONAL_COST_TYPE_ID": {
           "name": "ADDITIONAL_COST_TYPE_ID",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_ADDITIONAL_COST_TYPE_MASTER_ADDITIONAL_COST_TYPE_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "ADDITIONAL_COST_TYPE_NAME": {
           "name": "ADDITIONAL_COST_TYPE_NAME",
@@ -488,9 +532,20 @@
       "columns": {
         "BANK_ID": {
           "name": "BANK_ID",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_BANK_MASTER_BANK_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "BANK_NAME": {
           "name": "BANK_NAME",
@@ -500,7 +555,7 @@
         },
         "ADDRESS": {
           "name": "ADDRESS",
-          "type": "varchar(50)",
+          "type": "varchar(250)",
           "primaryKey": false,
           "notNull": false
         },
@@ -575,9 +630,20 @@
       "columns": {
         "Billing_Location_Id": {
           "name": "Billing_Location_Id",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tbl_Billing_Location_Master_Billing_Location_Id_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "Billing_Location_Name": {
           "name": "Billing_Location_Name",
@@ -656,15 +722,309 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "stomaster.TBL_BILLING_LOCATION_WISE_PRODUCT_PRICE": {
+      "name": "TBL_BILLING_LOCATION_WISE_PRODUCT_PRICE",
+      "schema": "stomaster",
+      "columns": {
+        "SNO": {
+          "name": "SNO",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_BILLING_LOCATION_WISE_PRODUCT_PRICE_SNO_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "Billing_Location_Id": {
+          "name": "Billing_Location_Id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Main_Category_Id": {
+          "name": "Main_Category_Id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Sub_Category_Id": {
+          "name": "Sub_Category_Id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Product_Id": {
+          "name": "Product_Id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Unit_Price": {
+          "name": "Unit_Price",
+          "type": "numeric(30, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Effective_From": {
+          "name": "Effective_From",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Effective_To": {
+          "name": "Effective_To",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Remarks": {
+          "name": "Remarks",
+          "type": "varchar(2000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Status_Master": {
+          "name": "Status_Master",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'Active'"
+        },
+        "Created_By": {
+          "name": "Created_By",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Created_Date": {
+          "name": "Created_Date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "Created_Mac_Address": {
+          "name": "Created_Mac_Address",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Modified_By": {
+          "name": "Modified_By",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Modified_Date": {
+          "name": "Modified_Date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Modified_Mac_Address": {
+          "name": "Modified_Mac_Address",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_BILLING_LOCATION_WISE_PRODUCT_PRICE_Billing_Location_Id_tbl_Billing_Location_Master_Billing_Location_Id_fk": {
+          "name": "TBL_BILLING_LOCATION_WISE_PRODUCT_PRICE_Billing_Location_Id_tbl_Billing_Location_Master_Billing_Location_Id_fk",
+          "tableFrom": "TBL_BILLING_LOCATION_WISE_PRODUCT_PRICE",
+          "tableTo": "tbl_Billing_Location_Master",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "Billing_Location_Id"
+          ],
+          "columnsTo": [
+            "Billing_Location_Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_BILLING_LOCATION_WISE_PRODUCT_PRICE_Product_Id_TBL_PRODUCT_MASTER_PRODUCT_ID_fk": {
+          "name": "TBL_BILLING_LOCATION_WISE_PRODUCT_PRICE_Product_Id_TBL_PRODUCT_MASTER_PRODUCT_ID_fk",
+          "tableFrom": "TBL_BILLING_LOCATION_WISE_PRODUCT_PRICE",
+          "tableTo": "TBL_PRODUCT_MASTER",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "Product_Id"
+          ],
+          "columnsTo": [
+            "PRODUCT_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "stomaster.TBL_BUDGET_ALERT_LOG": {
+      "name": "TBL_BUDGET_ALERT_LOG",
+      "schema": "stomaster",
+      "columns": {
+        "ALERT_ID": {
+          "name": "ALERT_ID",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_BUDGET_ALERT_LOG_ALERT_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "Company_ID": {
+          "name": "Company_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "COST_CENTER_ID": {
+          "name": "COST_CENTER_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ALERT_TYPE": {
+          "name": "ALERT_TYPE",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "THRESHOLD_PERCENT": {
+          "name": "THRESHOLD_PERCENT",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CURRENT_USAGE_PERCENT": {
+          "name": "CURRENT_USAGE_PERCENT",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "BUDGETED_AMOUNT": {
+          "name": "BUDGETED_AMOUNT",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ACTUAL_EXPENSE": {
+          "name": "ACTUAL_EXPENSE",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "COMMITTED_AMOUNT": {
+          "name": "COMMITTED_AMOUNT",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ALERT_DATE": {
+          "name": "ALERT_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "IS_NOTIFIED": {
+          "name": "IS_NOTIFIED",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "CREATED_BY": {
+          "name": "CREATED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_DATE": {
+          "name": "CREATED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_BUDGET_ALERT_LOG_Company_ID_tbl_Company_Master_Company_Id_fk": {
+          "name": "TBL_BUDGET_ALERT_LOG_Company_ID_tbl_Company_Master_Company_Id_fk",
+          "tableFrom": "TBL_BUDGET_ALERT_LOG",
+          "tableTo": "tbl_Company_Master",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "Company_ID"
+          ],
+          "columnsTo": [
+            "Company_Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_BUDGET_ALERT_LOG_COST_CENTER_ID_TBL_COST_CENTER_MASTER_COST_CENTER_ID_fk": {
+          "name": "TBL_BUDGET_ALERT_LOG_COST_CENTER_ID_TBL_COST_CENTER_MASTER_COST_CENTER_ID_fk",
+          "tableFrom": "TBL_BUDGET_ALERT_LOG",
+          "tableTo": "TBL_COST_CENTER_MASTER",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "COST_CENTER_ID"
+          ],
+          "columnsTo": [
+            "COST_CENTER_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "stomaster.tbl_Change_Password_Log": {
       "name": "tbl_Change_Password_Log",
       "schema": "stomaster",
       "columns": {
         "Sno": {
           "name": "Sno",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tbl_Change_Password_Log_Sno_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "login_id": {
           "name": "login_id",
@@ -768,9 +1128,20 @@
       "columns": {
         "Account_Id": {
           "name": "Account_Id",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tbl_Company_Bank_Account_Master_Account_Id_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "Company_id": {
           "name": "Company_id",
@@ -935,15 +1306,160 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "stomaster.TBL_COMPANY_BASE_CURRENCY": {
+      "name": "TBL_COMPANY_BASE_CURRENCY",
+      "schema": "stomaster",
+      "columns": {
+        "ID": {
+          "name": "ID",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_COMPANY_BASE_CURRENCY_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "Company_ID": {
+          "name": "Company_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "BASE_CURRENCY_ID": {
+          "name": "BASE_CURRENCY_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "UNREALIZED_GAIN_ACCOUNT_CODE": {
+          "name": "UNREALIZED_GAIN_ACCOUNT_CODE",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "UNREALIZED_LOSS_ACCOUNT_CODE": {
+          "name": "UNREALIZED_LOSS_ACCOUNT_CODE",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "REALIZED_GAIN_ACCOUNT_CODE": {
+          "name": "REALIZED_GAIN_ACCOUNT_CODE",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "REALIZED_LOSS_ACCOUNT_CODE": {
+          "name": "REALIZED_LOSS_ACCOUNT_CODE",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "AUTO_REVALUATION_FREQUENCY": {
+          "name": "AUTO_REVALUATION_FREQUENCY",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'MONTHLY'"
+        },
+        "CREATED_BY": {
+          "name": "CREATED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_DATE": {
+          "name": "CREATED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_BY": {
+          "name": "MODIFIED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_DATE": {
+          "name": "MODIFIED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_COMPANY_BASE_CURRENCY_Company_ID_tbl_Company_Master_Company_Id_fk": {
+          "name": "TBL_COMPANY_BASE_CURRENCY_Company_ID_tbl_Company_Master_Company_Id_fk",
+          "tableFrom": "TBL_COMPANY_BASE_CURRENCY",
+          "tableTo": "tbl_Company_Master",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "Company_ID"
+          ],
+          "columnsTo": [
+            "Company_Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_COMPANY_BASE_CURRENCY_BASE_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk": {
+          "name": "TBL_COMPANY_BASE_CURRENCY_BASE_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk",
+          "tableFrom": "TBL_COMPANY_BASE_CURRENCY",
+          "tableTo": "TBL_CURRENCY_MASTER",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "BASE_CURRENCY_ID"
+          ],
+          "columnsTo": [
+            "CURRENCY_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "TBL_COMPANY_BASE_CURRENCY_Company_ID_unique": {
+          "name": "TBL_COMPANY_BASE_CURRENCY_Company_ID_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "Company_ID"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "stomaster.tbl_Company_Master": {
       "name": "tbl_Company_Master",
       "schema": "stomaster",
       "columns": {
         "Company_Id": {
           "name": "Company_Id",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tbl_Company_Master_Company_Id_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "Company_Name": {
           "name": "Company_Name",
@@ -1146,15 +1662,452 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "stomaster.TBL_COST_CENTER_ALLOCATION": {
+      "name": "TBL_COST_CENTER_ALLOCATION",
+      "schema": "stomaster",
+      "columns": {
+        "ALLOCATION_ID": {
+          "name": "ALLOCATION_ID",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_COST_CENTER_ALLOCATION_ALLOCATION_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "Company_ID": {
+          "name": "Company_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "COST_CENTER_ID": {
+          "name": "COST_CENTER_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "SOURCE_TABLE": {
+          "name": "SOURCE_TABLE",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "SOURCE_REF_NO": {
+          "name": "SOURCE_REF_NO",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "SOURCE_LINE_SNO": {
+          "name": "SOURCE_LINE_SNO",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "EXPENSE_DATE": {
+          "name": "EXPENSE_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "EXPENSE_CATEGORY": {
+          "name": "EXPENSE_CATEGORY",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CURRENCY_ID": {
+          "name": "CURRENCY_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "EXPENSE_AMOUNT": {
+          "name": "EXPENSE_AMOUNT",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "LC_AMOUNT": {
+          "name": "LC_AMOUNT",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ALLOCATION_PERCENTAGE": {
+          "name": "ALLOCATION_PERCENTAGE",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ALLOCATED_AMOUNT": {
+          "name": "ALLOCATED_AMOUNT",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "APPROVAL_STATUS": {
+          "name": "APPROVAL_STATUS",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'PENDING'"
+        },
+        "STATUS_ENTRY": {
+          "name": "STATUS_ENTRY",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'Active'"
+        },
+        "REMARKS": {
+          "name": "REMARKS",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_BY": {
+          "name": "CREATED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_DATE": {
+          "name": "CREATED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_COST_CENTER_ALLOCATION_Company_ID_tbl_Company_Master_Company_Id_fk": {
+          "name": "TBL_COST_CENTER_ALLOCATION_Company_ID_tbl_Company_Master_Company_Id_fk",
+          "tableFrom": "TBL_COST_CENTER_ALLOCATION",
+          "tableTo": "tbl_Company_Master",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "Company_ID"
+          ],
+          "columnsTo": [
+            "Company_Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_COST_CENTER_ALLOCATION_COST_CENTER_ID_TBL_COST_CENTER_MASTER_COST_CENTER_ID_fk": {
+          "name": "TBL_COST_CENTER_ALLOCATION_COST_CENTER_ID_TBL_COST_CENTER_MASTER_COST_CENTER_ID_fk",
+          "tableFrom": "TBL_COST_CENTER_ALLOCATION",
+          "tableTo": "TBL_COST_CENTER_MASTER",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "COST_CENTER_ID"
+          ],
+          "columnsTo": [
+            "COST_CENTER_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_COST_CENTER_ALLOCATION_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk": {
+          "name": "TBL_COST_CENTER_ALLOCATION_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk",
+          "tableFrom": "TBL_COST_CENTER_ALLOCATION",
+          "tableTo": "TBL_CURRENCY_MASTER",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "CURRENCY_ID"
+          ],
+          "columnsTo": [
+            "CURRENCY_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "stomaster.TBL_COST_CENTER_BUDGET": {
+      "name": "TBL_COST_CENTER_BUDGET",
+      "schema": "stomaster",
+      "columns": {
+        "BUDGET_ID": {
+          "name": "BUDGET_ID",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_COST_CENTER_BUDGET_BUDGET_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "Company_ID": {
+          "name": "Company_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "COST_CENTER_ID": {
+          "name": "COST_CENTER_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "FINANCIAL_YEAR": {
+          "name": "FINANCIAL_YEAR",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "PERIOD_START_DATE": {
+          "name": "PERIOD_START_DATE",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "PERIOD_END_DATE": {
+          "name": "PERIOD_END_DATE",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "BUDGET_AMOUNT": {
+          "name": "BUDGET_AMOUNT",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ACTUAL_EXPENSE": {
+          "name": "ACTUAL_EXPENSE",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0'"
+        },
+        "COMMITTED_AMOUNT": {
+          "name": "COMMITTED_AMOUNT",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0'"
+        },
+        "AVAILABLE_BUDGET": {
+          "name": "AVAILABLE_BUDGET",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "VARIANCE_AMOUNT": {
+          "name": "VARIANCE_AMOUNT",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "VARIANCE_PERCENTAGE": {
+          "name": "VARIANCE_PERCENTAGE",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "STATUS": {
+          "name": "STATUS",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'Active'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_COST_CENTER_BUDGET_Company_ID_tbl_Company_Master_Company_Id_fk": {
+          "name": "TBL_COST_CENTER_BUDGET_Company_ID_tbl_Company_Master_Company_Id_fk",
+          "tableFrom": "TBL_COST_CENTER_BUDGET",
+          "tableTo": "tbl_Company_Master",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "Company_ID"
+          ],
+          "columnsTo": [
+            "Company_Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_COST_CENTER_BUDGET_COST_CENTER_ID_TBL_COST_CENTER_MASTER_COST_CENTER_ID_fk": {
+          "name": "TBL_COST_CENTER_BUDGET_COST_CENTER_ID_TBL_COST_CENTER_MASTER_COST_CENTER_ID_fk",
+          "tableFrom": "TBL_COST_CENTER_BUDGET",
+          "tableTo": "TBL_COST_CENTER_MASTER",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "COST_CENTER_ID"
+          ],
+          "columnsTo": [
+            "COST_CENTER_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "stomaster.TBL_COST_CENTER_MASTER": {
+      "name": "TBL_COST_CENTER_MASTER",
+      "schema": "stomaster",
+      "columns": {
+        "COST_CENTER_ID": {
+          "name": "COST_CENTER_ID",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_COST_CENTER_MASTER_COST_CENTER_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "Company_ID": {
+          "name": "Company_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "COST_CENTER_CODE": {
+          "name": "COST_CENTER_CODE",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "COST_CENTER_NAME": {
+          "name": "COST_CENTER_NAME",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "COST_CENTER_TYPE": {
+          "name": "COST_CENTER_TYPE",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "DESCRIPTION": {
+          "name": "DESCRIPTION",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "BUDGET_ALERT_THRESHOLD": {
+          "name": "BUDGET_ALERT_THRESHOLD",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 80
+        },
+        "STATUS": {
+          "name": "STATUS",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'Active'"
+        },
+        "CREATED_BY": {
+          "name": "CREATED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_DATE": {
+          "name": "CREATED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_MAC_ADDRESS": {
+          "name": "CREATED_MAC_ADDRESS",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_COST_CENTER_MASTER_Company_ID_tbl_Company_Master_Company_Id_fk": {
+          "name": "TBL_COST_CENTER_MASTER_Company_ID_tbl_Company_Master_Company_Id_fk",
+          "tableFrom": "TBL_COST_CENTER_MASTER",
+          "tableTo": "tbl_Company_Master",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "Company_ID"
+          ],
+          "columnsTo": [
+            "Company_Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "TBL_COST_CENTER_MASTER_COST_CENTER_CODE_unique": {
+          "name": "TBL_COST_CENTER_MASTER_COST_CENTER_CODE_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "COST_CENTER_CODE"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "stomaster.tbl_country_master": {
       "name": "tbl_country_master",
       "schema": "stomaster",
       "columns": {
         "Country_Id": {
           "name": "Country_Id",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tbl_country_master_Country_Id_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "Country_Name": {
           "name": "Country_Name",
@@ -1188,7 +2141,7 @@
         },
         "Batch_No": {
           "name": "Batch_No",
-          "type": "varchar(2)",
+          "type": "varchar(50)",
           "primaryKey": false,
           "notNull": false
         },
@@ -1263,9 +2216,20 @@
       "columns": {
         "CURRENCY_ID": {
           "name": "CURRENCY_ID",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_CURRENCY_MASTER_CURRENCY_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "CURRENCY_NAME": {
           "name": "CURRENCY_NAME",
@@ -1356,9 +2320,20 @@
       "columns": {
         "Sno": {
           "name": "Sno",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tbl_Customer_Address_Details_Sno_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "Customer_Id": {
           "name": "Customer_Id",
@@ -1462,9 +2437,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_CUSTOMER_COMPANY_WISE_BILLING_LOCATION_MAPPING_SNO_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "Customer_Id": {
           "name": "Customer_Id",
@@ -1602,9 +2588,20 @@
       "columns": {
         "Sno": {
           "name": "Sno",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tbl_Customer_Credit_Limit_Details_Sno_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "Company_id": {
           "name": "Company_id",
@@ -1896,9 +2893,20 @@
       "columns": {
         "Customer_Id": {
           "name": "Customer_Id",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tbl_Customer_Master_Customer_Id_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "Customer_Name": {
           "name": "Customer_Name",
@@ -2315,9 +3323,20 @@
       "columns": {
         "PAYMENT_MODE_ID": {
           "name": "PAYMENT_MODE_ID",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_CUSTOMER_PAYMENT_MODE_MASTER_PAYMENT_MODE_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "PAYMENT_MODE_NAME": {
           "name": "PAYMENT_MODE_NAME",
@@ -2394,9 +3413,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_CUSTOMER_PRODUCT_VAT_PERCENTAGE_SETTINGS_SNO_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "Company_id": {
           "name": "Company_id",
@@ -2580,9 +3610,20 @@
       "columns": {
         "Sno": {
           "name": "Sno",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tbl_Customer_Wise_Product_Price_Settings_Sno_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "Company_id": {
           "name": "Company_id",
@@ -2870,15 +3911,124 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "stomaster.tbl_Department_Master": {
+      "name": "tbl_Department_Master",
+      "schema": "stomaster",
+      "columns": {
+        "Department_Id": {
+          "name": "Department_Id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tbl_Department_Master_Department_Id_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "Department_Name": {
+          "name": "Department_Name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Department_Description": {
+          "name": "Department_Description",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Remarks": {
+          "name": "Remarks",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Status_Master": {
+          "name": "Status_Master",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Created_By": {
+          "name": "Created_By",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Created_Date": {
+          "name": "Created_Date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Created_Mac_Address": {
+          "name": "Created_Mac_Address",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Modified_By": {
+          "name": "Modified_By",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Modified_Date": {
+          "name": "Modified_Date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Modified_Mac_Address": {
+          "name": "Modified_Mac_Address",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "tbl_Department_Master_Department_Name_unique": {
+          "name": "tbl_Department_Master_Department_Name_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "Department_Name"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "stomaster.tbl_District_Master": {
       "name": "tbl_District_Master",
       "schema": "stomaster",
       "columns": {
         "District_id": {
           "name": "District_id",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tbl_District_Master_District_id_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "Country_Id": {
           "name": "Country_Id",
@@ -2996,15 +4146,156 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "stomaster.tbl_Employee_Master": {
+      "name": "tbl_Employee_Master",
+      "schema": "stomaster",
+      "columns": {
+        "Employee_Id": {
+          "name": "Employee_Id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tbl_Employee_Master_Employee_Id_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "Card_Id": {
+          "name": "Card_Id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Name": {
+          "name": "Name",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "Role": {
+          "name": "Role",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Department": {
+          "name": "Department",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Phone": {
+          "name": "Phone",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Email": {
+          "name": "Email",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Remarks": {
+          "name": "Remarks",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Status_Master": {
+          "name": "Status_Master",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'Active'"
+        },
+        "Created_By": {
+          "name": "Created_By",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Created_Date": {
+          "name": "Created_Date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Created_Mac_Address": {
+          "name": "Created_Mac_Address",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Modified_By": {
+          "name": "Modified_By",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Modified_Date": {
+          "name": "Modified_Date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Modified_Mac_Address": {
+          "name": "Modified_Mac_Address",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "tbl_Employee_Master_Department_tbl_Department_Master_Department_Id_fk": {
+          "name": "tbl_Employee_Master_Department_tbl_Department_Master_Department_Id_fk",
+          "tableFrom": "tbl_Employee_Master",
+          "tableTo": "tbl_Department_Master",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "Department"
+          ],
+          "columnsTo": [
+            "Department_Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "stomaster.TBL_EXCHANGE_RATE_MASTER": {
       "name": "TBL_EXCHANGE_RATE_MASTER",
       "schema": "stomaster",
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_EXCHANGE_RATE_MASTER_SNO_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "Company_ID": {
           "name": "Company_ID",
@@ -3021,6 +4312,12 @@
         "Exchange_Rate": {
           "name": "Exchange_Rate",
           "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "EFFECTIVE_DATE": {
+          "name": "EFFECTIVE_DATE",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": false
         },
@@ -3110,15 +4407,147 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "stomaster.TBL_EXCHANGE_RATE_USAGE_LOG": {
+      "name": "TBL_EXCHANGE_RATE_USAGE_LOG",
+      "schema": "stomaster",
+      "columns": {
+        "LOG_ID": {
+          "name": "LOG_ID",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_EXCHANGE_RATE_USAGE_LOG_LOG_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "Company_ID": {
+          "name": "Company_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "EXCHANGE_RATE_SNO": {
+          "name": "EXCHANGE_RATE_SNO",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "TRANSACTION_ID": {
+          "name": "TRANSACTION_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "RATE_VALUE_AT_USAGE": {
+          "name": "RATE_VALUE_AT_USAGE",
+          "type": "numeric(30, 8)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "APPLIED_DATE": {
+          "name": "APPLIED_DATE",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "USAGE_TYPE": {
+          "name": "USAGE_TYPE",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_BY": {
+          "name": "CREATED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_DATE": {
+          "name": "CREATED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_EXCHANGE_RATE_USAGE_LOG_Company_ID_tbl_Company_Master_Company_Id_fk": {
+          "name": "TBL_EXCHANGE_RATE_USAGE_LOG_Company_ID_tbl_Company_Master_Company_Id_fk",
+          "tableFrom": "TBL_EXCHANGE_RATE_USAGE_LOG",
+          "tableTo": "tbl_Company_Master",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "Company_ID"
+          ],
+          "columnsTo": [
+            "Company_Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_EXCHANGE_RATE_USAGE_LOG_EXCHANGE_RATE_SNO_TBL_EXCHANGE_RATE_MASTER_SNO_fk": {
+          "name": "TBL_EXCHANGE_RATE_USAGE_LOG_EXCHANGE_RATE_SNO_TBL_EXCHANGE_RATE_MASTER_SNO_fk",
+          "tableFrom": "TBL_EXCHANGE_RATE_USAGE_LOG",
+          "tableTo": "TBL_EXCHANGE_RATE_MASTER",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "EXCHANGE_RATE_SNO"
+          ],
+          "columnsTo": [
+            "SNO"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_EXCHANGE_RATE_USAGE_LOG_TRANSACTION_ID_TBL_MULTI_CURRENCY_TRANSACTIONS_TRANSACTION_ID_fk": {
+          "name": "TBL_EXCHANGE_RATE_USAGE_LOG_TRANSACTION_ID_TBL_MULTI_CURRENCY_TRANSACTIONS_TRANSACTION_ID_fk",
+          "tableFrom": "TBL_EXCHANGE_RATE_USAGE_LOG",
+          "tableTo": "TBL_MULTI_CURRENCY_TRANSACTIONS",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "TRANSACTION_ID"
+          ],
+          "columnsTo": [
+            "TRANSACTION_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "stomaster.tbl_field_dtl": {
       "name": "tbl_field_dtl",
       "schema": "stomaster",
       "columns": {
         "activity_id_fld_dtl": {
           "name": "activity_id_fld_dtl",
-          "type": "bigserial",
+          "type": "bigint",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tbl_field_dtl_activity_id_fld_dtl_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "field_id_fld_dtl": {
           "name": "field_id_fld_dtl",
@@ -3216,9 +4645,20 @@
       "columns": {
         "field_id_fld_hdr": {
           "name": "field_id_fld_hdr",
-          "type": "bigserial",
+          "type": "bigint",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tbl_field_hdr_field_id_fld_hdr_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "project_name_fld_hdr": {
           "name": "project_name_fld_hdr",
@@ -3303,15 +4743,145 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "stomaster.TBL_FINANCIAL_YEAR_MASTER": {
+      "name": "TBL_FINANCIAL_YEAR_MASTER",
+      "schema": "stomaster",
+      "columns": {
+        "Year_Id": {
+          "name": "Year_Id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_FINANCIAL_YEAR_MASTER_Year_Id_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "Company_Id": {
+          "name": "Company_Id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Financial_Year": {
+          "name": "Financial_Year",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Start_Date": {
+          "name": "Start_Date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "End_Date": {
+          "name": "End_Date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Is_Current": {
+          "name": "Is_Current",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'No'"
+        },
+        "Status_Master": {
+          "name": "Status_Master",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'Active'"
+        },
+        "Created_By": {
+          "name": "Created_By",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Created_Date": {
+          "name": "Created_Date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Created_Mac_Address": {
+          "name": "Created_Mac_Address",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Modified_By": {
+          "name": "Modified_By",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Modified_Date": {
+          "name": "Modified_Date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Modified_Mac_Address": {
+          "name": "Modified_Mac_Address",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_FINANCIAL_YEAR_MASTER_Company_Id_tbl_Company_Master_Company_Id_fk": {
+          "name": "TBL_FINANCIAL_YEAR_MASTER_Company_Id_tbl_Company_Master_Company_Id_fk",
+          "tableFrom": "TBL_FINANCIAL_YEAR_MASTER",
+          "tableTo": "tbl_Company_Master",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "Company_Id"
+          ],
+          "columnsTo": [
+            "Company_Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "stomaster.tbl_Location_Master": {
       "name": "tbl_Location_Master",
       "schema": "stomaster",
       "columns": {
         "Location_Id": {
           "name": "Location_Id",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tbl_Location_Master_Location_Id_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "Location_Name": {
           "name": "Location_Name",
@@ -3390,15 +4960,221 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "stomaster.TBL_MULTI_CURRENCY_TRANSACTIONS": {
+      "name": "TBL_MULTI_CURRENCY_TRANSACTIONS",
+      "schema": "stomaster",
+      "columns": {
+        "TRANSACTION_ID": {
+          "name": "TRANSACTION_ID",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_MULTI_CURRENCY_TRANSACTIONS_TRANSACTION_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "Company_ID": {
+          "name": "Company_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "DOCUMENT_TYPE": {
+          "name": "DOCUMENT_TYPE",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "DOCUMENT_NUMBER": {
+          "name": "DOCUMENT_NUMBER",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "DOCUMENT_DATE": {
+          "name": "DOCUMENT_DATE",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "TRANSACTION_CURRENCY_ID": {
+          "name": "TRANSACTION_CURRENCY_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "TRANSACTION_AMOUNT": {
+          "name": "TRANSACTION_AMOUNT",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "BASE_CURRENCY_ID": {
+          "name": "BASE_CURRENCY_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "BASE_AMOUNT": {
+          "name": "BASE_AMOUNT",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "EXCHANGE_RATE_USED": {
+          "name": "EXCHANGE_RATE_USED",
+          "type": "numeric(30, 8)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "EXCHANGE_RATE_SNO": {
+          "name": "EXCHANGE_RATE_SNO",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ORIGINAL_BASE_AMOUNT": {
+          "name": "ORIGINAL_BASE_AMOUNT",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "SETTLED_AMOUNT": {
+          "name": "SETTLED_AMOUNT",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0'"
+        },
+        "STATUS": {
+          "name": "STATUS",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'PENDING'"
+        },
+        "REMARKS": {
+          "name": "REMARKS",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_BY": {
+          "name": "CREATED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_DATE": {
+          "name": "CREATED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_MAC_ADDRESS": {
+          "name": "CREATED_MAC_ADDRESS",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_BY": {
+          "name": "MODIFIED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_DATE": {
+          "name": "MODIFIED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_MAC_ADDRESS": {
+          "name": "MODIFIED_MAC_ADDRESS",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_MULTI_CURRENCY_TRANSACTIONS_Company_ID_tbl_Company_Master_Company_Id_fk": {
+          "name": "TBL_MULTI_CURRENCY_TRANSACTIONS_Company_ID_tbl_Company_Master_Company_Id_fk",
+          "tableFrom": "TBL_MULTI_CURRENCY_TRANSACTIONS",
+          "tableTo": "tbl_Company_Master",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "Company_ID"
+          ],
+          "columnsTo": [
+            "Company_Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_MULTI_CURRENCY_TRANSACTIONS_TRANSACTION_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk": {
+          "name": "TBL_MULTI_CURRENCY_TRANSACTIONS_TRANSACTION_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk",
+          "tableFrom": "TBL_MULTI_CURRENCY_TRANSACTIONS",
+          "tableTo": "TBL_CURRENCY_MASTER",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "TRANSACTION_CURRENCY_ID"
+          ],
+          "columnsTo": [
+            "CURRENCY_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_MULTI_CURRENCY_TRANSACTIONS_BASE_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk": {
+          "name": "TBL_MULTI_CURRENCY_TRANSACTIONS_BASE_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk",
+          "tableFrom": "TBL_MULTI_CURRENCY_TRANSACTIONS",
+          "tableTo": "TBL_CURRENCY_MASTER",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "BASE_CURRENCY_ID"
+          ],
+          "columnsTo": [
+            "CURRENCY_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "stomaster.TBL_PAYMENT_MODE_MASTER": {
       "name": "TBL_PAYMENT_MODE_MASTER",
       "schema": "stomaster",
       "columns": {
         "PAYMENT_MODE_ID": {
           "name": "PAYMENT_MODE_ID",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_PAYMENT_MODE_MASTER_PAYMENT_MODE_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "PAYMENT_MODE_NAME": {
           "name": "PAYMENT_MODE_NAME",
@@ -3483,9 +5259,20 @@
       "columns": {
         "PAYMENT_TERM_ID": {
           "name": "PAYMENT_TERM_ID",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_PAYMENT_TERM_MASTER_PAYMENT_TERM_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "PAYMENT_TERM_NAME": {
           "name": "PAYMENT_TERM_NAME",
@@ -3564,9 +5351,20 @@
       "columns": {
         "Sno": {
           "name": "Sno",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tbl_Product_Company_Main_Category_Mapping_Sno_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "Company_Id": {
           "name": "Company_Id",
@@ -3672,9 +5470,20 @@
       "columns": {
         "MAIN_CATEGORY_ID": {
           "name": "MAIN_CATEGORY_ID",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_PRODUCT_MAIN_CATEGORY_MASTER_MAIN_CATEGORY_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "MAIN_CATEGORY_NAME": {
           "name": "MAIN_CATEGORY_NAME",
@@ -3753,9 +5562,20 @@
       "columns": {
         "PRODUCT_ID": {
           "name": "PRODUCT_ID",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_PRODUCT_MASTER_PRODUCT_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "PRODUCT_NAME": {
           "name": "PRODUCT_NAME",
@@ -3911,9 +5731,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_PRODUCT_OPENING_STOCK_SNO_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "OPENING_STOCK_DATE": {
           "name": "OPENING_STOCK_DATE",
@@ -4091,9 +5922,20 @@
       "columns": {
         "SUB_CATEGORY_ID": {
           "name": "SUB_CATEGORY_ID",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_PRODUCT_SUB_CATEGORY_MASTER_SUB_CATEGORY_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "SUB_CATEGORY_NAME": {
           "name": "SUB_CATEGORY_NAME",
@@ -4187,15 +6029,537 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "stomaster.TBL_PROFIT_CENTER_ALLOCATION": {
+      "name": "TBL_PROFIT_CENTER_ALLOCATION",
+      "schema": "stomaster",
+      "columns": {
+        "ALLOCATION_ID": {
+          "name": "ALLOCATION_ID",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_PROFIT_CENTER_ALLOCATION_ALLOCATION_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "Company_ID": {
+          "name": "Company_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "PROFIT_CENTER_ID": {
+          "name": "PROFIT_CENTER_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "SOURCE_TABLE": {
+          "name": "SOURCE_TABLE",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "SOURCE_REF_NO": {
+          "name": "SOURCE_REF_NO",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "SOURCE_LINE_SNO": {
+          "name": "SOURCE_LINE_SNO",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "REVENUE_DATE": {
+          "name": "REVENUE_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "REVENUE_CATEGORY": {
+          "name": "REVENUE_CATEGORY",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CURRENCY_ID": {
+          "name": "CURRENCY_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "REVENUE_AMOUNT": {
+          "name": "REVENUE_AMOUNT",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "LC_AMOUNT": {
+          "name": "LC_AMOUNT",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ALLOCATION_PERCENTAGE": {
+          "name": "ALLOCATION_PERCENTAGE",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ALLOCATED_AMOUNT": {
+          "name": "ALLOCATED_AMOUNT",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "STATUS_ENTRY": {
+          "name": "STATUS_ENTRY",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'Active'"
+        },
+        "CREATED_BY": {
+          "name": "CREATED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_DATE": {
+          "name": "CREATED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_PROFIT_CENTER_ALLOCATION_Company_ID_tbl_Company_Master_Company_Id_fk": {
+          "name": "TBL_PROFIT_CENTER_ALLOCATION_Company_ID_tbl_Company_Master_Company_Id_fk",
+          "tableFrom": "TBL_PROFIT_CENTER_ALLOCATION",
+          "tableTo": "tbl_Company_Master",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "Company_ID"
+          ],
+          "columnsTo": [
+            "Company_Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_PROFIT_CENTER_ALLOCATION_PROFIT_CENTER_ID_TBL_PROFIT_CENTER_MASTER_PROFIT_CENTER_ID_fk": {
+          "name": "TBL_PROFIT_CENTER_ALLOCATION_PROFIT_CENTER_ID_TBL_PROFIT_CENTER_MASTER_PROFIT_CENTER_ID_fk",
+          "tableFrom": "TBL_PROFIT_CENTER_ALLOCATION",
+          "tableTo": "TBL_PROFIT_CENTER_MASTER",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "PROFIT_CENTER_ID"
+          ],
+          "columnsTo": [
+            "PROFIT_CENTER_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_PROFIT_CENTER_ALLOCATION_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk": {
+          "name": "TBL_PROFIT_CENTER_ALLOCATION_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk",
+          "tableFrom": "TBL_PROFIT_CENTER_ALLOCATION",
+          "tableTo": "TBL_CURRENCY_MASTER",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "CURRENCY_ID"
+          ],
+          "columnsTo": [
+            "CURRENCY_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "stomaster.TBL_PROFIT_CENTER_MASTER": {
+      "name": "TBL_PROFIT_CENTER_MASTER",
+      "schema": "stomaster",
+      "columns": {
+        "PROFIT_CENTER_ID": {
+          "name": "PROFIT_CENTER_ID",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_PROFIT_CENTER_MASTER_PROFIT_CENTER_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "Company_ID": {
+          "name": "Company_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "PROFIT_CENTER_CODE": {
+          "name": "PROFIT_CENTER_CODE",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "PROFIT_CENTER_NAME": {
+          "name": "PROFIT_CENTER_NAME",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MANAGER_NAME": {
+          "name": "MANAGER_NAME",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "STATUS": {
+          "name": "STATUS",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'Active'"
+        },
+        "CREATED_BY": {
+          "name": "CREATED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_DATE": {
+          "name": "CREATED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_MAC_ADDRESS": {
+          "name": "CREATED_MAC_ADDRESS",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_PROFIT_CENTER_MASTER_Company_ID_tbl_Company_Master_Company_Id_fk": {
+          "name": "TBL_PROFIT_CENTER_MASTER_Company_ID_tbl_Company_Master_Company_Id_fk",
+          "tableFrom": "TBL_PROFIT_CENTER_MASTER",
+          "tableTo": "tbl_Company_Master",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "Company_ID"
+          ],
+          "columnsTo": [
+            "Company_Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "TBL_PROFIT_CENTER_MASTER_PROFIT_CENTER_CODE_unique": {
+          "name": "TBL_PROFIT_CENTER_MASTER_PROFIT_CENTER_CODE_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "PROFIT_CENTER_CODE"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "stomaster.TBL_PROFIT_CENTER_TARGET": {
+      "name": "TBL_PROFIT_CENTER_TARGET",
+      "schema": "stomaster",
+      "columns": {
+        "TARGET_ID": {
+          "name": "TARGET_ID",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_PROFIT_CENTER_TARGET_TARGET_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "Company_ID": {
+          "name": "Company_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "PROFIT_CENTER_ID": {
+          "name": "PROFIT_CENTER_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "FINANCIAL_YEAR": {
+          "name": "FINANCIAL_YEAR",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "PERIOD_NAME": {
+          "name": "PERIOD_NAME",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "PERIOD_START_DATE": {
+          "name": "PERIOD_START_DATE",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "PERIOD_END_DATE": {
+          "name": "PERIOD_END_DATE",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "TARGET_AMOUNT": {
+          "name": "TARGET_AMOUNT",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ACTUAL_REVENUE": {
+          "name": "ACTUAL_REVENUE",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0'"
+        },
+        "ACHIEVEMENT_PERCENT": {
+          "name": "ACHIEVEMENT_PERCENT",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_PROFIT_CENTER_TARGET_Company_ID_tbl_Company_Master_Company_Id_fk": {
+          "name": "TBL_PROFIT_CENTER_TARGET_Company_ID_tbl_Company_Master_Company_Id_fk",
+          "tableFrom": "TBL_PROFIT_CENTER_TARGET",
+          "tableTo": "tbl_Company_Master",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "Company_ID"
+          ],
+          "columnsTo": [
+            "Company_Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_PROFIT_CENTER_TARGET_PROFIT_CENTER_ID_TBL_PROFIT_CENTER_MASTER_PROFIT_CENTER_ID_fk": {
+          "name": "TBL_PROFIT_CENTER_TARGET_PROFIT_CENTER_ID_TBL_PROFIT_CENTER_MASTER_PROFIT_CENTER_ID_fk",
+          "tableFrom": "TBL_PROFIT_CENTER_TARGET",
+          "tableTo": "TBL_PROFIT_CENTER_MASTER",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "PROFIT_CENTER_ID"
+          ],
+          "columnsTo": [
+            "PROFIT_CENTER_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "stomaster.TBL_REALIZED_GAIN_LOSS": {
+      "name": "TBL_REALIZED_GAIN_LOSS",
+      "schema": "stomaster",
+      "columns": {
+        "GL_ID": {
+          "name": "GL_ID",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_REALIZED_GAIN_LOSS_GL_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "Company_ID": {
+          "name": "Company_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "TRANSACTION_ID": {
+          "name": "TRANSACTION_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "SETTLEMENT_DATE": {
+          "name": "SETTLEMENT_DATE",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "SETTLEMENT_AMOUNT": {
+          "name": "SETTLEMENT_AMOUNT",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "SETTLEMENT_RATE": {
+          "name": "SETTLEMENT_RATE",
+          "type": "numeric(30, 8)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "SETTLEMENT_BASE_AMOUNT": {
+          "name": "SETTLEMENT_BASE_AMOUNT",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ORIGINAL_BASE_AMOUNT": {
+          "name": "ORIGINAL_BASE_AMOUNT",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "REALIZED_GAIN_LOSS": {
+          "name": "REALIZED_GAIN_LOSS",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "GL_TYPE": {
+          "name": "GL_TYPE",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "JOURNAL_VOUCHER_NO": {
+          "name": "JOURNAL_VOUCHER_NO",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_BY": {
+          "name": "CREATED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_DATE": {
+          "name": "CREATED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_REALIZED_GAIN_LOSS_Company_ID_tbl_Company_Master_Company_Id_fk": {
+          "name": "TBL_REALIZED_GAIN_LOSS_Company_ID_tbl_Company_Master_Company_Id_fk",
+          "tableFrom": "TBL_REALIZED_GAIN_LOSS",
+          "tableTo": "tbl_Company_Master",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "Company_ID"
+          ],
+          "columnsTo": [
+            "Company_Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_REALIZED_GAIN_LOSS_TRANSACTION_ID_TBL_MULTI_CURRENCY_TRANSACTIONS_TRANSACTION_ID_fk": {
+          "name": "TBL_REALIZED_GAIN_LOSS_TRANSACTION_ID_TBL_MULTI_CURRENCY_TRANSACTIONS_TRANSACTION_ID_fk",
+          "tableFrom": "TBL_REALIZED_GAIN_LOSS",
+          "tableTo": "TBL_MULTI_CURRENCY_TRANSACTIONS",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "TRANSACTION_ID"
+          ],
+          "columnsTo": [
+            "TRANSACTION_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "stomaster.TBL_REGION_MASTER": {
       "name": "TBL_REGION_MASTER",
       "schema": "stomaster",
       "columns": {
         "REGION_ID": {
           "name": "REGION_ID",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_REGION_MASTER_REGION_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "REGION_NAME": {
           "name": "REGION_NAME",
@@ -4319,9 +6683,20 @@
       "columns": {
         "ROLE_ID": {
           "name": "ROLE_ID",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_ROLE_MASTER_ROLE_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "ROLE_NAME": {
           "name": "ROLE_NAME",
@@ -4406,9 +6781,20 @@
       "columns": {
         "Sales_Person_ID": {
           "name": "Sales_Person_ID",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_SALES_PERSON_MASTER_Sales_Person_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "Emp_Id": {
           "name": "Emp_Id",
@@ -4527,9 +6913,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_SCHEDULER_SETTINGS_SNO_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "JOB_NAME": {
           "name": "JOB_NAME",
@@ -4597,9 +6994,20 @@
       "columns": {
         "Store_Id": {
           "name": "Store_Id",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tbl_Store_Master_Store_Id_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "Store_Name": {
           "name": "Store_Name",
@@ -4741,9 +7149,20 @@
       "columns": {
         "Sno": {
           "name": "Sno",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tbl_Store_Product_Minimum_Stock_Sno_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "Company_id": {
           "name": "Company_id",
@@ -4939,9 +7358,20 @@
       "columns": {
         "Supplier_Id": {
           "name": "Supplier_Id",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tbl_Supplier_Master_Supplier_Id_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "Supplier_Type": {
           "name": "Supplier_Type",
@@ -5119,15 +7549,263 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "stomaster.tbl_Tax_Master": {
+      "name": "tbl_Tax_Master",
+      "schema": "stomaster",
+      "columns": {
+        "Tax_Id": {
+          "name": "Tax_Id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tbl_Tax_Master_Tax_Id_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "Name": {
+          "name": "Name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "Rate": {
+          "name": "Rate",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "Description": {
+          "name": "Description",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Status_Master": {
+          "name": "Status_Master",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'Active'"
+        },
+        "Created_By": {
+          "name": "Created_By",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Created_Date": {
+          "name": "Created_Date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "Created_Mac_Address": {
+          "name": "Created_Mac_Address",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Modified_By": {
+          "name": "Modified_By",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Modified_Date": {
+          "name": "Modified_Date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Modified_Mac_Address": {
+          "name": "Modified_Mac_Address",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "stomaster.TBL_UNREALIZED_GAIN_LOSS": {
+      "name": "TBL_UNREALIZED_GAIN_LOSS",
+      "schema": "stomaster",
+      "columns": {
+        "GL_ID": {
+          "name": "GL_ID",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_UNREALIZED_GAIN_LOSS_GL_ID_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "Company_ID": {
+          "name": "Company_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "TRANSACTION_ID": {
+          "name": "TRANSACTION_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ACCOUNT_TYPE": {
+          "name": "ACCOUNT_TYPE",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "REVALUATION_DATE": {
+          "name": "REVALUATION_DATE",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "OLD_BASE_AMOUNT": {
+          "name": "OLD_BASE_AMOUNT",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "NEW_BASE_AMOUNT": {
+          "name": "NEW_BASE_AMOUNT",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "UNREALIZED_GAIN_LOSS": {
+          "name": "UNREALIZED_GAIN_LOSS",
+          "type": "numeric(30, 5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "GL_TYPE": {
+          "name": "GL_TYPE",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "JOURNAL_VOUCHER_NO": {
+          "name": "JOURNAL_VOUCHER_NO",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "REVERSAL_JOURNAL_VOUCHER_NO": {
+          "name": "REVERSAL_JOURNAL_VOUCHER_NO",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "IS_REVERSED": {
+          "name": "IS_REVERSED",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "STATUS": {
+          "name": "STATUS",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'ACTIVE'"
+        },
+        "CREATED_BY": {
+          "name": "CREATED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_DATE": {
+          "name": "CREATED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_UNREALIZED_GAIN_LOSS_Company_ID_tbl_Company_Master_Company_Id_fk": {
+          "name": "TBL_UNREALIZED_GAIN_LOSS_Company_ID_tbl_Company_Master_Company_Id_fk",
+          "tableFrom": "TBL_UNREALIZED_GAIN_LOSS",
+          "tableTo": "tbl_Company_Master",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "Company_ID"
+          ],
+          "columnsTo": [
+            "Company_Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_UNREALIZED_GAIN_LOSS_TRANSACTION_ID_TBL_MULTI_CURRENCY_TRANSACTIONS_TRANSACTION_ID_fk": {
+          "name": "TBL_UNREALIZED_GAIN_LOSS_TRANSACTION_ID_TBL_MULTI_CURRENCY_TRANSACTIONS_TRANSACTION_ID_fk",
+          "tableFrom": "TBL_UNREALIZED_GAIN_LOSS",
+          "tableTo": "TBL_MULTI_CURRENCY_TRANSACTIONS",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "TRANSACTION_ID"
+          ],
+          "columnsTo": [
+            "TRANSACTION_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "stomaster.TBL_USER_INFO_HDR": {
       "name": "TBL_USER_INFO_HDR",
       "schema": "stomaster",
       "columns": {
         "LOGIN_ID_USER_HDR": {
           "name": "LOGIN_ID_USER_HDR",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_USER_INFO_HDR_LOGIN_ID_USER_HDR_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "NEW_CARD_NO_USER_HDR": {
           "name": "NEW_CARD_NO_USER_HDR",
@@ -5248,9 +7926,20 @@
       "columns": {
         "USER_TO_LOCATION_ID_USER_TO_ROLE": {
           "name": "USER_TO_LOCATION_ID_USER_TO_ROLE",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_USER_TO_STORE_MAPPING_USER_TO_LOCATION_ID_USER_TO_ROLE_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "USER_ID_USER_TO_ROLE": {
           "name": "USER_ID_USER_TO_ROLE",
@@ -5390,9 +8079,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_VAT_PERCENTAGE_SETTING_SNO_seq",
+            "schema": "stomaster",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "COMPANY_ID": {
           "name": "COMPANY_ID",
@@ -5625,9 +8325,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "bigserial",
+          "type": "bigint",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_CUSTOMER_RECEIPT_HDR_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "RECEIPT_REF_NO": {
           "name": "RECEIPT_REF_NO",
@@ -5923,9 +8634,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "bigserial",
+          "type": "bigint",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_CUSTOMER_RECEIPT_INVOICE_DTL_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "RECEIPT_REF_NO": {
           "name": "RECEIPT_REF_NO",
@@ -6184,9 +8906,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_DELIVERY_NOTE_DTL_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "DELIVERY_NOTE_REF_NO": {
           "name": "DELIVERY_NOTE_REF_NO",
@@ -6379,34 +9112,6 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "TBL_DELIVERY_NOTE_DTL_PO_DTL_SNO_TBL_PURCHASE_ORDER_DTL_SNO_fk": {
-          "name": "TBL_DELIVERY_NOTE_DTL_PO_DTL_SNO_TBL_PURCHASE_ORDER_DTL_SNO_fk",
-          "tableFrom": "TBL_DELIVERY_NOTE_DTL",
-          "tableTo": "TBL_PURCHASE_ORDER_DTL",
-          "schemaTo": "stoentries",
-          "columnsFrom": [
-            "PO_DTL_SNO"
-          ],
-          "columnsTo": [
-            "SNO"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "TBL_DELIVERY_NOTE_DTL_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk": {
-          "name": "TBL_DELIVERY_NOTE_DTL_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk",
-          "tableFrom": "TBL_DELIVERY_NOTE_DTL",
-          "tableTo": "TBL_PURCHASE_ORDER_HDR",
-          "schemaTo": "stoentries",
-          "columnsFrom": [
-            "PO_REF_NO"
-          ],
-          "columnsTo": [
-            "PO_REF_NO"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
         "TBL_DELIVERY_NOTE_DTL_MAIN_CATEGORY_ID_TBL_PRODUCT_MAIN_CATEGORY_MASTER_MAIN_CATEGORY_ID_fk": {
           "name": "TBL_DELIVERY_NOTE_DTL_MAIN_CATEGORY_ID_TBL_PRODUCT_MAIN_CATEGORY_MASTER_MAIN_CATEGORY_ID_fk",
           "tableFrom": "TBL_DELIVERY_NOTE_DTL",
@@ -6462,9 +9167,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_DELIVERY_NOTE_HDR_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "DELIVERY_NOTE_REF_NO": {
           "name": "DELIVERY_NOTE_REF_NO",
@@ -6744,9 +9460,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_EXPENSE_DTL_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "EXPENSE_REF_NO": {
           "name": "EXPENSE_REF_NO",
@@ -6845,34 +9572,6 @@
           ],
           "columnsTo": [
             "EXPENSE_REF_NO"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "TBL_EXPENSE_DTL_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk": {
-          "name": "TBL_EXPENSE_DTL_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk",
-          "tableFrom": "TBL_EXPENSE_DTL",
-          "tableTo": "TBL_PURCHASE_ORDER_HDR",
-          "schemaTo": "stoentries",
-          "columnsFrom": [
-            "PO_REF_NO"
-          ],
-          "columnsTo": [
-            "PO_REF_NO"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "TBL_EXPENSE_DTL_PO_DTL_SNO_TBL_PURCHASE_ORDER_DTL_SNO_fk": {
-          "name": "TBL_EXPENSE_DTL_PO_DTL_SNO_TBL_PURCHASE_ORDER_DTL_SNO_fk",
-          "tableFrom": "TBL_EXPENSE_DTL",
-          "tableTo": "TBL_PURCHASE_ORDER_DTL",
-          "schemaTo": "stoentries",
-          "columnsFrom": [
-            "PO_DTL_SNO"
-          ],
-          "columnsTo": [
-            "SNO"
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
@@ -7033,9 +9732,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_EXPENSE_HDR_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "EXPENSE_REF_NO": {
           "name": "EXPENSE_REF_NO",
@@ -7163,6 +9873,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "COST_CENTER_ID": {
+          "name": "COST_CENTER_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "SUBMITTED_BY": {
           "name": "SUBMITTED_BY",
           "type": "varchar(50)",
@@ -7194,20 +9910,6 @@
           ],
           "columnsTo": [
             "Company_Id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "TBL_EXPENSE_HDR_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk": {
-          "name": "TBL_EXPENSE_HDR_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk",
-          "tableFrom": "TBL_EXPENSE_HDR",
-          "tableTo": "TBL_PURCHASE_ORDER_HDR",
-          "schemaTo": "stoentries",
-          "columnsFrom": [
-            "PO_REF_NO"
-          ],
-          "columnsTo": [
-            "PO_REF_NO"
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
@@ -7250,6 +9952,20 @@
           ],
           "columnsTo": [
             "CURRENCY_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_EXPENSE_HDR_COST_CENTER_ID_TBL_COST_CENTER_MASTER_COST_CENTER_ID_fk": {
+          "name": "TBL_EXPENSE_HDR_COST_CENTER_ID_TBL_COST_CENTER_MASTER_COST_CENTER_ID_fk",
+          "tableFrom": "TBL_EXPENSE_HDR",
+          "tableTo": "TBL_COST_CENTER_MASTER",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "COST_CENTER_ID"
+          ],
+          "columnsTo": [
+            "COST_CENTER_ID"
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
@@ -7396,9 +10112,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_GOODS_INWARD_GRN_DTL_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "GRN_REF_NO": {
           "name": "GRN_REF_NO",
@@ -7525,20 +10252,6 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "TBL_GOODS_INWARD_GRN_DTL_PO_DTL_SNO_TBL_PURCHASE_ORDER_DTL_SNO_fk": {
-          "name": "TBL_GOODS_INWARD_GRN_DTL_PO_DTL_SNO_TBL_PURCHASE_ORDER_DTL_SNO_fk",
-          "tableFrom": "TBL_GOODS_INWARD_GRN_DTL",
-          "tableTo": "TBL_PURCHASE_ORDER_DTL",
-          "schemaTo": "stoentries",
-          "columnsFrom": [
-            "PO_DTL_SNO"
-          ],
-          "columnsTo": [
-            "SNO"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
         "TBL_GOODS_INWARD_GRN_DTL_MAIN_CATEGORY_ID_TBL_PRODUCT_MAIN_CATEGORY_MASTER_MAIN_CATEGORY_ID_fk": {
           "name": "TBL_GOODS_INWARD_GRN_DTL_MAIN_CATEGORY_ID_TBL_PRODUCT_MAIN_CATEGORY_MASTER_MAIN_CATEGORY_ID_fk",
           "tableFrom": "TBL_GOODS_INWARD_GRN_DTL",
@@ -7594,9 +10307,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_GOODS_INWARD_GRN_HDR_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "GRN_REF_NO": {
           "name": "GRN_REF_NO",
@@ -7800,17 +10524,218 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "stoentries.TBL_JOURNAL_DTL": {
+      "name": "TBL_JOURNAL_DTL",
+      "schema": "stoentries",
+      "columns": {
+        "SNO": {
+          "name": "SNO",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_JOURNAL_DTL_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
-        "TBL_GOODS_INWARD_GRN_HDR_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk": {
-          "name": "TBL_GOODS_INWARD_GRN_HDR_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk",
-          "tableFrom": "TBL_GOODS_INWARD_GRN_HDR",
-          "tableTo": "TBL_PURCHASE_ORDER_HDR",
+        "JOURNAL_REF_NO": {
+          "name": "JOURNAL_REF_NO",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "LEDGER_ID": {
+          "name": "LEDGER_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "DEBIT": {
+          "name": "DEBIT",
+          "type": "numeric(30, 2)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0'"
+        },
+        "CREDIT": {
+          "name": "CREDIT",
+          "type": "numeric(30, 2)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0'"
+        },
+        "REMARKS": {
+          "name": "REMARKS",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_JOURNAL_DTL_JOURNAL_REF_NO_TBL_JOURNAL_HDR_JOURNAL_REF_NO_fk": {
+          "name": "TBL_JOURNAL_DTL_JOURNAL_REF_NO_TBL_JOURNAL_HDR_JOURNAL_REF_NO_fk",
+          "tableFrom": "TBL_JOURNAL_DTL",
+          "tableTo": "TBL_JOURNAL_HDR",
           "schemaTo": "stoentries",
           "columnsFrom": [
-            "PO_REF_NO"
+            "JOURNAL_REF_NO"
           ],
           "columnsTo": [
-            "PO_REF_NO"
+            "JOURNAL_REF_NO"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_JOURNAL_DTL_LEDGER_ID_TBL_ACCOUNTS_LEDGER_MASTER_LEDGER_ID_fk": {
+          "name": "TBL_JOURNAL_DTL_LEDGER_ID_TBL_ACCOUNTS_LEDGER_MASTER_LEDGER_ID_fk",
+          "tableFrom": "TBL_JOURNAL_DTL",
+          "tableTo": "TBL_ACCOUNTS_LEDGER_MASTER",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "LEDGER_ID"
+          ],
+          "columnsTo": [
+            "LEDGER_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "stoentries.TBL_JOURNAL_HDR": {
+      "name": "TBL_JOURNAL_HDR",
+      "schema": "stoentries",
+      "columns": {
+        "SNO": {
+          "name": "SNO",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_JOURNAL_HDR_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "JOURNAL_REF_NO": {
+          "name": "JOURNAL_REF_NO",
+          "type": "varchar(50)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "JOURNAL_DATE": {
+          "name": "JOURNAL_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "COMPANY_ID": {
+          "name": "COMPANY_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODULE_NAME": {
+          "name": "MODULE_NAME",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODULE_REF_NO": {
+          "name": "MODULE_REF_NO",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "NARRATION": {
+          "name": "NARRATION",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "STATUS_ENTRY": {
+          "name": "STATUS_ENTRY",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_BY": {
+          "name": "CREATED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_DATE": {
+          "name": "CREATED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "CREATED_IP_ADDRESS": {
+          "name": "CREATED_IP_ADDRESS",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_BY": {
+          "name": "MODIFIED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_DATE": {
+          "name": "MODIFIED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_IP_ADDRESS": {
+          "name": "MODIFIED_IP_ADDRESS",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_JOURNAL_HDR_COMPANY_ID_tbl_Company_Master_Company_Id_fk": {
+          "name": "TBL_JOURNAL_HDR_COMPANY_ID_tbl_Company_Master_Company_Id_fk",
+          "tableFrom": "TBL_JOURNAL_HDR",
+          "tableTo": "tbl_Company_Master",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "COMPANY_ID"
+          ],
+          "columnsTo": [
+            "Company_Id"
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
@@ -7828,9 +10753,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "PURCHASE_INVOICE_NO": {
           "name": "PURCHASE_INVOICE_NO",
@@ -7942,9 +10878,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_PURCHASE_INVOICE_DTL_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "PURCHASE_INVOICE_REF_NO": {
           "name": "PURCHASE_INVOICE_REF_NO",
@@ -8200,9 +11147,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_PURCHASE_INVOICE_FILES_UPLOAD_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "PURCHASE_INVOICE_REF_NO": {
           "name": "PURCHASE_INVOICE_REF_NO",
@@ -8318,9 +11276,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_PURCHASE_INVOICE_HDR_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "PURCHASE_INVOICE_REF_NO": {
           "name": "PURCHASE_INVOICE_REF_NO",
@@ -8609,6 +11578,12 @@
           "type": "varchar(50)",
           "primaryKey": false,
           "notNull": false
+        },
+        "COST_CENTER_ID": {
+          "name": "COST_CENTER_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -8623,20 +11598,6 @@
           ],
           "columnsTo": [
             "Company_Id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "TBL_PURCHASE_INVOICE_HDR_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk": {
-          "name": "TBL_PURCHASE_INVOICE_HDR_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk",
-          "tableFrom": "TBL_PURCHASE_INVOICE_HDR",
-          "tableTo": "TBL_PURCHASE_ORDER_HDR",
-          "schemaTo": "stoentries",
-          "columnsFrom": [
-            "PO_REF_NO"
-          ],
-          "columnsTo": [
-            "PO_REF_NO"
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
@@ -8696,6 +11657,20 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "TBL_PURCHASE_INVOICE_HDR_COST_CENTER_ID_TBL_COST_CENTER_MASTER_COST_CENTER_ID_fk": {
+          "name": "TBL_PURCHASE_INVOICE_HDR_COST_CENTER_ID_TBL_COST_CENTER_MASTER_COST_CENTER_ID_fk",
+          "tableFrom": "TBL_PURCHASE_INVOICE_HDR",
+          "tableTo": "TBL_COST_CENTER_MASTER",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "COST_CENTER_ID"
+          ],
+          "columnsTo": [
+            "COST_CENTER_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -8710,9 +11685,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "PO_REF_NO": {
           "name": "PO_REF_NO",
@@ -8783,20 +11769,6 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk": {
-          "name": "TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk",
-          "tableFrom": "TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS",
-          "tableTo": "TBL_PURCHASE_ORDER_HDR",
-          "schemaTo": "stoentries",
-          "columnsFrom": [
-            "PO_REF_NO"
-          ],
-          "columnsTo": [
-            "PO_REF_NO"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
         "TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS_ADDITIONAL_COST_TYPE_ID_TBL_ADDITIONAL_COST_TYPE_MASTER_ADDITIONAL_COST_TYPE_ID_fk": {
           "name": "TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS_ADDITIONAL_COST_TYPE_ID_TBL_ADDITIONAL_COST_TYPE_MASTER_ADDITIONAL_COST_TYPE_ID_fk",
           "tableFrom": "TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS",
@@ -8824,9 +11796,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_PURCHASE_ORDER_CONVERSATION_DTL_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "PO_REF_NO": {
           "name": "PO_REF_NO",
@@ -8902,22 +11885,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "TBL_PURCHASE_ORDER_CONVERSATION_DTL_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk": {
-          "name": "TBL_PURCHASE_ORDER_CONVERSATION_DTL_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk",
-          "tableFrom": "TBL_PURCHASE_ORDER_CONVERSATION_DTL",
-          "tableTo": "TBL_PURCHASE_ORDER_HDR",
-          "schemaTo": "stoentries",
-          "columnsFrom": [
-            "PO_REF_NO"
-          ],
-          "columnsTo": [
-            "PO_REF_NO"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -8930,9 +11898,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_PURCHASE_ORDER_DTL_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "PO_REF_NO": {
           "name": "PO_REF_NO",
@@ -9105,20 +12084,6 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "TBL_PURCHASE_ORDER_DTL_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk": {
-          "name": "TBL_PURCHASE_ORDER_DTL_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk",
-          "tableFrom": "TBL_PURCHASE_ORDER_DTL",
-          "tableTo": "TBL_PURCHASE_ORDER_HDR",
-          "schemaTo": "stoentries",
-          "columnsFrom": [
-            "PO_REF_NO"
-          ],
-          "columnsTo": [
-            "PO_REF_NO"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
         "TBL_PURCHASE_ORDER_DTL_REQUEST_STORE_ID_tbl_Store_Master_Store_Id_fk": {
           "name": "TBL_PURCHASE_ORDER_DTL_REQUEST_STORE_ID_tbl_Store_Master_Store_Id_fk",
           "tableFrom": "TBL_PURCHASE_ORDER_DTL",
@@ -9188,9 +12153,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_PURCHASE_ORDER_FILES_UPLOAD_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "PO_REF_NO": {
           "name": "PO_REF_NO",
@@ -9278,22 +12254,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "TBL_PURCHASE_ORDER_FILES_UPLOAD_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk": {
-          "name": "TBL_PURCHASE_ORDER_FILES_UPLOAD_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk",
-          "tableFrom": "TBL_PURCHASE_ORDER_FILES_UPLOAD",
-          "tableTo": "TBL_PURCHASE_ORDER_HDR",
-          "schemaTo": "stoentries",
-          "columnsFrom": [
-            "PO_REF_NO"
-          ],
-          "columnsTo": [
-            "PO_REF_NO"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -9306,9 +12267,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_PURCHASE_ORDER_HDR_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "PO_REF_NO": {
           "name": "PO_REF_NO",
@@ -9364,8 +12336,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "SUPLIER_PROFORMA_NUMBER": {
-          "name": "SUPLIER_PROFORMA_NUMBER",
+        "SUPPLIER_PROFORMA_NUMBER": {
+          "name": "SUPPLIER_PROFORMA_NUMBER",
           "type": "varchar(100)",
           "primaryKey": false,
           "notNull": false
@@ -9738,15 +12710,583 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "stoentries.TBL_PURCHASE_PAYMENT_FILES_UPLOAD": {
+      "name": "TBL_PURCHASE_PAYMENT_FILES_UPLOAD",
+      "schema": "stoentries",
+      "columns": {
+        "SNO": {
+          "name": "SNO",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_PURCHASE_PAYMENT_FILES_UPLOAD_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "PAYMENT_REF_NO": {
+          "name": "PAYMENT_REF_NO",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "DOCUMENT_TYPE": {
+          "name": "DOCUMENT_TYPE",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "DESCRIPTION_DETAILS": {
+          "name": "DESCRIPTION_DETAILS",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "FILE_NAME": {
+          "name": "FILE_NAME",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CONTENT_TYPE": {
+          "name": "CONTENT_TYPE",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CONTENT_DATA": {
+          "name": "CONTENT_DATA",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "REMARKS": {
+          "name": "REMARKS",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "STATUS_MASTER": {
+          "name": "STATUS_MASTER",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_BY": {
+          "name": "CREATED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_DATE": {
+          "name": "CREATED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_IP_ADDRESS": {
+          "name": "CREATED_IP_ADDRESS",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_BY": {
+          "name": "MODIFIED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_DATE": {
+          "name": "MODIFIED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_IP_ADDRESS": {
+          "name": "MODIFIED_IP_ADDRESS",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_PURCHASE_PAYMENT_FILES_UPLOAD_PAYMENT_REF_NO_TBL_PURCHASE_PAYMENT_HDR_PAYMENT_REF_NO_fk": {
+          "name": "TBL_PURCHASE_PAYMENT_FILES_UPLOAD_PAYMENT_REF_NO_TBL_PURCHASE_PAYMENT_HDR_PAYMENT_REF_NO_fk",
+          "tableFrom": "TBL_PURCHASE_PAYMENT_FILES_UPLOAD",
+          "tableTo": "TBL_PURCHASE_PAYMENT_HDR",
+          "schemaTo": "stoentries",
+          "columnsFrom": [
+            "PAYMENT_REF_NO"
+          ],
+          "columnsTo": [
+            "PAYMENT_REF_NO"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "stoentries.TBL_PURCHASE_PAYMENT_HDR": {
+      "name": "TBL_PURCHASE_PAYMENT_HDR",
+      "schema": "stoentries",
+      "columns": {
+        "SNO": {
+          "name": "SNO",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_PURCHASE_PAYMENT_HDR_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "PAYMENT_REF_NO": {
+          "name": "PAYMENT_REF_NO",
+          "type": "varchar(50)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "PAYMENT_DATE": {
+          "name": "PAYMENT_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "PAYMENT_TYPE": {
+          "name": "PAYMENT_TYPE",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "COMPANY_ID": {
+          "name": "COMPANY_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "SUPPLIER_ID": {
+          "name": "SUPPLIER_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "PAYMENT_MODE_ID": {
+          "name": "PAYMENT_MODE_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CR_BANK_CASH_ID": {
+          "name": "CR_BANK_CASH_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "DR_BANK_CASH_ID": {
+          "name": "DR_BANK_CASH_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "DR_ACCOUNT_ID": {
+          "name": "DR_ACCOUNT_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "TRANSACTION_REF_NO": {
+          "name": "TRANSACTION_REF_NO",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "TRANSACTION_DATE": {
+          "name": "TRANSACTION_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CURRENCY_ID": {
+          "name": "CURRENCY_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "PAYMENT_AMOUNT": {
+          "name": "PAYMENT_AMOUNT",
+          "type": "numeric(30, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "EXCHANGE_RATE": {
+          "name": "EXCHANGE_RATE",
+          "type": "numeric(30, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "PAYMENT_AMOUNT_LC": {
+          "name": "PAYMENT_AMOUNT_LC",
+          "type": "numeric(30, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "REMARKS": {
+          "name": "REMARKS",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "STATUS_ENTRY": {
+          "name": "STATUS_ENTRY",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_BY": {
+          "name": "CREATED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_DATE": {
+          "name": "CREATED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_MAC_ADDRESS": {
+          "name": "CREATED_MAC_ADDRESS",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_BY": {
+          "name": "MODIFIED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_DATE": {
+          "name": "MODIFIED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_MAC_ADDRESS": {
+          "name": "MODIFIED_MAC_ADDRESS",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Submitted_By": {
+          "name": "Submitted_By",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Submitted_Date": {
+          "name": "Submitted_Date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Submitted_IP_Address": {
+          "name": "Submitted_IP_Address",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_PURCHASE_PAYMENT_HDR_COMPANY_ID_tbl_Company_Master_Company_Id_fk": {
+          "name": "TBL_PURCHASE_PAYMENT_HDR_COMPANY_ID_tbl_Company_Master_Company_Id_fk",
+          "tableFrom": "TBL_PURCHASE_PAYMENT_HDR",
+          "tableTo": "tbl_Company_Master",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "COMPANY_ID"
+          ],
+          "columnsTo": [
+            "Company_Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_PURCHASE_PAYMENT_HDR_SUPPLIER_ID_tbl_Supplier_Master_Supplier_Id_fk": {
+          "name": "TBL_PURCHASE_PAYMENT_HDR_SUPPLIER_ID_tbl_Supplier_Master_Supplier_Id_fk",
+          "tableFrom": "TBL_PURCHASE_PAYMENT_HDR",
+          "tableTo": "tbl_Supplier_Master",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "SUPPLIER_ID"
+          ],
+          "columnsTo": [
+            "Supplier_Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_PURCHASE_PAYMENT_HDR_PAYMENT_MODE_ID_TBL_PAYMENT_MODE_MASTER_PAYMENT_MODE_ID_fk": {
+          "name": "TBL_PURCHASE_PAYMENT_HDR_PAYMENT_MODE_ID_TBL_PAYMENT_MODE_MASTER_PAYMENT_MODE_ID_fk",
+          "tableFrom": "TBL_PURCHASE_PAYMENT_HDR",
+          "tableTo": "TBL_PAYMENT_MODE_MASTER",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "PAYMENT_MODE_ID"
+          ],
+          "columnsTo": [
+            "PAYMENT_MODE_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_PURCHASE_PAYMENT_HDR_CR_BANK_CASH_ID_TBL_BANK_MASTER_BANK_ID_fk": {
+          "name": "TBL_PURCHASE_PAYMENT_HDR_CR_BANK_CASH_ID_TBL_BANK_MASTER_BANK_ID_fk",
+          "tableFrom": "TBL_PURCHASE_PAYMENT_HDR",
+          "tableTo": "TBL_BANK_MASTER",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "CR_BANK_CASH_ID"
+          ],
+          "columnsTo": [
+            "BANK_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_PURCHASE_PAYMENT_HDR_DR_BANK_CASH_ID_TBL_BANK_MASTER_BANK_ID_fk": {
+          "name": "TBL_PURCHASE_PAYMENT_HDR_DR_BANK_CASH_ID_TBL_BANK_MASTER_BANK_ID_fk",
+          "tableFrom": "TBL_PURCHASE_PAYMENT_HDR",
+          "tableTo": "TBL_BANK_MASTER",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "DR_BANK_CASH_ID"
+          ],
+          "columnsTo": [
+            "BANK_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_PURCHASE_PAYMENT_HDR_DR_ACCOUNT_ID_tbl_Company_Bank_Account_Master_Account_Id_fk": {
+          "name": "TBL_PURCHASE_PAYMENT_HDR_DR_ACCOUNT_ID_tbl_Company_Bank_Account_Master_Account_Id_fk",
+          "tableFrom": "TBL_PURCHASE_PAYMENT_HDR",
+          "tableTo": "tbl_Company_Bank_Account_Master",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "DR_ACCOUNT_ID"
+          ],
+          "columnsTo": [
+            "Account_Id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_PURCHASE_PAYMENT_HDR_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk": {
+          "name": "TBL_PURCHASE_PAYMENT_HDR_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk",
+          "tableFrom": "TBL_PURCHASE_PAYMENT_HDR",
+          "tableTo": "TBL_CURRENCY_MASTER",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "CURRENCY_ID"
+          ],
+          "columnsTo": [
+            "CURRENCY_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "stoentries.TBL_PURCHASE_PAYMENT_INV_DTL": {
+      "name": "TBL_PURCHASE_PAYMENT_INV_DTL",
+      "schema": "stoentries",
+      "columns": {
+        "SNO": {
+          "name": "SNO",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_PURCHASE_PAYMENT_INV_DTL_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "PAYMENT_REF_NO": {
+          "name": "PAYMENT_REF_NO",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "PURCHASE_INVOICE_REF_NO": {
+          "name": "PURCHASE_INVOICE_REF_NO",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ACTUAL_INVOICE_AMOUNT": {
+          "name": "ACTUAL_INVOICE_AMOUNT",
+          "type": "numeric(30, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ALREADY_PAID_AMOUNT": {
+          "name": "ALREADY_PAID_AMOUNT",
+          "type": "numeric(30, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "OUTSTANDING_INVOICE_AMOUNT": {
+          "name": "OUTSTANDING_INVOICE_AMOUNT",
+          "type": "numeric(30, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "PAYMENT_INVOICE_ADJUST_AMOUNT": {
+          "name": "PAYMENT_INVOICE_ADJUST_AMOUNT",
+          "type": "numeric(30, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "REMARKS": {
+          "name": "REMARKS",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "STATUS_ENTRY": {
+          "name": "STATUS_ENTRY",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_BY": {
+          "name": "CREATED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_DATE": {
+          "name": "CREATED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_MAC_ADDRESS": {
+          "name": "CREATED_MAC_ADDRESS",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_BY": {
+          "name": "MODIFIED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_DATE": {
+          "name": "MODIFIED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_MAC_ADDRESS": {
+          "name": "MODIFIED_MAC_ADDRESS",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_PURCHASE_PAYMENT_INV_DTL_PAYMENT_REF_NO_TBL_PURCHASE_PAYMENT_HDR_PAYMENT_REF_NO_fk": {
+          "name": "TBL_PURCHASE_PAYMENT_INV_DTL_PAYMENT_REF_NO_TBL_PURCHASE_PAYMENT_HDR_PAYMENT_REF_NO_fk",
+          "tableFrom": "TBL_PURCHASE_PAYMENT_INV_DTL",
+          "tableTo": "TBL_PURCHASE_PAYMENT_HDR",
+          "schemaTo": "stoentries",
+          "columnsFrom": [
+            "PAYMENT_REF_NO"
+          ],
+          "columnsTo": [
+            "PAYMENT_REF_NO"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_PURCHASE_PAYMENT_INV_DTL_PURCHASE_INVOICE_REF_NO_TBL_PURCHASE_INVOICE_HDR_PURCHASE_INVOICE_REF_NO_fk": {
+          "name": "TBL_PURCHASE_PAYMENT_INV_DTL_PURCHASE_INVOICE_REF_NO_TBL_PURCHASE_INVOICE_HDR_PURCHASE_INVOICE_REF_NO_fk",
+          "tableFrom": "TBL_PURCHASE_PAYMENT_INV_DTL",
+          "tableTo": "TBL_PURCHASE_INVOICE_HDR",
+          "schemaTo": "stoentries",
+          "columnsFrom": [
+            "PURCHASE_INVOICE_REF_NO"
+          ],
+          "columnsTo": [
+            "PURCHASE_INVOICE_REF_NO"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "stoentries.TBL_SALES_ORDER_DTL": {
       "name": "TBL_SALES_ORDER_DTL",
       "schema": "stoentries",
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_SALES_ORDER_DTL_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "SALES_ORDER_REF_NO": {
           "name": "SALES_ORDER_REF_NO",
@@ -9986,34 +13526,6 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
-        },
-        "TBL_SALES_ORDER_DTL_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk": {
-          "name": "TBL_SALES_ORDER_DTL_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk",
-          "tableFrom": "TBL_SALES_ORDER_DTL",
-          "tableTo": "TBL_PURCHASE_ORDER_HDR",
-          "schemaTo": "stoentries",
-          "columnsFrom": [
-            "PO_REF_NO"
-          ],
-          "columnsTo": [
-            "PO_REF_NO"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "TBL_SALES_ORDER_DTL_PO_DTL_SNO_TBL_PURCHASE_ORDER_DTL_SNO_fk": {
-          "name": "TBL_SALES_ORDER_DTL_PO_DTL_SNO_TBL_PURCHASE_ORDER_DTL_SNO_fk",
-          "tableFrom": "TBL_SALES_ORDER_DTL",
-          "tableTo": "TBL_PURCHASE_ORDER_DTL",
-          "schemaTo": "stoentries",
-          "columnsFrom": [
-            "PO_DTL_SNO"
-          ],
-          "columnsTo": [
-            "SNO"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -10157,9 +13669,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_SALES_ORDER_HDR_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "SALES_ORDER_REF_NO": {
           "name": "SALES_ORDER_REF_NO",
@@ -10449,9 +13972,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_SALES_PROFORMA_DTL_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "SALES_PROFORMA_REF_NO": {
           "name": "SALES_PROFORMA_REF_NO",
@@ -10691,34 +14225,6 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
-        },
-        "TBL_SALES_PROFORMA_DTL_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk": {
-          "name": "TBL_SALES_PROFORMA_DTL_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk",
-          "tableFrom": "TBL_SALES_PROFORMA_DTL",
-          "tableTo": "TBL_PURCHASE_ORDER_HDR",
-          "schemaTo": "stoentries",
-          "columnsFrom": [
-            "PO_REF_NO"
-          ],
-          "columnsTo": [
-            "PO_REF_NO"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "TBL_SALES_PROFORMA_DTL_PO_DTL_SNO_TBL_PURCHASE_ORDER_DTL_SNO_fk": {
-          "name": "TBL_SALES_PROFORMA_DTL_PO_DTL_SNO_TBL_PURCHASE_ORDER_DTL_SNO_fk",
-          "tableFrom": "TBL_SALES_PROFORMA_DTL",
-          "tableTo": "TBL_PURCHASE_ORDER_DTL",
-          "schemaTo": "stoentries",
-          "columnsFrom": [
-            "PO_DTL_SNO"
-          ],
-          "columnsTo": [
-            "SNO"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -10862,9 +14368,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_SALES_PROFORMA_HDR_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "SALES_PROFORMA_REF_NO": {
           "name": "SALES_PROFORMA_REF_NO",
@@ -11116,9 +14633,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_TAX_INVOICE_DTL_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "TAX_INVOICE_REF_NO": {
           "name": "TAX_INVOICE_REF_NO",
@@ -11301,34 +14829,6 @@
           ],
           "columnsTo": [
             "TAX_INVOICE_REF_NO"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "TBL_TAX_INVOICE_DTL_PO_DTL_SNO_TBL_PURCHASE_ORDER_DTL_SNO_fk": {
-          "name": "TBL_TAX_INVOICE_DTL_PO_DTL_SNO_TBL_PURCHASE_ORDER_DTL_SNO_fk",
-          "tableFrom": "TBL_TAX_INVOICE_DTL",
-          "tableTo": "TBL_PURCHASE_ORDER_DTL",
-          "schemaTo": "stoentries",
-          "columnsFrom": [
-            "PO_DTL_SNO"
-          ],
-          "columnsTo": [
-            "SNO"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "TBL_TAX_INVOICE_DTL_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk": {
-          "name": "TBL_TAX_INVOICE_DTL_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk",
-          "tableFrom": "TBL_TAX_INVOICE_DTL",
-          "tableTo": "TBL_PURCHASE_ORDER_HDR",
-          "schemaTo": "stoentries",
-          "columnsFrom": [
-            "PO_REF_NO"
-          ],
-          "columnsTo": [
-            "PO_REF_NO"
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
@@ -11517,9 +15017,20 @@
       "columns": {
         "SNO": {
           "name": "SNO",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_TAX_INVOICE_HDR_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
         },
         "TAX_INVOICE_REF_NO": {
           "name": "TAX_INVOICE_REF_NO",
@@ -11676,6 +15187,12 @@
           "type": "varchar(50)",
           "primaryKey": false,
           "notNull": false
+        },
+        "PROFIT_CENTER_ID": {
+          "name": "PROFIT_CENTER_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -11746,6 +15263,265 @@
           ],
           "columnsTo": [
             "CURRENCY_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_TAX_INVOICE_HDR_PROFIT_CENTER_ID_TBL_PROFIT_CENTER_MASTER_PROFIT_CENTER_ID_fk": {
+          "name": "TBL_TAX_INVOICE_HDR_PROFIT_CENTER_ID_TBL_PROFIT_CENTER_MASTER_PROFIT_CENTER_ID_fk",
+          "tableFrom": "TBL_TAX_INVOICE_HDR",
+          "tableTo": "TBL_PROFIT_CENTER_MASTER",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "PROFIT_CENTER_ID"
+          ],
+          "columnsTo": [
+            "PROFIT_CENTER_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "stoentries.TBL_TRIAL_BALANCE_DTL": {
+      "name": "TBL_TRIAL_BALANCE_DTL",
+      "schema": "stoentries",
+      "columns": {
+        "SNO": {
+          "name": "SNO",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_TRIAL_BALANCE_DTL_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "TB_REF_NO": {
+          "name": "TB_REF_NO",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "LEDGER_ID": {
+          "name": "LEDGER_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "OPENING_DEBIT": {
+          "name": "OPENING_DEBIT",
+          "type": "numeric(30, 2)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0'"
+        },
+        "OPENING_CREDIT": {
+          "name": "OPENING_CREDIT",
+          "type": "numeric(30, 2)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0'"
+        },
+        "PERIOD_DEBIT": {
+          "name": "PERIOD_DEBIT",
+          "type": "numeric(30, 2)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0'"
+        },
+        "PERIOD_CREDIT": {
+          "name": "PERIOD_CREDIT",
+          "type": "numeric(30, 2)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0'"
+        },
+        "CLOSING_DEBIT": {
+          "name": "CLOSING_DEBIT",
+          "type": "numeric(30, 2)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0'"
+        },
+        "CLOSING_CREDIT": {
+          "name": "CLOSING_CREDIT",
+          "type": "numeric(30, 2)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0'"
+        },
+        "REMARKS": {
+          "name": "REMARKS",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_TRIAL_BALANCE_DTL_TB_REF_NO_TBL_TRIAL_BALANCE_HDR_TB_REF_NO_fk": {
+          "name": "TBL_TRIAL_BALANCE_DTL_TB_REF_NO_TBL_TRIAL_BALANCE_HDR_TB_REF_NO_fk",
+          "tableFrom": "TBL_TRIAL_BALANCE_DTL",
+          "tableTo": "TBL_TRIAL_BALANCE_HDR",
+          "schemaTo": "stoentries",
+          "columnsFrom": [
+            "TB_REF_NO"
+          ],
+          "columnsTo": [
+            "TB_REF_NO"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "TBL_TRIAL_BALANCE_DTL_LEDGER_ID_TBL_ACCOUNTS_LEDGER_MASTER_LEDGER_ID_fk": {
+          "name": "TBL_TRIAL_BALANCE_DTL_LEDGER_ID_TBL_ACCOUNTS_LEDGER_MASTER_LEDGER_ID_fk",
+          "tableFrom": "TBL_TRIAL_BALANCE_DTL",
+          "tableTo": "TBL_ACCOUNTS_LEDGER_MASTER",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "LEDGER_ID"
+          ],
+          "columnsTo": [
+            "LEDGER_ID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "stoentries.TBL_TRIAL_BALANCE_HDR": {
+      "name": "TBL_TRIAL_BALANCE_HDR",
+      "schema": "stoentries",
+      "columns": {
+        "SNO": {
+          "name": "SNO",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "TBL_TRIAL_BALANCE_HDR_SNO_seq",
+            "schema": "stoentries",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "TB_REF_NO": {
+          "name": "TB_REF_NO",
+          "type": "varchar(50)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "AS_OF_DATE": {
+          "name": "AS_OF_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "COMPANY_ID": {
+          "name": "COMPANY_ID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "FINANCIAL_YEAR": {
+          "name": "FINANCIAL_YEAR",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "TOTAL_DEBIT": {
+          "name": "TOTAL_DEBIT",
+          "type": "numeric(30, 2)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0'"
+        },
+        "TOTAL_CREDIT": {
+          "name": "TOTAL_CREDIT",
+          "type": "numeric(30, 2)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0'"
+        },
+        "STATUS_ENTRY": {
+          "name": "STATUS_ENTRY",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_BY": {
+          "name": "CREATED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CREATED_DATE": {
+          "name": "CREATED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "CREATED_IP_ADDRESS": {
+          "name": "CREATED_IP_ADDRESS",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_BY": {
+          "name": "MODIFIED_BY",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_DATE": {
+          "name": "MODIFIED_DATE",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "MODIFIED_IP_ADDRESS": {
+          "name": "MODIFIED_IP_ADDRESS",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "TBL_TRIAL_BALANCE_HDR_COMPANY_ID_tbl_Company_Master_Company_Id_fk": {
+          "name": "TBL_TRIAL_BALANCE_HDR_COMPANY_ID_tbl_Company_Master_Company_Id_fk",
+          "tableFrom": "TBL_TRIAL_BALANCE_HDR",
+          "tableTo": "tbl_Company_Master",
+          "schemaTo": "stomaster",
+          "columnsFrom": [
+            "COMPANY_ID"
+          ],
+          "columnsTo": [
+            "Company_Id"
           ],
           "onDelete": "no action",
           "onUpdate": "no action"

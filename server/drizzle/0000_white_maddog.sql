@@ -20,7 +20,7 @@ CREATE TABLE "stomaster"."CUSTOMER_CREDIT_LIMIT_FILE_UPLOAD" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_ACCOUNTS_HEAD_MASTER" (
-	"ACCOUNT_HEAD_ID" serial PRIMARY KEY NOT NULL,
+	"ACCOUNT_HEAD_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_ACCOUNTS_HEAD_MASTER_ACCOUNT_HEAD_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"ACCOUNT_HEAD_NAME" varchar(50),
 	"REMARKS" varchar(1000),
 	"STATUS_ENTRY" varchar(50),
@@ -34,7 +34,7 @@ CREATE TABLE "stomaster"."TBL_ACCOUNTS_HEAD_MASTER" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_ACCOUNTS_LEDGER_GROUP_MASTER" (
-	"LEDGER_GROUP_ID" serial PRIMARY KEY NOT NULL,
+	"LEDGER_GROUP_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_ACCOUNTS_LEDGER_GROUP_MASTER_LEDGER_GROUP_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"LEDGER_GROUP_NAME" varchar(50),
 	"REMARKS" varchar(1000),
 	"STATUS_ENTRY" varchar(50),
@@ -48,7 +48,7 @@ CREATE TABLE "stomaster"."TBL_ACCOUNTS_LEDGER_GROUP_MASTER" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_ACCOUNTS_LEDGER_MASTER" (
-	"LEDGER_ID" serial PRIMARY KEY NOT NULL,
+	"LEDGER_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_ACCOUNTS_LEDGER_MASTER_LEDGER_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"Company_id" integer,
 	"LEDGER_TYPE" varchar(50),
 	"LEDGER_GROUP_ID" integer,
@@ -65,7 +65,7 @@ CREATE TABLE "stomaster"."TBL_ACCOUNTS_LEDGER_MASTER" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_ADDITIONAL_COST_TYPE_MASTER" (
-	"ADDITIONAL_COST_TYPE_ID" serial PRIMARY KEY NOT NULL,
+	"ADDITIONAL_COST_TYPE_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_ADDITIONAL_COST_TYPE_MASTER_ADDITIONAL_COST_TYPE_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"ADDITIONAL_COST_TYPE_NAME" varchar(50),
 	"REMARKS" varchar(1000),
 	"STATUS_ENTRY" varchar(50),
@@ -79,9 +79,9 @@ CREATE TABLE "stomaster"."TBL_ADDITIONAL_COST_TYPE_MASTER" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_BANK_MASTER" (
-	"BANK_ID" serial PRIMARY KEY NOT NULL,
+	"BANK_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_BANK_MASTER_BANK_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"BANK_NAME" varchar(50),
-	"ADDRESS" varchar(50),
+	"ADDRESS" varchar(250),
 	"REMARKS" varchar(1000),
 	"STATUS_MASTER" varchar(20),
 	"CREATED_BY" varchar(50),
@@ -94,7 +94,7 @@ CREATE TABLE "stomaster"."TBL_BANK_MASTER" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."tbl_Billing_Location_Master" (
-	"Billing_Location_Id" serial PRIMARY KEY NOT NULL,
+	"Billing_Location_Id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."tbl_Billing_Location_Master_Billing_Location_Id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"Billing_Location_Name" varchar(100),
 	"Billing_Location_Description" varchar(100),
 	"Remarks" varchar(2000),
@@ -108,8 +108,43 @@ CREATE TABLE "stomaster"."tbl_Billing_Location_Master" (
 	CONSTRAINT "tbl_Billing_Location_Master_Billing_Location_Name_unique" UNIQUE("Billing_Location_Name")
 );
 --> statement-breakpoint
+CREATE TABLE "stomaster"."TBL_BILLING_LOCATION_WISE_PRODUCT_PRICE" (
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_BILLING_LOCATION_WISE_PRODUCT_PRICE_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"Billing_Location_Id" integer,
+	"Main_Category_Id" integer,
+	"Sub_Category_Id" integer,
+	"Product_Id" integer,
+	"Unit_Price" numeric(30, 2),
+	"Effective_From" timestamp,
+	"Effective_To" timestamp,
+	"Remarks" varchar(2000),
+	"Status_Master" varchar(50) DEFAULT 'Active',
+	"Created_By" varchar(100),
+	"Created_Date" timestamp DEFAULT now(),
+	"Created_Mac_Address" varchar(100),
+	"Modified_By" varchar(100),
+	"Modified_Date" timestamp,
+	"Modified_Mac_Address" varchar(100)
+);
+--> statement-breakpoint
+CREATE TABLE "stomaster"."TBL_BUDGET_ALERT_LOG" (
+	"ALERT_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_BUDGET_ALERT_LOG_ALERT_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"Company_ID" integer,
+	"COST_CENTER_ID" integer,
+	"ALERT_TYPE" varchar(50),
+	"THRESHOLD_PERCENT" integer,
+	"CURRENT_USAGE_PERCENT" numeric(5, 2),
+	"BUDGETED_AMOUNT" numeric(30, 5),
+	"ACTUAL_EXPENSE" numeric(30, 5),
+	"COMMITTED_AMOUNT" numeric(30, 5),
+	"ALERT_DATE" timestamp,
+	"IS_NOTIFIED" boolean DEFAULT false,
+	"CREATED_BY" varchar(50),
+	"CREATED_DATE" timestamp
+);
+--> statement-breakpoint
 CREATE TABLE "stomaster"."tbl_Change_Password_Log" (
-	"Sno" serial PRIMARY KEY NOT NULL,
+	"Sno" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."tbl_Change_Password_Log_Sno_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"login_id" integer,
 	"User_Name" varchar(50),
 	"Old_Password" varchar(50),
@@ -125,7 +160,7 @@ CREATE TABLE "stomaster"."tbl_Change_Password_Log" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."tbl_Company_Bank_Account_Master" (
-	"Account_Id" serial PRIMARY KEY NOT NULL,
+	"Account_Id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."tbl_Company_Bank_Account_Master_Account_Id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"Company_id" integer,
 	"Bank_Id" integer,
 	"Account_Name" varchar(100),
@@ -146,8 +181,24 @@ CREATE TABLE "stomaster"."tbl_Company_Bank_Account_Master" (
 	CONSTRAINT "tbl_Company_Bank_Account_Master_Account_Number_unique" UNIQUE("Account_Number")
 );
 --> statement-breakpoint
+CREATE TABLE "stomaster"."TBL_COMPANY_BASE_CURRENCY" (
+	"ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_COMPANY_BASE_CURRENCY_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"Company_ID" integer,
+	"BASE_CURRENCY_ID" integer,
+	"UNREALIZED_GAIN_ACCOUNT_CODE" varchar(50),
+	"UNREALIZED_LOSS_ACCOUNT_CODE" varchar(50),
+	"REALIZED_GAIN_ACCOUNT_CODE" varchar(50),
+	"REALIZED_LOSS_ACCOUNT_CODE" varchar(50),
+	"AUTO_REVALUATION_FREQUENCY" varchar(20) DEFAULT 'MONTHLY',
+	"CREATED_BY" varchar(50),
+	"CREATED_DATE" timestamp,
+	"MODIFIED_BY" varchar(50),
+	"MODIFIED_DATE" timestamp,
+	CONSTRAINT "TBL_COMPANY_BASE_CURRENCY_Company_ID_unique" UNIQUE("Company_ID")
+);
+--> statement-breakpoint
 CREATE TABLE "stomaster"."tbl_Company_Master" (
-	"Company_Id" serial PRIMARY KEY NOT NULL,
+	"Company_Id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."tbl_Company_Master_Company_Id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"Company_Name" varchar(100),
 	"TIN_Number" varchar(50),
 	"Address" varchar(2000),
@@ -179,14 +230,66 @@ CREATE TABLE "stomaster"."tbl_Company_Master" (
 	CONSTRAINT "tbl_Company_Master_TIN_Number_unique" UNIQUE("TIN_Number")
 );
 --> statement-breakpoint
+CREATE TABLE "stomaster"."TBL_COST_CENTER_ALLOCATION" (
+	"ALLOCATION_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_COST_CENTER_ALLOCATION_ALLOCATION_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"Company_ID" integer,
+	"COST_CENTER_ID" integer,
+	"SOURCE_TABLE" varchar(50),
+	"SOURCE_REF_NO" varchar(50),
+	"SOURCE_LINE_SNO" integer,
+	"EXPENSE_DATE" timestamp,
+	"EXPENSE_CATEGORY" varchar(100),
+	"CURRENCY_ID" integer,
+	"EXPENSE_AMOUNT" numeric(30, 5),
+	"LC_AMOUNT" numeric(30, 5),
+	"ALLOCATION_PERCENTAGE" numeric(5, 2),
+	"ALLOCATED_AMOUNT" numeric(30, 5),
+	"APPROVAL_STATUS" varchar(20) DEFAULT 'PENDING',
+	"STATUS_ENTRY" varchar(20) DEFAULT 'Active',
+	"REMARKS" varchar(500),
+	"CREATED_BY" varchar(50),
+	"CREATED_DATE" timestamp
+);
+--> statement-breakpoint
+CREATE TABLE "stomaster"."TBL_COST_CENTER_BUDGET" (
+	"BUDGET_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_COST_CENTER_BUDGET_BUDGET_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"Company_ID" integer,
+	"COST_CENTER_ID" integer,
+	"FINANCIAL_YEAR" varchar(20),
+	"PERIOD_START_DATE" date,
+	"PERIOD_END_DATE" date,
+	"BUDGET_AMOUNT" numeric(30, 5),
+	"ACTUAL_EXPENSE" numeric(30, 5) DEFAULT '0',
+	"COMMITTED_AMOUNT" numeric(30, 5) DEFAULT '0',
+	"AVAILABLE_BUDGET" numeric(30, 5),
+	"VARIANCE_AMOUNT" numeric(30, 5),
+	"VARIANCE_PERCENTAGE" numeric(5, 2),
+	"STATUS" varchar(20) DEFAULT 'Active'
+);
+--> statement-breakpoint
+CREATE TABLE "stomaster"."TBL_COST_CENTER_MASTER" (
+	"COST_CENTER_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_COST_CENTER_MASTER_COST_CENTER_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"Company_ID" integer,
+	"COST_CENTER_CODE" varchar(50),
+	"COST_CENTER_NAME" varchar(150),
+	"COST_CENTER_TYPE" varchar(50),
+	"DESCRIPTION" varchar(500),
+	"BUDGET_ALERT_THRESHOLD" integer DEFAULT 80,
+	"STATUS" varchar(20) DEFAULT 'Active',
+	"CREATED_BY" varchar(50),
+	"CREATED_DATE" timestamp,
+	"CREATED_MAC_ADDRESS" varchar(50),
+	CONSTRAINT "TBL_COST_CENTER_MASTER_COST_CENTER_CODE_unique" UNIQUE("COST_CENTER_CODE")
+);
+--> statement-breakpoint
 CREATE TABLE "stomaster"."tbl_country_master" (
-	"Country_Id" serial PRIMARY KEY NOT NULL,
+	"Country_Id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."tbl_country_master_Country_Id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"Country_Name" varchar(100),
 	"nicename" varchar(80),
 	"iso3" varchar(50),
 	"numcode" integer,
 	"phonecode" integer,
-	"Batch_No" varchar(2),
+	"Batch_No" varchar(50),
 	"Remarks" varchar(1000),
 	"Status_Master" varchar(50),
 	"Created_User" varchar(50),
@@ -199,7 +302,7 @@ CREATE TABLE "stomaster"."tbl_country_master" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_CURRENCY_MASTER" (
-	"CURRENCY_ID" serial PRIMARY KEY NOT NULL,
+	"CURRENCY_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_CURRENCY_MASTER_CURRENCY_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"CURRENCY_NAME" varchar(50),
 	"ADDRESS" varchar(50),
 	"Exchange_Rate" numeric(30, 5),
@@ -215,7 +318,7 @@ CREATE TABLE "stomaster"."TBL_CURRENCY_MASTER" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."tbl_Customer_Address_Details" (
-	"Sno" serial PRIMARY KEY NOT NULL,
+	"Sno" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."tbl_Customer_Address_Details_Sno_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"Customer_Id" integer,
 	"ADDRESS_TYPE" varchar(50),
 	"Address" varchar(5000),
@@ -231,7 +334,7 @@ CREATE TABLE "stomaster"."tbl_Customer_Address_Details" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_CUSTOMER_COMPANY_WISE_BILLING_LOCATION_MAPPING" (
-	"SNO" serial PRIMARY KEY NOT NULL,
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_CUSTOMER_COMPANY_WISE_BILLING_LOCATION_MAPPING_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"Customer_Id" integer,
 	"Company_id" integer,
 	"Billing_Location_Id" integer,
@@ -248,7 +351,7 @@ CREATE TABLE "stomaster"."TBL_CUSTOMER_COMPANY_WISE_BILLING_LOCATION_MAPPING" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."tbl_Customer_Credit_Limit_Details" (
-	"Sno" serial PRIMARY KEY NOT NULL,
+	"Sno" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."tbl_Customer_Credit_Limit_Details_Sno_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"Company_id" integer,
 	"Customer_Id" integer,
 	"Currency_id" integer,
@@ -286,7 +389,7 @@ CREATE TABLE "stomaster"."tbl_Customer_Credit_Limit_Details" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."tbl_Customer_Master" (
-	"Customer_Id" serial PRIMARY KEY NOT NULL,
+	"Customer_Id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."tbl_Customer_Master_Customer_Id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"Customer_Name" varchar(250),
 	"TIN_Number" varchar(100),
 	"VAT_Number" varchar(50),
@@ -341,7 +444,7 @@ CREATE TABLE "stomaster"."TBL_CUSTOMER_MASTER_FILES_UPLOAD" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_CUSTOMER_PAYMENT_MODE_MASTER" (
-	"PAYMENT_MODE_ID" serial PRIMARY KEY NOT NULL,
+	"PAYMENT_MODE_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_CUSTOMER_PAYMENT_MODE_MASTER_PAYMENT_MODE_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"PAYMENT_MODE_NAME" varchar(50),
 	"SHORT_CODE" varchar(20),
 	"REMARKS" varchar(1000),
@@ -355,7 +458,7 @@ CREATE TABLE "stomaster"."TBL_CUSTOMER_PAYMENT_MODE_MASTER" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_CUSTOMER_PRODUCT_VAT_PERCENTAGE_SETTINGS" (
-	"SNO" serial PRIMARY KEY NOT NULL,
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_CUSTOMER_PRODUCT_VAT_PERCENTAGE_SETTINGS_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"Company_id" integer,
 	"Customer_Id" integer,
 	"Main_Category_Id" integer,
@@ -375,7 +478,7 @@ CREATE TABLE "stomaster"."TBL_CUSTOMER_PRODUCT_VAT_PERCENTAGE_SETTINGS" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."tbl_Customer_Wise_Product_Price_Settings" (
-	"Sno" serial PRIMARY KEY NOT NULL,
+	"Sno" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."tbl_Customer_Wise_Product_Price_Settings_Sno_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"Company_id" integer,
 	"Customer_Id" integer,
 	"Main_Category_Id" integer,
@@ -410,8 +513,23 @@ CREATE TABLE "stomaster"."tbl_Customer_Wise_Product_Price_Settings" (
 	"Modified_Mac_Address" varchar(50)
 );
 --> statement-breakpoint
+CREATE TABLE "stomaster"."tbl_Department_Master" (
+	"Department_Id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."tbl_Department_Master_Department_Id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"Department_Name" varchar(100),
+	"Department_Description" varchar(200),
+	"Remarks" varchar(1000),
+	"Status_Master" varchar(20),
+	"Created_By" varchar(50),
+	"Created_Date" timestamp,
+	"Created_Mac_Address" varchar(50),
+	"Modified_By" varchar(50),
+	"Modified_Date" timestamp,
+	"Modified_Mac_Address" varchar(50),
+	CONSTRAINT "tbl_Department_Master_Department_Name_unique" UNIQUE("Department_Name")
+);
+--> statement-breakpoint
 CREATE TABLE "stomaster"."tbl_District_Master" (
-	"District_id" serial PRIMARY KEY NOT NULL,
+	"District_id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."tbl_District_Master_District_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"Country_Id" integer,
 	"Region_Id" integer,
 	"District_Name" varchar(50),
@@ -427,11 +545,30 @@ CREATE TABLE "stomaster"."tbl_District_Master" (
 	"Modified_Mac_Address" varchar(50)
 );
 --> statement-breakpoint
+CREATE TABLE "stomaster"."tbl_Employee_Master" (
+	"Employee_Id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."tbl_Employee_Master_Employee_Id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"Card_Id" varchar(50),
+	"Name" varchar(150) NOT NULL,
+	"Role" varchar(100),
+	"Department" integer,
+	"Phone" varchar(50),
+	"Email" varchar(150),
+	"Remarks" varchar(1000),
+	"Status_Master" varchar(20) DEFAULT 'Active',
+	"Created_By" varchar(50),
+	"Created_Date" timestamp,
+	"Created_Mac_Address" varchar(50),
+	"Modified_By" varchar(50),
+	"Modified_Date" timestamp,
+	"Modified_Mac_Address" varchar(50)
+);
+--> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_EXCHANGE_RATE_MASTER" (
-	"SNO" serial PRIMARY KEY NOT NULL,
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_EXCHANGE_RATE_MASTER_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"Company_ID" integer,
 	"CURRENCY_ID" integer,
 	"Exchange_Rate" numeric(30, 5),
+	"EFFECTIVE_DATE" timestamp,
 	"REMARKS" varchar(1000),
 	"STATUS_MASTER" varchar(20),
 	"CREATED_BY" varchar(50),
@@ -442,8 +579,20 @@ CREATE TABLE "stomaster"."TBL_EXCHANGE_RATE_MASTER" (
 	"MODIFIED_MAC_ADDRESS" varchar(50)
 );
 --> statement-breakpoint
+CREATE TABLE "stomaster"."TBL_EXCHANGE_RATE_USAGE_LOG" (
+	"LOG_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_EXCHANGE_RATE_USAGE_LOG_LOG_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"Company_ID" integer,
+	"EXCHANGE_RATE_SNO" integer,
+	"TRANSACTION_ID" integer,
+	"RATE_VALUE_AT_USAGE" numeric(30, 8),
+	"APPLIED_DATE" date,
+	"USAGE_TYPE" varchar(30),
+	"CREATED_BY" varchar(50),
+	"CREATED_DATE" timestamp
+);
+--> statement-breakpoint
 CREATE TABLE "stomaster"."tbl_field_dtl" (
-	"activity_id_fld_dtl" bigserial PRIMARY KEY NOT NULL,
+	"activity_id_fld_dtl" bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."tbl_field_dtl_activity_id_fld_dtl_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
 	"field_id_fld_dtl" bigint,
 	"activity_name_fld_dtl" text,
 	"activity_desc_fld_dtl" text,
@@ -458,7 +607,7 @@ CREATE TABLE "stomaster"."tbl_field_dtl" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."tbl_field_hdr" (
-	"field_id_fld_hdr" bigserial PRIMARY KEY NOT NULL,
+	"field_id_fld_hdr" bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."tbl_field_hdr_field_id_fld_hdr_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
 	"project_name_fld_hdr" varchar(50),
 	"field_category_fld_hdr" varchar(50),
 	"field_desc_fld_hdr" varchar(150),
@@ -473,8 +622,24 @@ CREATE TABLE "stomaster"."tbl_field_hdr" (
 	CONSTRAINT "tbl_field_hdr_field_category_fld_hdr_unique" UNIQUE("field_category_fld_hdr")
 );
 --> statement-breakpoint
+CREATE TABLE "stomaster"."TBL_FINANCIAL_YEAR_MASTER" (
+	"Year_Id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_FINANCIAL_YEAR_MASTER_Year_Id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"Company_Id" integer,
+	"Financial_Year" varchar(50),
+	"Start_Date" timestamp,
+	"End_Date" timestamp,
+	"Is_Current" varchar(20) DEFAULT 'No',
+	"Status_Master" varchar(20) DEFAULT 'Active',
+	"Created_By" varchar(50),
+	"Created_Date" timestamp,
+	"Created_Mac_Address" varchar(50),
+	"Modified_By" varchar(50),
+	"Modified_Date" timestamp,
+	"Modified_Mac_Address" varchar(50)
+);
+--> statement-breakpoint
 CREATE TABLE "stomaster"."tbl_Location_Master" (
-	"Location_Id" serial PRIMARY KEY NOT NULL,
+	"Location_Id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."tbl_Location_Master_Location_Id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"Location_Name" varchar(100),
 	"Location_Description" varchar(100),
 	"Remarks" varchar(2000),
@@ -488,8 +653,32 @@ CREATE TABLE "stomaster"."tbl_Location_Master" (
 	CONSTRAINT "tbl_Location_Master_Location_Name_unique" UNIQUE("Location_Name")
 );
 --> statement-breakpoint
+CREATE TABLE "stomaster"."TBL_MULTI_CURRENCY_TRANSACTIONS" (
+	"TRANSACTION_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_MULTI_CURRENCY_TRANSACTIONS_TRANSACTION_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"Company_ID" integer,
+	"DOCUMENT_TYPE" varchar(30),
+	"DOCUMENT_NUMBER" varchar(50),
+	"DOCUMENT_DATE" date,
+	"TRANSACTION_CURRENCY_ID" integer,
+	"TRANSACTION_AMOUNT" numeric(30, 5),
+	"BASE_CURRENCY_ID" integer,
+	"BASE_AMOUNT" numeric(30, 5),
+	"EXCHANGE_RATE_USED" numeric(30, 8),
+	"EXCHANGE_RATE_SNO" integer,
+	"ORIGINAL_BASE_AMOUNT" numeric(30, 5),
+	"SETTLED_AMOUNT" numeric(30, 5) DEFAULT '0',
+	"STATUS" varchar(20) DEFAULT 'PENDING',
+	"REMARKS" varchar(500),
+	"CREATED_BY" varchar(50),
+	"CREATED_DATE" timestamp,
+	"CREATED_MAC_ADDRESS" varchar(50),
+	"MODIFIED_BY" varchar(50),
+	"MODIFIED_DATE" timestamp,
+	"MODIFIED_MAC_ADDRESS" varchar(50)
+);
+--> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_PAYMENT_MODE_MASTER" (
-	"PAYMENT_MODE_ID" serial PRIMARY KEY NOT NULL,
+	"PAYMENT_MODE_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_PAYMENT_MODE_MASTER_PAYMENT_MODE_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"PAYMENT_MODE_NAME" varchar(50),
 	"PAYMENT_MODE_PERCENTAGE" numeric(30, 2),
 	"REMARKS" varchar(1000),
@@ -504,7 +693,7 @@ CREATE TABLE "stomaster"."TBL_PAYMENT_MODE_MASTER" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_PAYMENT_TERM_MASTER" (
-	"PAYMENT_TERM_ID" serial PRIMARY KEY NOT NULL,
+	"PAYMENT_TERM_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_PAYMENT_TERM_MASTER_PAYMENT_TERM_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"PAYMENT_TERM_NAME" varchar(50),
 	"REMARKS" varchar(1000),
 	"STATUS_ENTRY" varchar(50),
@@ -518,7 +707,7 @@ CREATE TABLE "stomaster"."TBL_PAYMENT_TERM_MASTER" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."tbl_Product_Company_Main_Category_Mapping" (
-	"Sno" serial PRIMARY KEY NOT NULL,
+	"Sno" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."tbl_Product_Company_Main_Category_Mapping_Sno_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"Company_Id" integer,
 	"Main_Category_Id" integer,
 	"Remarks" varchar(2000),
@@ -532,7 +721,7 @@ CREATE TABLE "stomaster"."tbl_Product_Company_Main_Category_Mapping" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_PRODUCT_MAIN_CATEGORY_MASTER" (
-	"MAIN_CATEGORY_ID" serial PRIMARY KEY NOT NULL,
+	"MAIN_CATEGORY_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_PRODUCT_MAIN_CATEGORY_MASTER_MAIN_CATEGORY_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"MAIN_CATEGORY_NAME" varchar(100),
 	"REMARKS" varchar(2000),
 	"STATUS_MASTER" varchar(20),
@@ -546,7 +735,7 @@ CREATE TABLE "stomaster"."TBL_PRODUCT_MAIN_CATEGORY_MASTER" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_PRODUCT_MASTER" (
-	"PRODUCT_ID" serial PRIMARY KEY NOT NULL,
+	"PRODUCT_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_PRODUCT_MASTER_PRODUCT_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"PRODUCT_NAME" varchar(150),
 	"MAIN_CATEGORY_ID" integer,
 	"SUB_CATEGORY_ID" integer,
@@ -568,7 +757,7 @@ CREATE TABLE "stomaster"."TBL_PRODUCT_MASTER" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_PRODUCT_OPENING_STOCK" (
-	"SNO" serial PRIMARY KEY NOT NULL,
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_PRODUCT_OPENING_STOCK_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"OPENING_STOCK_DATE" timestamp,
 	"COMPANY_ID" integer,
 	"STORE_ID" integer,
@@ -587,7 +776,7 @@ CREATE TABLE "stomaster"."TBL_PRODUCT_OPENING_STOCK" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_PRODUCT_SUB_CATEGORY_MASTER" (
-	"SUB_CATEGORY_ID" serial PRIMARY KEY NOT NULL,
+	"SUB_CATEGORY_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_PRODUCT_SUB_CATEGORY_MASTER_SUB_CATEGORY_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"SUB_CATEGORY_NAME" varchar(50),
 	"MAIN_CATEGORY_ID" integer,
 	"REMARKS" varchar(2000),
@@ -601,8 +790,69 @@ CREATE TABLE "stomaster"."TBL_PRODUCT_SUB_CATEGORY_MASTER" (
 	CONSTRAINT "TBL_PRODUCT_SUB_CATEGORY_MASTER_SUB_CATEGORY_NAME_unique" UNIQUE("SUB_CATEGORY_NAME")
 );
 --> statement-breakpoint
+CREATE TABLE "stomaster"."TBL_PROFIT_CENTER_ALLOCATION" (
+	"ALLOCATION_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_PROFIT_CENTER_ALLOCATION_ALLOCATION_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"Company_ID" integer,
+	"PROFIT_CENTER_ID" integer,
+	"SOURCE_TABLE" varchar(50),
+	"SOURCE_REF_NO" varchar(50),
+	"SOURCE_LINE_SNO" integer,
+	"REVENUE_DATE" timestamp,
+	"REVENUE_CATEGORY" varchar(100),
+	"CURRENCY_ID" integer,
+	"REVENUE_AMOUNT" numeric(30, 5),
+	"LC_AMOUNT" numeric(30, 5),
+	"ALLOCATION_PERCENTAGE" numeric(5, 2),
+	"ALLOCATED_AMOUNT" numeric(30, 5),
+	"STATUS_ENTRY" varchar(20) DEFAULT 'Active',
+	"CREATED_BY" varchar(50),
+	"CREATED_DATE" timestamp
+);
+--> statement-breakpoint
+CREATE TABLE "stomaster"."TBL_PROFIT_CENTER_MASTER" (
+	"PROFIT_CENTER_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_PROFIT_CENTER_MASTER_PROFIT_CENTER_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"Company_ID" integer,
+	"PROFIT_CENTER_CODE" varchar(50),
+	"PROFIT_CENTER_NAME" varchar(150),
+	"MANAGER_NAME" varchar(100),
+	"STATUS" varchar(20) DEFAULT 'Active',
+	"CREATED_BY" varchar(50),
+	"CREATED_DATE" timestamp,
+	"CREATED_MAC_ADDRESS" varchar(50),
+	CONSTRAINT "TBL_PROFIT_CENTER_MASTER_PROFIT_CENTER_CODE_unique" UNIQUE("PROFIT_CENTER_CODE")
+);
+--> statement-breakpoint
+CREATE TABLE "stomaster"."TBL_PROFIT_CENTER_TARGET" (
+	"TARGET_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_PROFIT_CENTER_TARGET_TARGET_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"Company_ID" integer,
+	"PROFIT_CENTER_ID" integer,
+	"FINANCIAL_YEAR" varchar(20),
+	"PERIOD_NAME" varchar(50),
+	"PERIOD_START_DATE" date,
+	"PERIOD_END_DATE" date,
+	"TARGET_AMOUNT" numeric(30, 5),
+	"ACTUAL_REVENUE" numeric(30, 5) DEFAULT '0',
+	"ACHIEVEMENT_PERCENT" numeric(5, 2)
+);
+--> statement-breakpoint
+CREATE TABLE "stomaster"."TBL_REALIZED_GAIN_LOSS" (
+	"GL_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_REALIZED_GAIN_LOSS_GL_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"Company_ID" integer,
+	"TRANSACTION_ID" integer,
+	"SETTLEMENT_DATE" date,
+	"SETTLEMENT_AMOUNT" numeric(30, 5),
+	"SETTLEMENT_RATE" numeric(30, 8),
+	"SETTLEMENT_BASE_AMOUNT" numeric(30, 5),
+	"ORIGINAL_BASE_AMOUNT" numeric(30, 5),
+	"REALIZED_GAIN_LOSS" numeric(30, 5),
+	"GL_TYPE" varchar(10),
+	"JOURNAL_VOUCHER_NO" varchar(50),
+	"CREATED_BY" varchar(50),
+	"CREATED_DATE" timestamp
+);
+--> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_REGION_MASTER" (
-	"REGION_ID" serial PRIMARY KEY NOT NULL,
+	"REGION_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_REGION_MASTER_REGION_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"REGION_NAME" varchar(50),
 	"COUNTRY_ID" integer,
 	"CAPITAL" varchar(50),
@@ -621,7 +871,7 @@ CREATE TABLE "stomaster"."TBL_REGION_MASTER" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_ROLE_MASTER" (
-	"ROLE_ID" serial PRIMARY KEY NOT NULL,
+	"ROLE_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_ROLE_MASTER_ROLE_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"ROLE_NAME" varchar(50),
 	"ROLE_DESCRIPTION" varchar(50),
 	"REMARKS" varchar(1000),
@@ -636,7 +886,7 @@ CREATE TABLE "stomaster"."TBL_ROLE_MASTER" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_SALES_PERSON_MASTER" (
-	"Sales_Person_ID" serial PRIMARY KEY NOT NULL,
+	"Sales_Person_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_SALES_PERSON_MASTER_Sales_Person_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"Emp_Id" integer,
 	"PERSON_NAME" varchar(50),
 	"Designation_Name" varchar(50),
@@ -657,7 +907,7 @@ CREATE TABLE "stomaster"."TBL_SALES_PERSON_MASTER" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_SCHEDULER_SETTINGS" (
-	"SNO" serial PRIMARY KEY NOT NULL,
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_SCHEDULER_SETTINGS_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"JOB_NAME" varchar(100),
 	"CRON_EXPRESSION" varchar(50),
 	"IS_ENABLED" varchar(20) DEFAULT 'True',
@@ -669,7 +919,7 @@ CREATE TABLE "stomaster"."TBL_SCHEDULER_SETTINGS" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."tbl_Store_Master" (
-	"Store_Id" serial PRIMARY KEY NOT NULL,
+	"Store_Id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."tbl_Store_Master_Store_Id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"Store_Name" varchar(100),
 	"Location_Id" integer,
 	"Manager_Name" varchar(50),
@@ -691,7 +941,7 @@ CREATE TABLE "stomaster"."tbl_Store_Master" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."tbl_Store_Product_Minimum_Stock" (
-	"Sno" serial PRIMARY KEY NOT NULL,
+	"Sno" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."tbl_Store_Product_Minimum_Stock_Sno_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"Company_id" integer,
 	"Store_Id" integer,
 	"Main_Category_Id" integer,
@@ -713,7 +963,7 @@ CREATE TABLE "stomaster"."tbl_Store_Product_Minimum_Stock" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."tbl_Supplier_Master" (
-	"Supplier_Id" serial PRIMARY KEY NOT NULL,
+	"Supplier_Id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."tbl_Supplier_Master_Supplier_Id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"Supplier_Type" varchar(50),
 	"Supplier_Name" varchar(250),
 	"TIN_Number" varchar(100),
@@ -741,8 +991,40 @@ CREATE TABLE "stomaster"."tbl_Supplier_Master" (
 	CONSTRAINT "tbl_Supplier_Master_Supplier_Name_unique" UNIQUE("Supplier_Name")
 );
 --> statement-breakpoint
+CREATE TABLE "stomaster"."tbl_Tax_Master" (
+	"Tax_Id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."tbl_Tax_Master_Tax_Id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"Name" varchar(100) NOT NULL,
+	"Rate" numeric(5, 2) NOT NULL,
+	"Description" varchar(255),
+	"Status_Master" varchar(20) DEFAULT 'Active',
+	"Created_By" varchar(50),
+	"Created_Date" timestamp DEFAULT now(),
+	"Created_Mac_Address" varchar(50),
+	"Modified_By" varchar(50),
+	"Modified_Date" timestamp,
+	"Modified_Mac_Address" varchar(50)
+);
+--> statement-breakpoint
+CREATE TABLE "stomaster"."TBL_UNREALIZED_GAIN_LOSS" (
+	"GL_ID" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_UNREALIZED_GAIN_LOSS_GL_ID_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"Company_ID" integer,
+	"TRANSACTION_ID" integer,
+	"ACCOUNT_TYPE" varchar(30),
+	"REVALUATION_DATE" date,
+	"OLD_BASE_AMOUNT" numeric(30, 5),
+	"NEW_BASE_AMOUNT" numeric(30, 5),
+	"UNREALIZED_GAIN_LOSS" numeric(30, 5),
+	"GL_TYPE" varchar(10),
+	"JOURNAL_VOUCHER_NO" varchar(50),
+	"REVERSAL_JOURNAL_VOUCHER_NO" varchar(50),
+	"IS_REVERSED" boolean DEFAULT false,
+	"STATUS" varchar(20) DEFAULT 'ACTIVE',
+	"CREATED_BY" varchar(50),
+	"CREATED_DATE" timestamp
+);
+--> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_USER_INFO_HDR" (
-	"LOGIN_ID_USER_HDR" serial PRIMARY KEY NOT NULL,
+	"LOGIN_ID_USER_HDR" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_USER_INFO_HDR_LOGIN_ID_USER_HDR_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"NEW_CARD_NO_USER_HDR" integer,
 	"LOGIN_NAME" varchar(50),
 	"PASSWORD_USER_HDR" varchar(100),
@@ -763,7 +1045,7 @@ CREATE TABLE "stomaster"."TBL_USER_INFO_HDR" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_USER_TO_STORE_MAPPING" (
-	"USER_TO_LOCATION_ID_USER_TO_ROLE" serial PRIMARY KEY NOT NULL,
+	"USER_TO_LOCATION_ID_USER_TO_ROLE" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_USER_TO_STORE_MAPPING_USER_TO_LOCATION_ID_USER_TO_ROLE_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"USER_ID_USER_TO_ROLE" integer,
 	"COMPANY_ID" integer,
 	"STORE_ID_USER_TO_ROLE" integer,
@@ -778,7 +1060,7 @@ CREATE TABLE "stomaster"."TBL_USER_TO_STORE_MAPPING" (
 );
 --> statement-breakpoint
 CREATE TABLE "stomaster"."TBL_VAT_PERCENTAGE_SETTING" (
-	"SNO" serial PRIMARY KEY NOT NULL,
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stomaster"."TBL_VAT_PERCENTAGE_SETTING_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"COMPANY_ID" integer,
 	"VAT_PERCENTAGE" numeric(30, 2),
 	"EFFECTIVE_FROM" timestamp,
@@ -812,7 +1094,7 @@ CREATE TABLE "stoentries"."TBL_CUSTOMER_RECEIPT_FILES_UPLOAD" (
 );
 --> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_CUSTOMER_RECEIPT_HDR" (
-	"SNO" bigserial NOT NULL,
+	"SNO" bigint GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_CUSTOMER_RECEIPT_HDR_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
 	"RECEIPT_REF_NO" varchar(50) PRIMARY KEY NOT NULL,
 	"RECEIPT_DATE" timestamp,
 	"PAYMENT_TYPE" varchar(50),
@@ -846,7 +1128,7 @@ CREATE TABLE "stoentries"."TBL_CUSTOMER_RECEIPT_HDR" (
 );
 --> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_CUSTOMER_RECEIPT_INVOICE_DTL" (
-	"SNO" bigserial PRIMARY KEY NOT NULL,
+	"SNO" bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_CUSTOMER_RECEIPT_INVOICE_DTL_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
 	"RECEIPT_REF_NO" varchar(50),
 	"TAX_INVOICE_REF_NO" varchar(50),
 	"ACTUAL_INVOICE_AMOUNT" numeric(30, 2),
@@ -882,7 +1164,7 @@ CREATE TABLE "stoentries"."TBL_DELIVERY_FILES_UPLOAD" (
 );
 --> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_DELIVERY_NOTE_DTL" (
-	"SNO" serial PRIMARY KEY NOT NULL,
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_DELIVERY_NOTE_DTL_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"DELIVERY_NOTE_REF_NO" varchar(50),
 	"SALES_ORDER_DTL_SNO" integer,
 	"PO_DTL_SNO" integer,
@@ -915,7 +1197,7 @@ CREATE TABLE "stoentries"."TBL_DELIVERY_NOTE_DTL" (
 );
 --> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_DELIVERY_NOTE_HDR" (
-	"SNO" serial NOT NULL,
+	"SNO" integer GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_DELIVERY_NOTE_HDR_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"DELIVERY_NOTE_REF_NO" varchar(50) PRIMARY KEY NOT NULL,
 	"DELIVERY_DATE" timestamp,
 	"COMPANY_ID" integer,
@@ -951,7 +1233,7 @@ CREATE TABLE "stoentries"."TBL_DELIVERY_NOTE_HDR" (
 );
 --> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_EXPENSE_DTL" (
-	"SNO" serial PRIMARY KEY NOT NULL,
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_EXPENSE_DTL_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"EXPENSE_REF_NO" varchar(50),
 	"PO_REF_NO" varchar(50),
 	"PO_DTL_SNO" integer,
@@ -987,7 +1269,7 @@ CREATE TABLE "stoentries"."TBL_EXPENSE_FILES_UPLOAD" (
 );
 --> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_EXPENSE_HDR" (
-	"SNO" serial NOT NULL,
+	"SNO" integer GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_EXPENSE_HDR_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"EXPENSE_REF_NO" varchar(50) PRIMARY KEY NOT NULL,
 	"EXPENSE_DATE" timestamp,
 	"COMPANY_ID" integer,
@@ -1009,6 +1291,7 @@ CREATE TABLE "stoentries"."TBL_EXPENSE_HDR" (
 	"MODIFIED_BY" varchar(50),
 	"MODIFIED_DATE" timestamp,
 	"MODIFIED_IP_ADDRESS" varchar(50),
+	"COST_CENTER_ID" integer,
 	"SUBMITTED_BY" varchar(50),
 	"SUBMITTED_DATE" timestamp,
 	"SUBMITTED_IP_ADDRESS" varchar(50)
@@ -1033,7 +1316,7 @@ CREATE TABLE "stoentries"."TBL_GOODS_FILES_UPLOAD" (
 );
 --> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_GOODS_INWARD_GRN_DTL" (
-	"SNO" serial PRIMARY KEY NOT NULL,
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_GOODS_INWARD_GRN_DTL_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"GRN_REF_NO" varchar(50),
 	"PO_DTL_SNO" integer,
 	"MAIN_CATEGORY_ID" integer,
@@ -1055,7 +1338,7 @@ CREATE TABLE "stoentries"."TBL_GOODS_INWARD_GRN_DTL" (
 );
 --> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_GOODS_INWARD_GRN_HDR" (
-	"SNO" serial NOT NULL,
+	"SNO" integer GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_GOODS_INWARD_GRN_HDR_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"GRN_REF_NO" varchar(50) PRIMARY KEY NOT NULL,
 	"GRN_DATE" timestamp,
 	"COMPANY_ID" integer,
@@ -1082,8 +1365,34 @@ CREATE TABLE "stoentries"."TBL_GOODS_INWARD_GRN_HDR" (
 	"MODIFIED_IP_ADDRESS" varchar(50)
 );
 --> statement-breakpoint
+CREATE TABLE "stoentries"."TBL_JOURNAL_DTL" (
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_JOURNAL_DTL_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"JOURNAL_REF_NO" varchar(50),
+	"LEDGER_ID" integer,
+	"DEBIT" numeric(30, 2) DEFAULT '0',
+	"CREDIT" numeric(30, 2) DEFAULT '0',
+	"REMARKS" varchar(255)
+);
+--> statement-breakpoint
+CREATE TABLE "stoentries"."TBL_JOURNAL_HDR" (
+	"SNO" integer GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_JOURNAL_HDR_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"JOURNAL_REF_NO" varchar(50) PRIMARY KEY NOT NULL,
+	"JOURNAL_DATE" timestamp NOT NULL,
+	"COMPANY_ID" integer,
+	"MODULE_NAME" varchar(50),
+	"MODULE_REF_NO" varchar(50),
+	"NARRATION" text,
+	"STATUS_ENTRY" varchar(20),
+	"CREATED_BY" varchar(50),
+	"CREATED_DATE" timestamp DEFAULT now(),
+	"CREATED_IP_ADDRESS" varchar(50),
+	"MODIFIED_BY" varchar(50),
+	"MODIFIED_DATE" timestamp,
+	"MODIFIED_IP_ADDRESS" varchar(50)
+);
+--> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS" (
-	"SNO" serial PRIMARY KEY NOT NULL,
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"PURCHASE_INVOICE_NO" varchar(50),
 	"ADDITIONAL_COST_TYPE_ID" integer,
 	"ADDITIONAL_COST_AMOUNT" numeric(30, 4),
@@ -1098,7 +1407,7 @@ CREATE TABLE "stoentries"."TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS" (
 );
 --> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_PURCHASE_INVOICE_DTL" (
-	"SNO" serial PRIMARY KEY NOT NULL,
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_PURCHASE_INVOICE_DTL_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"PURCHASE_INVOICE_REF_NO" varchar(50),
 	"GRN_REF_NO" varchar(50),
 	"MAIN_CATEGORY_ID" integer,
@@ -1130,7 +1439,7 @@ CREATE TABLE "stoentries"."TBL_PURCHASE_INVOICE_DTL" (
 );
 --> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_PURCHASE_INVOICE_FILES_UPLOAD" (
-	"SNO" serial PRIMARY KEY NOT NULL,
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_PURCHASE_INVOICE_FILES_UPLOAD_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"PURCHASE_INVOICE_REF_NO" varchar(50),
 	"DOCUMENT_TYPE" varchar(50),
 	"DESCRIPTION_DETAILS" varchar(100),
@@ -1148,7 +1457,7 @@ CREATE TABLE "stoentries"."TBL_PURCHASE_INVOICE_FILES_UPLOAD" (
 );
 --> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_PURCHASE_INVOICE_HDR" (
-	"SNO" serial NOT NULL,
+	"SNO" integer GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_PURCHASE_INVOICE_HDR_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"PURCHASE_INVOICE_REF_NO" varchar(50) PRIMARY KEY NOT NULL,
 	"COMPANY_ID" integer,
 	"INVOICE_NO" varchar(100),
@@ -1196,11 +1505,12 @@ CREATE TABLE "stoentries"."TBL_PURCHASE_INVOICE_HDR" (
 	"CREATED_IP_ADDRESS" varchar(50),
 	"MODIFIED_BY" varchar(50),
 	"MODIFIED_DATE" timestamp,
-	"MODIFIED_IP_ADDRESS" varchar(50)
+	"MODIFIED_IP_ADDRESS" varchar(50),
+	"COST_CENTER_ID" integer
 );
 --> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS" (
-	"SNO" serial PRIMARY KEY NOT NULL,
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"PO_REF_NO" varchar(50),
 	"ADDITIONAL_COST_TYPE_ID" integer,
 	"ADDITIONAL_COST_AMOUNT" numeric(30, 4),
@@ -1215,7 +1525,7 @@ CREATE TABLE "stoentries"."TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS" (
 );
 --> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_PURCHASE_ORDER_CONVERSATION_DTL" (
-	"SNO" serial PRIMARY KEY NOT NULL,
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_PURCHASE_ORDER_CONVERSATION_DTL_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"PO_REF_NO" varchar(50),
 	"RESPOND_PERSON" varchar(50),
 	"DISCUSSION_DETAILS" text,
@@ -1231,7 +1541,7 @@ CREATE TABLE "stoentries"."TBL_PURCHASE_ORDER_CONVERSATION_DTL" (
 );
 --> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_PURCHASE_ORDER_DTL" (
-	"SNO" serial PRIMARY KEY NOT NULL,
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_PURCHASE_ORDER_DTL_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"PO_REF_NO" varchar(50),
 	"REQUEST_STORE_ID" integer,
 	"MAIN_CATEGORY_ID" integer,
@@ -1263,7 +1573,7 @@ CREATE TABLE "stoentries"."TBL_PURCHASE_ORDER_DTL" (
 );
 --> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_PURCHASE_ORDER_FILES_UPLOAD" (
-	"SNO" serial PRIMARY KEY NOT NULL,
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_PURCHASE_ORDER_FILES_UPLOAD_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"PO_REF_NO" varchar(50),
 	"DOCUMENT_TYPE" varchar(50),
 	"DESCRIPTION_DETAILS" varchar(100),
@@ -1281,7 +1591,7 @@ CREATE TABLE "stoentries"."TBL_PURCHASE_ORDER_FILES_UPLOAD" (
 );
 --> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_PURCHASE_ORDER_HDR" (
-	"SNO" serial NOT NULL,
+	"SNO" integer GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_PURCHASE_ORDER_HDR_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"PO_REF_NO" varchar(50) PRIMARY KEY NOT NULL,
 	"PO_DATE" timestamp,
 	"PURCHASE_TYPE" varchar(20),
@@ -1291,7 +1601,7 @@ CREATE TABLE "stoentries"."TBL_PURCHASE_ORDER_HDR" (
 	"PAYMENT_TERM_ID" integer,
 	"MODE_OF_PAYMENT" varchar(25),
 	"CURRENCY_ID" integer,
-	"SUPLIER_PROFORMA_NUMBER" varchar(100),
+	"SUPPLIER_PROFORMA_NUMBER" varchar(100),
 	"SHIPMENT_MODE" varchar(100),
 	"PRICE_TERMS" varchar(150),
 	"ESTIMATED_SHIPMENT_DATE" timestamp,
@@ -1342,8 +1652,74 @@ CREATE TABLE "stoentries"."TBL_PURCHASE_ORDER_HDR" (
 	"MODIFIED_IP_ADDRESS" varchar(50)
 );
 --> statement-breakpoint
+CREATE TABLE "stoentries"."TBL_PURCHASE_PAYMENT_FILES_UPLOAD" (
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_PURCHASE_PAYMENT_FILES_UPLOAD_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"PAYMENT_REF_NO" varchar(50),
+	"DOCUMENT_TYPE" varchar(50),
+	"DESCRIPTION_DETAILS" varchar(100),
+	"FILE_NAME" varchar(150),
+	"CONTENT_TYPE" varchar(50),
+	"CONTENT_DATA" "bytea",
+	"REMARKS" varchar(1000),
+	"STATUS_MASTER" varchar(20),
+	"CREATED_BY" varchar(50),
+	"CREATED_DATE" timestamp,
+	"CREATED_IP_ADDRESS" varchar(50),
+	"MODIFIED_BY" varchar(50),
+	"MODIFIED_DATE" timestamp,
+	"MODIFIED_IP_ADDRESS" varchar(50)
+);
+--> statement-breakpoint
+CREATE TABLE "stoentries"."TBL_PURCHASE_PAYMENT_HDR" (
+	"SNO" bigint GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_PURCHASE_PAYMENT_HDR_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
+	"PAYMENT_REF_NO" varchar(50) PRIMARY KEY NOT NULL,
+	"PAYMENT_DATE" timestamp,
+	"PAYMENT_TYPE" varchar(50),
+	"COMPANY_ID" integer,
+	"SUPPLIER_ID" integer,
+	"PAYMENT_MODE_ID" integer,
+	"CR_BANK_CASH_ID" integer,
+	"DR_BANK_CASH_ID" integer,
+	"DR_ACCOUNT_ID" integer,
+	"TRANSACTION_REF_NO" varchar(100),
+	"TRANSACTION_DATE" timestamp,
+	"CURRENCY_ID" integer,
+	"PAYMENT_AMOUNT" numeric(30, 2),
+	"EXCHANGE_RATE" numeric(30, 2),
+	"PAYMENT_AMOUNT_LC" numeric(30, 2),
+	"REMARKS" varchar(1000),
+	"STATUS_ENTRY" varchar(20),
+	"CREATED_BY" varchar(50),
+	"CREATED_DATE" timestamp,
+	"CREATED_MAC_ADDRESS" varchar(50),
+	"MODIFIED_BY" varchar(50),
+	"MODIFIED_DATE" timestamp,
+	"MODIFIED_MAC_ADDRESS" varchar(50),
+	"Submitted_By" varchar(50),
+	"Submitted_Date" timestamp,
+	"Submitted_IP_Address" varchar(50)
+);
+--> statement-breakpoint
+CREATE TABLE "stoentries"."TBL_PURCHASE_PAYMENT_INV_DTL" (
+	"SNO" bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_PURCHASE_PAYMENT_INV_DTL_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1),
+	"PAYMENT_REF_NO" varchar(50),
+	"PURCHASE_INVOICE_REF_NO" varchar(50),
+	"ACTUAL_INVOICE_AMOUNT" numeric(30, 2),
+	"ALREADY_PAID_AMOUNT" numeric(30, 2),
+	"OUTSTANDING_INVOICE_AMOUNT" numeric(30, 2),
+	"PAYMENT_INVOICE_ADJUST_AMOUNT" numeric(30, 2),
+	"REMARKS" varchar(1000),
+	"STATUS_ENTRY" varchar(20),
+	"CREATED_BY" varchar(50),
+	"CREATED_DATE" timestamp,
+	"CREATED_MAC_ADDRESS" varchar(50),
+	"MODIFIED_BY" varchar(50),
+	"MODIFIED_DATE" timestamp,
+	"MODIFIED_MAC_ADDRESS" varchar(50)
+);
+--> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_SALES_ORDER_DTL" (
-	"SNO" serial PRIMARY KEY NOT NULL,
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_SALES_ORDER_DTL_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"SALES_ORDER_REF_NO" varchar(50),
 	"MAIN_CATEGORY_ID" integer,
 	"SUB_CATEGORY_ID" integer,
@@ -1395,7 +1771,7 @@ CREATE TABLE "stoentries"."TBL_SALES_ORDER_FILES_UPLOAD" (
 );
 --> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_SALES_ORDER_HDR" (
-	"SNO" serial NOT NULL,
+	"SNO" integer GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_SALES_ORDER_HDR_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"SALES_ORDER_REF_NO" varchar(50) PRIMARY KEY NOT NULL,
 	"SALES_ORDER_DATE" timestamp NOT NULL,
 	"SALES_PROFORMA_REF_NO" varchar(50) NOT NULL,
@@ -1428,7 +1804,7 @@ CREATE TABLE "stoentries"."TBL_SALES_ORDER_HDR" (
 );
 --> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_SALES_PROFORMA_DTL" (
-	"SNO" serial PRIMARY KEY NOT NULL,
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_SALES_PROFORMA_DTL_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"SALES_PROFORMA_REF_NO" varchar(50),
 	"MAIN_CATEGORY_ID" integer,
 	"SUB_CATEGORY_ID" integer,
@@ -1480,7 +1856,7 @@ CREATE TABLE "stoentries"."TBL_SALES_PROFORMA_FILES_UPLOAD" (
 );
 --> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_SALES_PROFORMA_HDR" (
-	"SNO" serial NOT NULL,
+	"SNO" integer GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_SALES_PROFORMA_HDR_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"SALES_PROFORMA_REF_NO" varchar(50) PRIMARY KEY NOT NULL,
 	"SALES_PROFORMA_DATE" timestamp,
 	"COMPANY_ID" integer,
@@ -1509,7 +1885,7 @@ CREATE TABLE "stoentries"."TBL_SALES_PROFORMA_HDR" (
 );
 --> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_TAX_INVOICE_DTL" (
-	"SNO" serial PRIMARY KEY NOT NULL,
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_TAX_INVOICE_DTL_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"TAX_INVOICE_REF_NO" varchar(50),
 	"DELIVERY_NOTE_DTL_SNO" integer,
 	"PO_DTL_SNO" integer,
@@ -1559,7 +1935,7 @@ CREATE TABLE "stoentries"."TBL_TAX_INVOICE_FILES_UPLOAD" (
 );
 --> statement-breakpoint
 CREATE TABLE "stoentries"."TBL_TAX_INVOICE_HDR" (
-	"SNO" serial NOT NULL,
+	"SNO" integer GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_TAX_INVOICE_HDR_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"TAX_INVOICE_REF_NO" varchar(50) PRIMARY KEY NOT NULL,
 	"INVOICE_DATE" timestamp,
 	"COMPANY_ID" integer,
@@ -1585,16 +1961,59 @@ CREATE TABLE "stoentries"."TBL_TAX_INVOICE_HDR" (
 	"MODIFIED_MAC_ADDRESS" varchar(50),
 	"SUBMITTED_BY" varchar(50),
 	"SUBMITTED_DATE" timestamp,
-	"SUBMITTED_MAC_ADDRESS" varchar(50)
+	"SUBMITTED_MAC_ADDRESS" varchar(50),
+	"PROFIT_CENTER_ID" integer
+);
+--> statement-breakpoint
+CREATE TABLE "stoentries"."TBL_TRIAL_BALANCE_DTL" (
+	"SNO" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_TRIAL_BALANCE_DTL_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"TB_REF_NO" varchar(50),
+	"LEDGER_ID" integer,
+	"OPENING_DEBIT" numeric(30, 2) DEFAULT '0',
+	"OPENING_CREDIT" numeric(30, 2) DEFAULT '0',
+	"PERIOD_DEBIT" numeric(30, 2) DEFAULT '0',
+	"PERIOD_CREDIT" numeric(30, 2) DEFAULT '0',
+	"CLOSING_DEBIT" numeric(30, 2) DEFAULT '0',
+	"CLOSING_CREDIT" numeric(30, 2) DEFAULT '0',
+	"REMARKS" varchar(255)
+);
+--> statement-breakpoint
+CREATE TABLE "stoentries"."TBL_TRIAL_BALANCE_HDR" (
+	"SNO" integer GENERATED ALWAYS AS IDENTITY (sequence name "stoentries"."TBL_TRIAL_BALANCE_HDR_SNO_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"TB_REF_NO" varchar(50) PRIMARY KEY NOT NULL,
+	"AS_OF_DATE" timestamp NOT NULL,
+	"COMPANY_ID" integer,
+	"FINANCIAL_YEAR" varchar(50),
+	"TOTAL_DEBIT" numeric(30, 2) DEFAULT '0',
+	"TOTAL_CREDIT" numeric(30, 2) DEFAULT '0',
+	"STATUS_ENTRY" varchar(20),
+	"CREATED_BY" varchar(50),
+	"CREATED_DATE" timestamp DEFAULT now(),
+	"CREATED_IP_ADDRESS" varchar(50),
+	"MODIFIED_BY" varchar(50),
+	"MODIFIED_DATE" timestamp,
+	"MODIFIED_IP_ADDRESS" varchar(50)
 );
 --> statement-breakpoint
 ALTER TABLE "stomaster"."CUSTOMER_CREDIT_LIMIT_FILE_UPLOAD" ADD CONSTRAINT "CUSTOMER_CREDIT_LIMIT_FILE_UPLOAD_CREDIT_LIMIT_ID_tbl_Customer_Credit_Limit_Details_Sno_fk" FOREIGN KEY ("CREDIT_LIMIT_ID") REFERENCES "stomaster"."tbl_Customer_Credit_Limit_Details"("Sno") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."TBL_ACCOUNTS_LEDGER_MASTER" ADD CONSTRAINT "TBL_ACCOUNTS_LEDGER_MASTER_Company_id_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("Company_id") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_BILLING_LOCATION_WISE_PRODUCT_PRICE" ADD CONSTRAINT "TBL_BILLING_LOCATION_WISE_PRODUCT_PRICE_Billing_Location_Id_tbl_Billing_Location_Master_Billing_Location_Id_fk" FOREIGN KEY ("Billing_Location_Id") REFERENCES "stomaster"."tbl_Billing_Location_Master"("Billing_Location_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_BILLING_LOCATION_WISE_PRODUCT_PRICE" ADD CONSTRAINT "TBL_BILLING_LOCATION_WISE_PRODUCT_PRICE_Product_Id_TBL_PRODUCT_MASTER_PRODUCT_ID_fk" FOREIGN KEY ("Product_Id") REFERENCES "stomaster"."TBL_PRODUCT_MASTER"("PRODUCT_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_BUDGET_ALERT_LOG" ADD CONSTRAINT "TBL_BUDGET_ALERT_LOG_Company_ID_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("Company_ID") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_BUDGET_ALERT_LOG" ADD CONSTRAINT "TBL_BUDGET_ALERT_LOG_COST_CENTER_ID_TBL_COST_CENTER_MASTER_COST_CENTER_ID_fk" FOREIGN KEY ("COST_CENTER_ID") REFERENCES "stomaster"."TBL_COST_CENTER_MASTER"("COST_CENTER_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."tbl_Change_Password_Log" ADD CONSTRAINT "tbl_Change_Password_Log_login_id_TBL_USER_INFO_HDR_LOGIN_ID_USER_HDR_fk" FOREIGN KEY ("login_id") REFERENCES "stomaster"."TBL_USER_INFO_HDR"("LOGIN_ID_USER_HDR") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."tbl_Company_Bank_Account_Master" ADD CONSTRAINT "tbl_Company_Bank_Account_Master_Company_id_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("Company_id") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."tbl_Company_Bank_Account_Master" ADD CONSTRAINT "tbl_Company_Bank_Account_Master_Bank_Id_TBL_BANK_MASTER_BANK_ID_fk" FOREIGN KEY ("Bank_Id") REFERENCES "stomaster"."TBL_BANK_MASTER"("BANK_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."tbl_Company_Bank_Account_Master" ADD CONSTRAINT "tbl_Company_Bank_Account_Master_Currency_Id_TBL_CURRENCY_MASTER_CURRENCY_ID_fk" FOREIGN KEY ("Currency_Id") REFERENCES "stomaster"."TBL_CURRENCY_MASTER"("CURRENCY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_COMPANY_BASE_CURRENCY" ADD CONSTRAINT "TBL_COMPANY_BASE_CURRENCY_Company_ID_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("Company_ID") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_COMPANY_BASE_CURRENCY" ADD CONSTRAINT "TBL_COMPANY_BASE_CURRENCY_BASE_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk" FOREIGN KEY ("BASE_CURRENCY_ID") REFERENCES "stomaster"."TBL_CURRENCY_MASTER"("CURRENCY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."tbl_Company_Master" ADD CONSTRAINT "tbl_Company_Master_Currency_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk" FOREIGN KEY ("Currency_ID") REFERENCES "stomaster"."TBL_CURRENCY_MASTER"("CURRENCY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_COST_CENTER_ALLOCATION" ADD CONSTRAINT "TBL_COST_CENTER_ALLOCATION_Company_ID_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("Company_ID") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_COST_CENTER_ALLOCATION" ADD CONSTRAINT "TBL_COST_CENTER_ALLOCATION_COST_CENTER_ID_TBL_COST_CENTER_MASTER_COST_CENTER_ID_fk" FOREIGN KEY ("COST_CENTER_ID") REFERENCES "stomaster"."TBL_COST_CENTER_MASTER"("COST_CENTER_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_COST_CENTER_ALLOCATION" ADD CONSTRAINT "TBL_COST_CENTER_ALLOCATION_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk" FOREIGN KEY ("CURRENCY_ID") REFERENCES "stomaster"."TBL_CURRENCY_MASTER"("CURRENCY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_COST_CENTER_BUDGET" ADD CONSTRAINT "TBL_COST_CENTER_BUDGET_Company_ID_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("Company_ID") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_COST_CENTER_BUDGET" ADD CONSTRAINT "TBL_COST_CENTER_BUDGET_COST_CENTER_ID_TBL_COST_CENTER_MASTER_COST_CENTER_ID_fk" FOREIGN KEY ("COST_CENTER_ID") REFERENCES "stomaster"."TBL_COST_CENTER_MASTER"("COST_CENTER_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_COST_CENTER_MASTER" ADD CONSTRAINT "TBL_COST_CENTER_MASTER_Company_ID_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("Company_ID") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."tbl_Customer_Address_Details" ADD CONSTRAINT "tbl_Customer_Address_Details_Customer_Id_tbl_Customer_Master_Customer_Id_fk" FOREIGN KEY ("Customer_Id") REFERENCES "stomaster"."tbl_Customer_Master"("Customer_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."TBL_CUSTOMER_COMPANY_WISE_BILLING_LOCATION_MAPPING" ADD CONSTRAINT "TBL_CUSTOMER_COMPANY_WISE_BILLING_LOCATION_MAPPING_Customer_Id_tbl_Customer_Master_Customer_Id_fk" FOREIGN KEY ("Customer_Id") REFERENCES "stomaster"."tbl_Customer_Master"("Customer_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."TBL_CUSTOMER_COMPANY_WISE_BILLING_LOCATION_MAPPING" ADD CONSTRAINT "TBL_CUSTOMER_COMPANY_WISE_BILLING_LOCATION_MAPPING_Company_id_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("Company_id") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -1623,9 +2042,17 @@ ALTER TABLE "stomaster"."tbl_Customer_Wise_Product_Price_Settings" ADD CONSTRAIN
 ALTER TABLE "stomaster"."tbl_Customer_Wise_Product_Price_Settings" ADD CONSTRAINT "tbl_Customer_Wise_Product_Price_Settings_currency_id_TBL_CURRENCY_MASTER_CURRENCY_ID_fk" FOREIGN KEY ("currency_id") REFERENCES "stomaster"."TBL_CURRENCY_MASTER"("CURRENCY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."tbl_District_Master" ADD CONSTRAINT "tbl_District_Master_Country_Id_tbl_country_master_Country_Id_fk" FOREIGN KEY ("Country_Id") REFERENCES "stomaster"."tbl_country_master"("Country_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."tbl_District_Master" ADD CONSTRAINT "tbl_District_Master_Region_Id_TBL_REGION_MASTER_REGION_ID_fk" FOREIGN KEY ("Region_Id") REFERENCES "stomaster"."TBL_REGION_MASTER"("REGION_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."tbl_Employee_Master" ADD CONSTRAINT "tbl_Employee_Master_Department_tbl_Department_Master_Department_Id_fk" FOREIGN KEY ("Department") REFERENCES "stomaster"."tbl_Department_Master"("Department_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."TBL_EXCHANGE_RATE_MASTER" ADD CONSTRAINT "TBL_EXCHANGE_RATE_MASTER_Company_ID_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("Company_ID") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."TBL_EXCHANGE_RATE_MASTER" ADD CONSTRAINT "TBL_EXCHANGE_RATE_MASTER_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk" FOREIGN KEY ("CURRENCY_ID") REFERENCES "stomaster"."TBL_CURRENCY_MASTER"("CURRENCY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_EXCHANGE_RATE_USAGE_LOG" ADD CONSTRAINT "TBL_EXCHANGE_RATE_USAGE_LOG_Company_ID_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("Company_ID") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_EXCHANGE_RATE_USAGE_LOG" ADD CONSTRAINT "TBL_EXCHANGE_RATE_USAGE_LOG_EXCHANGE_RATE_SNO_TBL_EXCHANGE_RATE_MASTER_SNO_fk" FOREIGN KEY ("EXCHANGE_RATE_SNO") REFERENCES "stomaster"."TBL_EXCHANGE_RATE_MASTER"("SNO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_EXCHANGE_RATE_USAGE_LOG" ADD CONSTRAINT "TBL_EXCHANGE_RATE_USAGE_LOG_TRANSACTION_ID_TBL_MULTI_CURRENCY_TRANSACTIONS_TRANSACTION_ID_fk" FOREIGN KEY ("TRANSACTION_ID") REFERENCES "stomaster"."TBL_MULTI_CURRENCY_TRANSACTIONS"("TRANSACTION_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."tbl_field_dtl" ADD CONSTRAINT "tbl_field_dtl_field_id_fld_dtl_tbl_field_hdr_field_id_fld_hdr_fk" FOREIGN KEY ("field_id_fld_dtl") REFERENCES "stomaster"."tbl_field_hdr"("field_id_fld_hdr") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_FINANCIAL_YEAR_MASTER" ADD CONSTRAINT "TBL_FINANCIAL_YEAR_MASTER_Company_Id_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("Company_Id") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_MULTI_CURRENCY_TRANSACTIONS" ADD CONSTRAINT "TBL_MULTI_CURRENCY_TRANSACTIONS_Company_ID_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("Company_ID") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_MULTI_CURRENCY_TRANSACTIONS" ADD CONSTRAINT "TBL_MULTI_CURRENCY_TRANSACTIONS_TRANSACTION_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk" FOREIGN KEY ("TRANSACTION_CURRENCY_ID") REFERENCES "stomaster"."TBL_CURRENCY_MASTER"("CURRENCY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_MULTI_CURRENCY_TRANSACTIONS" ADD CONSTRAINT "TBL_MULTI_CURRENCY_TRANSACTIONS_BASE_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk" FOREIGN KEY ("BASE_CURRENCY_ID") REFERENCES "stomaster"."TBL_CURRENCY_MASTER"("CURRENCY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."tbl_Product_Company_Main_Category_Mapping" ADD CONSTRAINT "tbl_Product_Company_Main_Category_Mapping_Company_Id_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("Company_Id") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."tbl_Product_Company_Main_Category_Mapping" ADD CONSTRAINT "tbl_Product_Company_Main_Category_Mapping_Main_Category_Id_TBL_PRODUCT_MAIN_CATEGORY_MASTER_MAIN_CATEGORY_ID_fk" FOREIGN KEY ("Main_Category_Id") REFERENCES "stomaster"."TBL_PRODUCT_MAIN_CATEGORY_MASTER"("MAIN_CATEGORY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."TBL_PRODUCT_MASTER" ADD CONSTRAINT "TBL_PRODUCT_MASTER_MAIN_CATEGORY_ID_TBL_PRODUCT_MAIN_CATEGORY_MASTER_MAIN_CATEGORY_ID_fk" FOREIGN KEY ("MAIN_CATEGORY_ID") REFERENCES "stomaster"."TBL_PRODUCT_MAIN_CATEGORY_MASTER"("MAIN_CATEGORY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -1636,6 +2063,14 @@ ALTER TABLE "stomaster"."TBL_PRODUCT_OPENING_STOCK" ADD CONSTRAINT "TBL_PRODUCT_
 ALTER TABLE "stomaster"."TBL_PRODUCT_OPENING_STOCK" ADD CONSTRAINT "TBL_PRODUCT_OPENING_STOCK_SUB_CATEGORY_ID_TBL_PRODUCT_SUB_CATEGORY_MASTER_SUB_CATEGORY_ID_fk" FOREIGN KEY ("SUB_CATEGORY_ID") REFERENCES "stomaster"."TBL_PRODUCT_SUB_CATEGORY_MASTER"("SUB_CATEGORY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."TBL_PRODUCT_OPENING_STOCK" ADD CONSTRAINT "TBL_PRODUCT_OPENING_STOCK_PRODUCT_ID_TBL_PRODUCT_MASTER_PRODUCT_ID_fk" FOREIGN KEY ("PRODUCT_ID") REFERENCES "stomaster"."TBL_PRODUCT_MASTER"("PRODUCT_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."TBL_PRODUCT_SUB_CATEGORY_MASTER" ADD CONSTRAINT "TBL_PRODUCT_SUB_CATEGORY_MASTER_MAIN_CATEGORY_ID_TBL_PRODUCT_MAIN_CATEGORY_MASTER_MAIN_CATEGORY_ID_fk" FOREIGN KEY ("MAIN_CATEGORY_ID") REFERENCES "stomaster"."TBL_PRODUCT_MAIN_CATEGORY_MASTER"("MAIN_CATEGORY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_PROFIT_CENTER_ALLOCATION" ADD CONSTRAINT "TBL_PROFIT_CENTER_ALLOCATION_Company_ID_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("Company_ID") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_PROFIT_CENTER_ALLOCATION" ADD CONSTRAINT "TBL_PROFIT_CENTER_ALLOCATION_PROFIT_CENTER_ID_TBL_PROFIT_CENTER_MASTER_PROFIT_CENTER_ID_fk" FOREIGN KEY ("PROFIT_CENTER_ID") REFERENCES "stomaster"."TBL_PROFIT_CENTER_MASTER"("PROFIT_CENTER_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_PROFIT_CENTER_ALLOCATION" ADD CONSTRAINT "TBL_PROFIT_CENTER_ALLOCATION_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk" FOREIGN KEY ("CURRENCY_ID") REFERENCES "stomaster"."TBL_CURRENCY_MASTER"("CURRENCY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_PROFIT_CENTER_MASTER" ADD CONSTRAINT "TBL_PROFIT_CENTER_MASTER_Company_ID_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("Company_ID") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_PROFIT_CENTER_TARGET" ADD CONSTRAINT "TBL_PROFIT_CENTER_TARGET_Company_ID_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("Company_ID") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_PROFIT_CENTER_TARGET" ADD CONSTRAINT "TBL_PROFIT_CENTER_TARGET_PROFIT_CENTER_ID_TBL_PROFIT_CENTER_MASTER_PROFIT_CENTER_ID_fk" FOREIGN KEY ("PROFIT_CENTER_ID") REFERENCES "stomaster"."TBL_PROFIT_CENTER_MASTER"("PROFIT_CENTER_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_REALIZED_GAIN_LOSS" ADD CONSTRAINT "TBL_REALIZED_GAIN_LOSS_Company_ID_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("Company_ID") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_REALIZED_GAIN_LOSS" ADD CONSTRAINT "TBL_REALIZED_GAIN_LOSS_TRANSACTION_ID_TBL_MULTI_CURRENCY_TRANSACTIONS_TRANSACTION_ID_fk" FOREIGN KEY ("TRANSACTION_ID") REFERENCES "stomaster"."TBL_MULTI_CURRENCY_TRANSACTIONS"("TRANSACTION_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."TBL_REGION_MASTER" ADD CONSTRAINT "TBL_REGION_MASTER_COUNTRY_ID_tbl_country_master_Country_Id_fk" FOREIGN KEY ("COUNTRY_ID") REFERENCES "stomaster"."tbl_country_master"("Country_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."tbl_Store_Master" ADD CONSTRAINT "tbl_Store_Master_Location_Id_tbl_Location_Master_Location_Id_fk" FOREIGN KEY ("Location_Id") REFERENCES "stomaster"."tbl_Location_Master"("Location_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."tbl_Store_Product_Minimum_Stock" ADD CONSTRAINT "tbl_Store_Product_Minimum_Stock_Company_id_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("Company_id") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -1644,6 +2079,8 @@ ALTER TABLE "stomaster"."tbl_Store_Product_Minimum_Stock" ADD CONSTRAINT "tbl_St
 ALTER TABLE "stomaster"."tbl_Store_Product_Minimum_Stock" ADD CONSTRAINT "tbl_Store_Product_Minimum_Stock_Sub_Category_Id_TBL_PRODUCT_SUB_CATEGORY_MASTER_SUB_CATEGORY_ID_fk" FOREIGN KEY ("Sub_Category_Id") REFERENCES "stomaster"."TBL_PRODUCT_SUB_CATEGORY_MASTER"("SUB_CATEGORY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."tbl_Store_Product_Minimum_Stock" ADD CONSTRAINT "tbl_Store_Product_Minimum_Stock_Product_Id_TBL_PRODUCT_MASTER_PRODUCT_ID_fk" FOREIGN KEY ("Product_Id") REFERENCES "stomaster"."TBL_PRODUCT_MASTER"("PRODUCT_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."tbl_Supplier_Master" ADD CONSTRAINT "tbl_Supplier_Master_Country_Id_tbl_country_master_Country_Id_fk" FOREIGN KEY ("Country_Id") REFERENCES "stomaster"."tbl_country_master"("Country_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_UNREALIZED_GAIN_LOSS" ADD CONSTRAINT "TBL_UNREALIZED_GAIN_LOSS_Company_ID_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("Company_ID") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stomaster"."TBL_UNREALIZED_GAIN_LOSS" ADD CONSTRAINT "TBL_UNREALIZED_GAIN_LOSS_TRANSACTION_ID_TBL_MULTI_CURRENCY_TRANSACTIONS_TRANSACTION_ID_fk" FOREIGN KEY ("TRANSACTION_ID") REFERENCES "stomaster"."TBL_MULTI_CURRENCY_TRANSACTIONS"("TRANSACTION_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."TBL_USER_TO_STORE_MAPPING" ADD CONSTRAINT "TBL_USER_TO_STORE_MAPPING_USER_ID_USER_TO_ROLE_TBL_USER_INFO_HDR_LOGIN_ID_USER_HDR_fk" FOREIGN KEY ("USER_ID_USER_TO_ROLE") REFERENCES "stomaster"."TBL_USER_INFO_HDR"("LOGIN_ID_USER_HDR") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."TBL_USER_TO_STORE_MAPPING" ADD CONSTRAINT "TBL_USER_TO_STORE_MAPPING_COMPANY_ID_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("COMPANY_ID") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stomaster"."TBL_USER_TO_STORE_MAPPING" ADD CONSTRAINT "TBL_USER_TO_STORE_MAPPING_STORE_ID_USER_TO_ROLE_tbl_Store_Master_Store_Id_fk" FOREIGN KEY ("STORE_ID_USER_TO_ROLE") REFERENCES "stomaster"."tbl_Store_Master"("Store_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -1661,8 +2098,6 @@ ALTER TABLE "stoentries"."TBL_CUSTOMER_RECEIPT_INVOICE_DTL" ADD CONSTRAINT "TBL_
 ALTER TABLE "stoentries"."TBL_CUSTOMER_RECEIPT_INVOICE_DTL" ADD CONSTRAINT "TBL_CUSTOMER_RECEIPT_INVOICE_DTL_TAX_INVOICE_REF_NO_TBL_TAX_INVOICE_HDR_TAX_INVOICE_REF_NO_fk" FOREIGN KEY ("TAX_INVOICE_REF_NO") REFERENCES "stoentries"."TBL_TAX_INVOICE_HDR"("TAX_INVOICE_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_DELIVERY_FILES_UPLOAD" ADD CONSTRAINT "TBL_DELIVERY_FILES_UPLOAD_DELIVERY_NOTE_REF_NO_TBL_DELIVERY_NOTE_HDR_DELIVERY_NOTE_REF_NO_fk" FOREIGN KEY ("DELIVERY_NOTE_REF_NO") REFERENCES "stoentries"."TBL_DELIVERY_NOTE_HDR"("DELIVERY_NOTE_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_DELIVERY_NOTE_DTL" ADD CONSTRAINT "TBL_DELIVERY_NOTE_DTL_DELIVERY_NOTE_REF_NO_TBL_DELIVERY_NOTE_HDR_DELIVERY_NOTE_REF_NO_fk" FOREIGN KEY ("DELIVERY_NOTE_REF_NO") REFERENCES "stoentries"."TBL_DELIVERY_NOTE_HDR"("DELIVERY_NOTE_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "stoentries"."TBL_DELIVERY_NOTE_DTL" ADD CONSTRAINT "TBL_DELIVERY_NOTE_DTL_PO_DTL_SNO_TBL_PURCHASE_ORDER_DTL_SNO_fk" FOREIGN KEY ("PO_DTL_SNO") REFERENCES "stoentries"."TBL_PURCHASE_ORDER_DTL"("SNO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "stoentries"."TBL_DELIVERY_NOTE_DTL" ADD CONSTRAINT "TBL_DELIVERY_NOTE_DTL_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk" FOREIGN KEY ("PO_REF_NO") REFERENCES "stoentries"."TBL_PURCHASE_ORDER_HDR"("PO_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_DELIVERY_NOTE_DTL" ADD CONSTRAINT "TBL_DELIVERY_NOTE_DTL_MAIN_CATEGORY_ID_TBL_PRODUCT_MAIN_CATEGORY_MASTER_MAIN_CATEGORY_ID_fk" FOREIGN KEY ("MAIN_CATEGORY_ID") REFERENCES "stomaster"."TBL_PRODUCT_MAIN_CATEGORY_MASTER"("MAIN_CATEGORY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_DELIVERY_NOTE_DTL" ADD CONSTRAINT "TBL_DELIVERY_NOTE_DTL_SUB_CATEGORY_ID_TBL_PRODUCT_SUB_CATEGORY_MASTER_SUB_CATEGORY_ID_fk" FOREIGN KEY ("SUB_CATEGORY_ID") REFERENCES "stomaster"."TBL_PRODUCT_SUB_CATEGORY_MASTER"("SUB_CATEGORY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_DELIVERY_NOTE_DTL" ADD CONSTRAINT "TBL_DELIVERY_NOTE_DTL_PRODUCT_ID_TBL_PRODUCT_MASTER_PRODUCT_ID_fk" FOREIGN KEY ("PRODUCT_ID") REFERENCES "stomaster"."TBL_PRODUCT_MASTER"("PRODUCT_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -1672,18 +2107,15 @@ ALTER TABLE "stoentries"."TBL_DELIVERY_NOTE_HDR" ADD CONSTRAINT "TBL_DELIVERY_NO
 ALTER TABLE "stoentries"."TBL_DELIVERY_NOTE_HDR" ADD CONSTRAINT "TBL_DELIVERY_NOTE_HDR_CUSTOMER_ID_tbl_Customer_Master_Customer_Id_fk" FOREIGN KEY ("CUSTOMER_ID") REFERENCES "stomaster"."tbl_Customer_Master"("Customer_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_DELIVERY_NOTE_HDR" ADD CONSTRAINT "TBL_DELIVERY_NOTE_HDR_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk" FOREIGN KEY ("CURRENCY_ID") REFERENCES "stomaster"."TBL_CURRENCY_MASTER"("CURRENCY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_EXPENSE_DTL" ADD CONSTRAINT "TBL_EXPENSE_DTL_EXPENSE_REF_NO_TBL_EXPENSE_HDR_EXPENSE_REF_NO_fk" FOREIGN KEY ("EXPENSE_REF_NO") REFERENCES "stoentries"."TBL_EXPENSE_HDR"("EXPENSE_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "stoentries"."TBL_EXPENSE_DTL" ADD CONSTRAINT "TBL_EXPENSE_DTL_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk" FOREIGN KEY ("PO_REF_NO") REFERENCES "stoentries"."TBL_PURCHASE_ORDER_HDR"("PO_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "stoentries"."TBL_EXPENSE_DTL" ADD CONSTRAINT "TBL_EXPENSE_DTL_PO_DTL_SNO_TBL_PURCHASE_ORDER_DTL_SNO_fk" FOREIGN KEY ("PO_DTL_SNO") REFERENCES "stoentries"."TBL_PURCHASE_ORDER_DTL"("SNO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_EXPENSE_DTL" ADD CONSTRAINT "TBL_EXPENSE_DTL_PRODUCT_ID_TBL_PRODUCT_MASTER_PRODUCT_ID_fk" FOREIGN KEY ("PRODUCT_ID") REFERENCES "stomaster"."TBL_PRODUCT_MASTER"("PRODUCT_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_EXPENSE_FILES_UPLOAD" ADD CONSTRAINT "TBL_EXPENSE_FILES_UPLOAD_EXPENSE_REF_NO_TBL_EXPENSE_HDR_EXPENSE_REF_NO_fk" FOREIGN KEY ("EXPENSE_REF_NO") REFERENCES "stoentries"."TBL_EXPENSE_HDR"("EXPENSE_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_EXPENSE_HDR" ADD CONSTRAINT "TBL_EXPENSE_HDR_COMPANY_ID_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("COMPANY_ID") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "stoentries"."TBL_EXPENSE_HDR" ADD CONSTRAINT "TBL_EXPENSE_HDR_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk" FOREIGN KEY ("PO_REF_NO") REFERENCES "stoentries"."TBL_PURCHASE_ORDER_HDR"("PO_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_EXPENSE_HDR" ADD CONSTRAINT "TBL_EXPENSE_HDR_ACCOUNT_HEAD_ID_TBL_ACCOUNTS_HEAD_MASTER_ACCOUNT_HEAD_ID_fk" FOREIGN KEY ("ACCOUNT_HEAD_ID") REFERENCES "stomaster"."TBL_ACCOUNTS_HEAD_MASTER"("ACCOUNT_HEAD_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_EXPENSE_HDR" ADD CONSTRAINT "TBL_EXPENSE_HDR_EXPENSE_SUPPLIER_ID_tbl_Supplier_Master_Supplier_Id_fk" FOREIGN KEY ("EXPENSE_SUPPLIER_ID") REFERENCES "stomaster"."tbl_Supplier_Master"("Supplier_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_EXPENSE_HDR" ADD CONSTRAINT "TBL_EXPENSE_HDR_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk" FOREIGN KEY ("CURRENCY_ID") REFERENCES "stomaster"."TBL_CURRENCY_MASTER"("CURRENCY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stoentries"."TBL_EXPENSE_HDR" ADD CONSTRAINT "TBL_EXPENSE_HDR_COST_CENTER_ID_TBL_COST_CENTER_MASTER_COST_CENTER_ID_fk" FOREIGN KEY ("COST_CENTER_ID") REFERENCES "stomaster"."TBL_COST_CENTER_MASTER"("COST_CENTER_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_GOODS_FILES_UPLOAD" ADD CONSTRAINT "TBL_GOODS_FILES_UPLOAD_GRN_REF_NO_TBL_GOODS_INWARD_GRN_HDR_GRN_REF_NO_fk" FOREIGN KEY ("GRN_REF_NO") REFERENCES "stoentries"."TBL_GOODS_INWARD_GRN_HDR"("GRN_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_GOODS_INWARD_GRN_DTL" ADD CONSTRAINT "TBL_GOODS_INWARD_GRN_DTL_GRN_REF_NO_TBL_GOODS_INWARD_GRN_HDR_GRN_REF_NO_fk" FOREIGN KEY ("GRN_REF_NO") REFERENCES "stoentries"."TBL_GOODS_INWARD_GRN_HDR"("GRN_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "stoentries"."TBL_GOODS_INWARD_GRN_DTL" ADD CONSTRAINT "TBL_GOODS_INWARD_GRN_DTL_PO_DTL_SNO_TBL_PURCHASE_ORDER_DTL_SNO_fk" FOREIGN KEY ("PO_DTL_SNO") REFERENCES "stoentries"."TBL_PURCHASE_ORDER_DTL"("SNO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_GOODS_INWARD_GRN_DTL" ADD CONSTRAINT "TBL_GOODS_INWARD_GRN_DTL_MAIN_CATEGORY_ID_TBL_PRODUCT_MAIN_CATEGORY_MASTER_MAIN_CATEGORY_ID_fk" FOREIGN KEY ("MAIN_CATEGORY_ID") REFERENCES "stomaster"."TBL_PRODUCT_MAIN_CATEGORY_MASTER"("MAIN_CATEGORY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_GOODS_INWARD_GRN_DTL" ADD CONSTRAINT "TBL_GOODS_INWARD_GRN_DTL_SUB_CATEGORY_ID_TBL_PRODUCT_SUB_CATEGORY_MASTER_SUB_CATEGORY_ID_fk" FOREIGN KEY ("SUB_CATEGORY_ID") REFERENCES "stomaster"."TBL_PRODUCT_SUB_CATEGORY_MASTER"("SUB_CATEGORY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_GOODS_INWARD_GRN_DTL" ADD CONSTRAINT "TBL_GOODS_INWARD_GRN_DTL_PRODUCT_ID_TBL_PRODUCT_MASTER_PRODUCT_ID_fk" FOREIGN KEY ("PRODUCT_ID") REFERENCES "stomaster"."TBL_PRODUCT_MASTER"("PRODUCT_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -1691,7 +2123,9 @@ ALTER TABLE "stoentries"."TBL_GOODS_INWARD_GRN_HDR" ADD CONSTRAINT "TBL_GOODS_IN
 ALTER TABLE "stoentries"."TBL_GOODS_INWARD_GRN_HDR" ADD CONSTRAINT "TBL_GOODS_INWARD_GRN_HDR_SOURCE_STORE_ID_tbl_Store_Master_Store_Id_fk" FOREIGN KEY ("SOURCE_STORE_ID") REFERENCES "stomaster"."tbl_Store_Master"("Store_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_GOODS_INWARD_GRN_HDR" ADD CONSTRAINT "TBL_GOODS_INWARD_GRN_HDR_GRN_STORE_ID_tbl_Store_Master_Store_Id_fk" FOREIGN KEY ("GRN_STORE_ID") REFERENCES "stomaster"."tbl_Store_Master"("Store_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_GOODS_INWARD_GRN_HDR" ADD CONSTRAINT "TBL_GOODS_INWARD_GRN_HDR_SUPPLIER_ID_tbl_Supplier_Master_Supplier_Id_fk" FOREIGN KEY ("SUPPLIER_ID") REFERENCES "stomaster"."tbl_Supplier_Master"("Supplier_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "stoentries"."TBL_GOODS_INWARD_GRN_HDR" ADD CONSTRAINT "TBL_GOODS_INWARD_GRN_HDR_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk" FOREIGN KEY ("PO_REF_NO") REFERENCES "stoentries"."TBL_PURCHASE_ORDER_HDR"("PO_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stoentries"."TBL_JOURNAL_DTL" ADD CONSTRAINT "TBL_JOURNAL_DTL_JOURNAL_REF_NO_TBL_JOURNAL_HDR_JOURNAL_REF_NO_fk" FOREIGN KEY ("JOURNAL_REF_NO") REFERENCES "stoentries"."TBL_JOURNAL_HDR"("JOURNAL_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stoentries"."TBL_JOURNAL_DTL" ADD CONSTRAINT "TBL_JOURNAL_DTL_LEDGER_ID_TBL_ACCOUNTS_LEDGER_MASTER_LEDGER_ID_fk" FOREIGN KEY ("LEDGER_ID") REFERENCES "stomaster"."TBL_ACCOUNTS_LEDGER_MASTER"("LEDGER_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stoentries"."TBL_JOURNAL_HDR" ADD CONSTRAINT "TBL_JOURNAL_HDR_COMPANY_ID_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("COMPANY_ID") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS" ADD CONSTRAINT "TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS_PURCHASE_INVOICE_NO_TBL_PURCHASE_INVOICE_HDR_PURCHASE_INVOICE_REF_NO_fk" FOREIGN KEY ("PURCHASE_INVOICE_NO") REFERENCES "stoentries"."TBL_PURCHASE_INVOICE_HDR"("PURCHASE_INVOICE_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS" ADD CONSTRAINT "TBL_PURCHASE_INVOICE_ADDITIONAL_COST_DETAILS_ADDITIONAL_COST_TYPE_ID_TBL_ADDITIONAL_COST_TYPE_MASTER_ADDITIONAL_COST_TYPE_ID_fk" FOREIGN KEY ("ADDITIONAL_COST_TYPE_ID") REFERENCES "stomaster"."TBL_ADDITIONAL_COST_TYPE_MASTER"("ADDITIONAL_COST_TYPE_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_PURCHASE_INVOICE_DTL" ADD CONSTRAINT "TBL_PURCHASE_INVOICE_DTL_PURCHASE_INVOICE_REF_NO_TBL_PURCHASE_INVOICE_HDR_PURCHASE_INVOICE_REF_NO_fk" FOREIGN KEY ("PURCHASE_INVOICE_REF_NO") REFERENCES "stoentries"."TBL_PURCHASE_INVOICE_HDR"("PURCHASE_INVOICE_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -1701,31 +2135,35 @@ ALTER TABLE "stoentries"."TBL_PURCHASE_INVOICE_DTL" ADD CONSTRAINT "TBL_PURCHASE
 ALTER TABLE "stoentries"."TBL_PURCHASE_INVOICE_DTL" ADD CONSTRAINT "TBL_PURCHASE_INVOICE_DTL_PRODUCT_ID_TBL_PRODUCT_MASTER_PRODUCT_ID_fk" FOREIGN KEY ("PRODUCT_ID") REFERENCES "stomaster"."TBL_PRODUCT_MASTER"("PRODUCT_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_PURCHASE_INVOICE_FILES_UPLOAD" ADD CONSTRAINT "TBL_PURCHASE_INVOICE_FILES_UPLOAD_PURCHASE_INVOICE_REF_NO_TBL_PURCHASE_INVOICE_HDR_PURCHASE_INVOICE_REF_NO_fk" FOREIGN KEY ("PURCHASE_INVOICE_REF_NO") REFERENCES "stoentries"."TBL_PURCHASE_INVOICE_HDR"("PURCHASE_INVOICE_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_PURCHASE_INVOICE_HDR" ADD CONSTRAINT "TBL_PURCHASE_INVOICE_HDR_COMPANY_ID_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("COMPANY_ID") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "stoentries"."TBL_PURCHASE_INVOICE_HDR" ADD CONSTRAINT "TBL_PURCHASE_INVOICE_HDR_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk" FOREIGN KEY ("PO_REF_NO") REFERENCES "stoentries"."TBL_PURCHASE_ORDER_HDR"("PO_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_PURCHASE_INVOICE_HDR" ADD CONSTRAINT "TBL_PURCHASE_INVOICE_HDR_SUPPLIER_ID_tbl_Supplier_Master_Supplier_Id_fk" FOREIGN KEY ("SUPPLIER_ID") REFERENCES "stomaster"."tbl_Supplier_Master"("Supplier_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_PURCHASE_INVOICE_HDR" ADD CONSTRAINT "TBL_PURCHASE_INVOICE_HDR_STORE_ID_tbl_Store_Master_Store_Id_fk" FOREIGN KEY ("STORE_ID") REFERENCES "stomaster"."tbl_Store_Master"("Store_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_PURCHASE_INVOICE_HDR" ADD CONSTRAINT "TBL_PURCHASE_INVOICE_HDR_PAYMENT_TERM_ID_TBL_PAYMENT_TERM_MASTER_PAYMENT_TERM_ID_fk" FOREIGN KEY ("PAYMENT_TERM_ID") REFERENCES "stomaster"."TBL_PAYMENT_TERM_MASTER"("PAYMENT_TERM_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_PURCHASE_INVOICE_HDR" ADD CONSTRAINT "TBL_PURCHASE_INVOICE_HDR_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk" FOREIGN KEY ("CURRENCY_ID") REFERENCES "stomaster"."TBL_CURRENCY_MASTER"("CURRENCY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "stoentries"."TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS" ADD CONSTRAINT "TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk" FOREIGN KEY ("PO_REF_NO") REFERENCES "stoentries"."TBL_PURCHASE_ORDER_HDR"("PO_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stoentries"."TBL_PURCHASE_INVOICE_HDR" ADD CONSTRAINT "TBL_PURCHASE_INVOICE_HDR_COST_CENTER_ID_TBL_COST_CENTER_MASTER_COST_CENTER_ID_fk" FOREIGN KEY ("COST_CENTER_ID") REFERENCES "stomaster"."TBL_COST_CENTER_MASTER"("COST_CENTER_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS" ADD CONSTRAINT "TBL_PURCHASE_ORDER_ADDITIONAL_COST_DETAILS_ADDITIONAL_COST_TYPE_ID_TBL_ADDITIONAL_COST_TYPE_MASTER_ADDITIONAL_COST_TYPE_ID_fk" FOREIGN KEY ("ADDITIONAL_COST_TYPE_ID") REFERENCES "stomaster"."TBL_ADDITIONAL_COST_TYPE_MASTER"("ADDITIONAL_COST_TYPE_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "stoentries"."TBL_PURCHASE_ORDER_CONVERSATION_DTL" ADD CONSTRAINT "TBL_PURCHASE_ORDER_CONVERSATION_DTL_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk" FOREIGN KEY ("PO_REF_NO") REFERENCES "stoentries"."TBL_PURCHASE_ORDER_HDR"("PO_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "stoentries"."TBL_PURCHASE_ORDER_DTL" ADD CONSTRAINT "TBL_PURCHASE_ORDER_DTL_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk" FOREIGN KEY ("PO_REF_NO") REFERENCES "stoentries"."TBL_PURCHASE_ORDER_HDR"("PO_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_PURCHASE_ORDER_DTL" ADD CONSTRAINT "TBL_PURCHASE_ORDER_DTL_REQUEST_STORE_ID_tbl_Store_Master_Store_Id_fk" FOREIGN KEY ("REQUEST_STORE_ID") REFERENCES "stomaster"."tbl_Store_Master"("Store_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_PURCHASE_ORDER_DTL" ADD CONSTRAINT "TBL_PURCHASE_ORDER_DTL_MAIN_CATEGORY_ID_TBL_PRODUCT_MAIN_CATEGORY_MASTER_MAIN_CATEGORY_ID_fk" FOREIGN KEY ("MAIN_CATEGORY_ID") REFERENCES "stomaster"."TBL_PRODUCT_MAIN_CATEGORY_MASTER"("MAIN_CATEGORY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_PURCHASE_ORDER_DTL" ADD CONSTRAINT "TBL_PURCHASE_ORDER_DTL_SUB_CATEGORY_ID_TBL_PRODUCT_SUB_CATEGORY_MASTER_SUB_CATEGORY_ID_fk" FOREIGN KEY ("SUB_CATEGORY_ID") REFERENCES "stomaster"."TBL_PRODUCT_SUB_CATEGORY_MASTER"("SUB_CATEGORY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_PURCHASE_ORDER_DTL" ADD CONSTRAINT "TBL_PURCHASE_ORDER_DTL_PRODUCT_ID_TBL_PRODUCT_MASTER_PRODUCT_ID_fk" FOREIGN KEY ("PRODUCT_ID") REFERENCES "stomaster"."TBL_PRODUCT_MASTER"("PRODUCT_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "stoentries"."TBL_PURCHASE_ORDER_FILES_UPLOAD" ADD CONSTRAINT "TBL_PURCHASE_ORDER_FILES_UPLOAD_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk" FOREIGN KEY ("PO_REF_NO") REFERENCES "stoentries"."TBL_PURCHASE_ORDER_HDR"("PO_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_PURCHASE_ORDER_HDR" ADD CONSTRAINT "TBL_PURCHASE_ORDER_HDR_COMPANY_ID_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("COMPANY_ID") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_PURCHASE_ORDER_HDR" ADD CONSTRAINT "TBL_PURCHASE_ORDER_HDR_SUPPLIER_ID_tbl_Supplier_Master_Supplier_Id_fk" FOREIGN KEY ("SUPPLIER_ID") REFERENCES "stomaster"."tbl_Supplier_Master"("Supplier_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_PURCHASE_ORDER_HDR" ADD CONSTRAINT "TBL_PURCHASE_ORDER_HDR_PO_STORE_ID_tbl_Store_Master_Store_Id_fk" FOREIGN KEY ("PO_STORE_ID") REFERENCES "stomaster"."tbl_Store_Master"("Store_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_PURCHASE_ORDER_HDR" ADD CONSTRAINT "TBL_PURCHASE_ORDER_HDR_PAYMENT_TERM_ID_TBL_PAYMENT_TERM_MASTER_PAYMENT_TERM_ID_fk" FOREIGN KEY ("PAYMENT_TERM_ID") REFERENCES "stomaster"."TBL_PAYMENT_TERM_MASTER"("PAYMENT_TERM_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_PURCHASE_ORDER_HDR" ADD CONSTRAINT "TBL_PURCHASE_ORDER_HDR_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk" FOREIGN KEY ("CURRENCY_ID") REFERENCES "stomaster"."TBL_CURRENCY_MASTER"("CURRENCY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stoentries"."TBL_PURCHASE_PAYMENT_FILES_UPLOAD" ADD CONSTRAINT "TBL_PURCHASE_PAYMENT_FILES_UPLOAD_PAYMENT_REF_NO_TBL_PURCHASE_PAYMENT_HDR_PAYMENT_REF_NO_fk" FOREIGN KEY ("PAYMENT_REF_NO") REFERENCES "stoentries"."TBL_PURCHASE_PAYMENT_HDR"("PAYMENT_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stoentries"."TBL_PURCHASE_PAYMENT_HDR" ADD CONSTRAINT "TBL_PURCHASE_PAYMENT_HDR_COMPANY_ID_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("COMPANY_ID") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stoentries"."TBL_PURCHASE_PAYMENT_HDR" ADD CONSTRAINT "TBL_PURCHASE_PAYMENT_HDR_SUPPLIER_ID_tbl_Supplier_Master_Supplier_Id_fk" FOREIGN KEY ("SUPPLIER_ID") REFERENCES "stomaster"."tbl_Supplier_Master"("Supplier_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stoentries"."TBL_PURCHASE_PAYMENT_HDR" ADD CONSTRAINT "TBL_PURCHASE_PAYMENT_HDR_PAYMENT_MODE_ID_TBL_PAYMENT_MODE_MASTER_PAYMENT_MODE_ID_fk" FOREIGN KEY ("PAYMENT_MODE_ID") REFERENCES "stomaster"."TBL_PAYMENT_MODE_MASTER"("PAYMENT_MODE_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stoentries"."TBL_PURCHASE_PAYMENT_HDR" ADD CONSTRAINT "TBL_PURCHASE_PAYMENT_HDR_CR_BANK_CASH_ID_TBL_BANK_MASTER_BANK_ID_fk" FOREIGN KEY ("CR_BANK_CASH_ID") REFERENCES "stomaster"."TBL_BANK_MASTER"("BANK_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stoentries"."TBL_PURCHASE_PAYMENT_HDR" ADD CONSTRAINT "TBL_PURCHASE_PAYMENT_HDR_DR_BANK_CASH_ID_TBL_BANK_MASTER_BANK_ID_fk" FOREIGN KEY ("DR_BANK_CASH_ID") REFERENCES "stomaster"."TBL_BANK_MASTER"("BANK_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stoentries"."TBL_PURCHASE_PAYMENT_HDR" ADD CONSTRAINT "TBL_PURCHASE_PAYMENT_HDR_DR_ACCOUNT_ID_tbl_Company_Bank_Account_Master_Account_Id_fk" FOREIGN KEY ("DR_ACCOUNT_ID") REFERENCES "stomaster"."tbl_Company_Bank_Account_Master"("Account_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stoentries"."TBL_PURCHASE_PAYMENT_HDR" ADD CONSTRAINT "TBL_PURCHASE_PAYMENT_HDR_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk" FOREIGN KEY ("CURRENCY_ID") REFERENCES "stomaster"."TBL_CURRENCY_MASTER"("CURRENCY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stoentries"."TBL_PURCHASE_PAYMENT_INV_DTL" ADD CONSTRAINT "TBL_PURCHASE_PAYMENT_INV_DTL_PAYMENT_REF_NO_TBL_PURCHASE_PAYMENT_HDR_PAYMENT_REF_NO_fk" FOREIGN KEY ("PAYMENT_REF_NO") REFERENCES "stoentries"."TBL_PURCHASE_PAYMENT_HDR"("PAYMENT_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stoentries"."TBL_PURCHASE_PAYMENT_INV_DTL" ADD CONSTRAINT "TBL_PURCHASE_PAYMENT_INV_DTL_PURCHASE_INVOICE_REF_NO_TBL_PURCHASE_INVOICE_HDR_PURCHASE_INVOICE_REF_NO_fk" FOREIGN KEY ("PURCHASE_INVOICE_REF_NO") REFERENCES "stoentries"."TBL_PURCHASE_INVOICE_HDR"("PURCHASE_INVOICE_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_SALES_ORDER_DTL" ADD CONSTRAINT "TBL_SALES_ORDER_DTL_SALES_ORDER_REF_NO_TBL_SALES_ORDER_HDR_SALES_ORDER_REF_NO_fk" FOREIGN KEY ("SALES_ORDER_REF_NO") REFERENCES "stoentries"."TBL_SALES_ORDER_HDR"("SALES_ORDER_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_SALES_ORDER_DTL" ADD CONSTRAINT "TBL_SALES_ORDER_DTL_MAIN_CATEGORY_ID_TBL_PRODUCT_MAIN_CATEGORY_MASTER_MAIN_CATEGORY_ID_fk" FOREIGN KEY ("MAIN_CATEGORY_ID") REFERENCES "stomaster"."TBL_PRODUCT_MAIN_CATEGORY_MASTER"("MAIN_CATEGORY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_SALES_ORDER_DTL" ADD CONSTRAINT "TBL_SALES_ORDER_DTL_SUB_CATEGORY_ID_TBL_PRODUCT_SUB_CATEGORY_MASTER_SUB_CATEGORY_ID_fk" FOREIGN KEY ("SUB_CATEGORY_ID") REFERENCES "stomaster"."TBL_PRODUCT_SUB_CATEGORY_MASTER"("SUB_CATEGORY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_SALES_ORDER_DTL" ADD CONSTRAINT "TBL_SALES_ORDER_DTL_PRODUCT_ID_TBL_PRODUCT_MASTER_PRODUCT_ID_fk" FOREIGN KEY ("PRODUCT_ID") REFERENCES "stomaster"."TBL_PRODUCT_MASTER"("PRODUCT_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "stoentries"."TBL_SALES_ORDER_DTL" ADD CONSTRAINT "TBL_SALES_ORDER_DTL_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk" FOREIGN KEY ("PO_REF_NO") REFERENCES "stoentries"."TBL_PURCHASE_ORDER_HDR"("PO_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "stoentries"."TBL_SALES_ORDER_DTL" ADD CONSTRAINT "TBL_SALES_ORDER_DTL_PO_DTL_SNO_TBL_PURCHASE_ORDER_DTL_SNO_fk" FOREIGN KEY ("PO_DTL_SNO") REFERENCES "stoentries"."TBL_PURCHASE_ORDER_DTL"("SNO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_SALES_ORDER_FILES_UPLOAD" ADD CONSTRAINT "TBL_SALES_ORDER_FILES_UPLOAD_SALES_ORDER_REF_NO_TBL_SALES_ORDER_HDR_SALES_ORDER_REF_NO_fk" FOREIGN KEY ("SALES_ORDER_REF_NO") REFERENCES "stoentries"."TBL_SALES_ORDER_HDR"("SALES_ORDER_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_SALES_ORDER_HDR" ADD CONSTRAINT "TBL_SALES_ORDER_HDR_SALES_PROFORMA_REF_NO_TBL_SALES_PROFORMA_HDR_SALES_PROFORMA_REF_NO_fk" FOREIGN KEY ("SALES_PROFORMA_REF_NO") REFERENCES "stoentries"."TBL_SALES_PROFORMA_HDR"("SALES_PROFORMA_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_SALES_ORDER_HDR" ADD CONSTRAINT "TBL_SALES_ORDER_HDR_COMPANY_ID_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("COMPANY_ID") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -1738,8 +2176,6 @@ ALTER TABLE "stoentries"."TBL_SALES_PROFORMA_DTL" ADD CONSTRAINT "TBL_SALES_PROF
 ALTER TABLE "stoentries"."TBL_SALES_PROFORMA_DTL" ADD CONSTRAINT "TBL_SALES_PROFORMA_DTL_MAIN_CATEGORY_ID_TBL_PRODUCT_MAIN_CATEGORY_MASTER_MAIN_CATEGORY_ID_fk" FOREIGN KEY ("MAIN_CATEGORY_ID") REFERENCES "stomaster"."TBL_PRODUCT_MAIN_CATEGORY_MASTER"("MAIN_CATEGORY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_SALES_PROFORMA_DTL" ADD CONSTRAINT "TBL_SALES_PROFORMA_DTL_SUB_CATEGORY_ID_TBL_PRODUCT_SUB_CATEGORY_MASTER_SUB_CATEGORY_ID_fk" FOREIGN KEY ("SUB_CATEGORY_ID") REFERENCES "stomaster"."TBL_PRODUCT_SUB_CATEGORY_MASTER"("SUB_CATEGORY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_SALES_PROFORMA_DTL" ADD CONSTRAINT "TBL_SALES_PROFORMA_DTL_PRODUCT_ID_TBL_PRODUCT_MASTER_PRODUCT_ID_fk" FOREIGN KEY ("PRODUCT_ID") REFERENCES "stomaster"."TBL_PRODUCT_MASTER"("PRODUCT_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "stoentries"."TBL_SALES_PROFORMA_DTL" ADD CONSTRAINT "TBL_SALES_PROFORMA_DTL_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk" FOREIGN KEY ("PO_REF_NO") REFERENCES "stoentries"."TBL_PURCHASE_ORDER_HDR"("PO_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "stoentries"."TBL_SALES_PROFORMA_DTL" ADD CONSTRAINT "TBL_SALES_PROFORMA_DTL_PO_DTL_SNO_TBL_PURCHASE_ORDER_DTL_SNO_fk" FOREIGN KEY ("PO_DTL_SNO") REFERENCES "stoentries"."TBL_PURCHASE_ORDER_DTL"("SNO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_SALES_PROFORMA_FILES_UPLOAD" ADD CONSTRAINT "TBL_SALES_PROFORMA_FILES_UPLOAD_SALES_PROFORMA_REF_NO_TBL_SALES_PROFORMA_HDR_SALES_PROFORMA_REF_NO_fk" FOREIGN KEY ("SALES_PROFORMA_REF_NO") REFERENCES "stoentries"."TBL_SALES_PROFORMA_HDR"("SALES_PROFORMA_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_SALES_PROFORMA_HDR" ADD CONSTRAINT "TBL_SALES_PROFORMA_HDR_COMPANY_ID_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("COMPANY_ID") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_SALES_PROFORMA_HDR" ADD CONSTRAINT "TBL_SALES_PROFORMA_HDR_STORE_ID_tbl_Store_Master_Store_Id_fk" FOREIGN KEY ("STORE_ID") REFERENCES "stomaster"."tbl_Store_Master"("Store_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -1748,8 +2184,6 @@ ALTER TABLE "stoentries"."TBL_SALES_PROFORMA_HDR" ADD CONSTRAINT "TBL_SALES_PROF
 ALTER TABLE "stoentries"."TBL_SALES_PROFORMA_HDR" ADD CONSTRAINT "TBL_SALES_PROFORMA_HDR_SALES_PERSON_EMP_ID_TBL_SALES_PERSON_MASTER_Sales_Person_ID_fk" FOREIGN KEY ("SALES_PERSON_EMP_ID") REFERENCES "stomaster"."TBL_SALES_PERSON_MASTER"("Sales_Person_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_SALES_PROFORMA_HDR" ADD CONSTRAINT "TBL_SALES_PROFORMA_HDR_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk" FOREIGN KEY ("CURRENCY_ID") REFERENCES "stomaster"."TBL_CURRENCY_MASTER"("CURRENCY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_TAX_INVOICE_DTL" ADD CONSTRAINT "TBL_TAX_INVOICE_DTL_TAX_INVOICE_REF_NO_TBL_TAX_INVOICE_HDR_TAX_INVOICE_REF_NO_fk" FOREIGN KEY ("TAX_INVOICE_REF_NO") REFERENCES "stoentries"."TBL_TAX_INVOICE_HDR"("TAX_INVOICE_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "stoentries"."TBL_TAX_INVOICE_DTL" ADD CONSTRAINT "TBL_TAX_INVOICE_DTL_PO_DTL_SNO_TBL_PURCHASE_ORDER_DTL_SNO_fk" FOREIGN KEY ("PO_DTL_SNO") REFERENCES "stoentries"."TBL_PURCHASE_ORDER_DTL"("SNO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "stoentries"."TBL_TAX_INVOICE_DTL" ADD CONSTRAINT "TBL_TAX_INVOICE_DTL_PO_REF_NO_TBL_PURCHASE_ORDER_HDR_PO_REF_NO_fk" FOREIGN KEY ("PO_REF_NO") REFERENCES "stoentries"."TBL_PURCHASE_ORDER_HDR"("PO_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_TAX_INVOICE_DTL" ADD CONSTRAINT "TBL_TAX_INVOICE_DTL_MAIN_CATEGORY_ID_TBL_PRODUCT_MAIN_CATEGORY_MASTER_MAIN_CATEGORY_ID_fk" FOREIGN KEY ("MAIN_CATEGORY_ID") REFERENCES "stomaster"."TBL_PRODUCT_MAIN_CATEGORY_MASTER"("MAIN_CATEGORY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_TAX_INVOICE_DTL" ADD CONSTRAINT "TBL_TAX_INVOICE_DTL_SUB_CATEGORY_ID_TBL_PRODUCT_SUB_CATEGORY_MASTER_SUB_CATEGORY_ID_fk" FOREIGN KEY ("SUB_CATEGORY_ID") REFERENCES "stomaster"."TBL_PRODUCT_SUB_CATEGORY_MASTER"("SUB_CATEGORY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_TAX_INVOICE_DTL" ADD CONSTRAINT "TBL_TAX_INVOICE_DTL_PRODUCT_ID_TBL_PRODUCT_MASTER_PRODUCT_ID_fk" FOREIGN KEY ("PRODUCT_ID") REFERENCES "stomaster"."TBL_PRODUCT_MASTER"("PRODUCT_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -1758,4 +2192,8 @@ ALTER TABLE "stoentries"."TBL_TAX_INVOICE_HDR" ADD CONSTRAINT "TBL_TAX_INVOICE_H
 ALTER TABLE "stoentries"."TBL_TAX_INVOICE_HDR" ADD CONSTRAINT "TBL_TAX_INVOICE_HDR_FROM_STORE_ID_tbl_Store_Master_Store_Id_fk" FOREIGN KEY ("FROM_STORE_ID") REFERENCES "stomaster"."tbl_Store_Master"("Store_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_TAX_INVOICE_HDR" ADD CONSTRAINT "TBL_TAX_INVOICE_HDR_DELIVERY_NOTE_REF_NO_TBL_DELIVERY_NOTE_HDR_DELIVERY_NOTE_REF_NO_fk" FOREIGN KEY ("DELIVERY_NOTE_REF_NO") REFERENCES "stoentries"."TBL_DELIVERY_NOTE_HDR"("DELIVERY_NOTE_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "stoentries"."TBL_TAX_INVOICE_HDR" ADD CONSTRAINT "TBL_TAX_INVOICE_HDR_CUSTOMER_ID_tbl_Customer_Master_Customer_Id_fk" FOREIGN KEY ("CUSTOMER_ID") REFERENCES "stomaster"."tbl_Customer_Master"("Customer_Id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "stoentries"."TBL_TAX_INVOICE_HDR" ADD CONSTRAINT "TBL_TAX_INVOICE_HDR_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk" FOREIGN KEY ("CURRENCY_ID") REFERENCES "stomaster"."TBL_CURRENCY_MASTER"("CURRENCY_ID") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "stoentries"."TBL_TAX_INVOICE_HDR" ADD CONSTRAINT "TBL_TAX_INVOICE_HDR_CURRENCY_ID_TBL_CURRENCY_MASTER_CURRENCY_ID_fk" FOREIGN KEY ("CURRENCY_ID") REFERENCES "stomaster"."TBL_CURRENCY_MASTER"("CURRENCY_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stoentries"."TBL_TAX_INVOICE_HDR" ADD CONSTRAINT "TBL_TAX_INVOICE_HDR_PROFIT_CENTER_ID_TBL_PROFIT_CENTER_MASTER_PROFIT_CENTER_ID_fk" FOREIGN KEY ("PROFIT_CENTER_ID") REFERENCES "stomaster"."TBL_PROFIT_CENTER_MASTER"("PROFIT_CENTER_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stoentries"."TBL_TRIAL_BALANCE_DTL" ADD CONSTRAINT "TBL_TRIAL_BALANCE_DTL_TB_REF_NO_TBL_TRIAL_BALANCE_HDR_TB_REF_NO_fk" FOREIGN KEY ("TB_REF_NO") REFERENCES "stoentries"."TBL_TRIAL_BALANCE_HDR"("TB_REF_NO") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stoentries"."TBL_TRIAL_BALANCE_DTL" ADD CONSTRAINT "TBL_TRIAL_BALANCE_DTL_LEDGER_ID_TBL_ACCOUNTS_LEDGER_MASTER_LEDGER_ID_fk" FOREIGN KEY ("LEDGER_ID") REFERENCES "stomaster"."TBL_ACCOUNTS_LEDGER_MASTER"("LEDGER_ID") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "stoentries"."TBL_TRIAL_BALANCE_HDR" ADD CONSTRAINT "TBL_TRIAL_BALANCE_HDR_COMPANY_ID_tbl_Company_Master_Company_Id_fk" FOREIGN KEY ("COMPANY_ID") REFERENCES "stomaster"."tbl_Company_Master"("Company_Id") ON DELETE no action ON UPDATE no action;

@@ -1,4 +1,4 @@
-import cron from 'node-cron';
+import cron, { type ScheduledTask } from 'node-cron';
 import { sendEmail, getBaseTemplate } from './emailService.js';
 import { db } from '../db/index.js';
 import { TBL_TAX_INVOICE_HDR } from '../db/schema/StoEntries.js';
@@ -47,7 +47,7 @@ const runDailySalesSummary = async () => {
     }
 }
 
-let scheduledTasks: cron.ScheduledTask[] = [];
+let scheduledTasks: ScheduledTask[] = [];
 
 /**
  * Modern Dynamic Scheduling System
