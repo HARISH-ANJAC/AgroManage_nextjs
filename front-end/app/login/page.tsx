@@ -112,6 +112,7 @@ export default function LoginPage() {
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
+        mode: 'cors',
         headers: {
           'Content-Type': 'application/json'
         },
